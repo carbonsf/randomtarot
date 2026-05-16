@@ -1,4 +1,6 @@
 // Auto-generated from learntarot.com. Do not edit by hand.
+// Exception: the 16 court cards (Page/Knight/Queen/King of each suit)
+// are hand-rewritten in classic Rider-Waite framings.
 // Each entry: array of { lead, key, subs[] } objects for that card.
 const CARD_ACTIONS = {
   "maj00": [
@@ -1391,227 +1393,201 @@ const CARD_ACTIONS = {
   ],
   "wands11": [
     {
-      "lead": "",
-      "key": "Be Creative",
+      "lead": "discovering",
+      "key": "passion",
       "subs": [
-        "take a novel approach",
-        "be original",
-        "invent",
-        "find a new area of self-expression",
-        "use your art",
-        "come up with a solution",
-        "go in a new direction"
+        "finding what stirs you",
+        "feeling the first spark of inspiration",
+        "falling for an idea",
+        "getting excited about a possibility",
+        "waking up to your own enthusiasm",
+        "noticing what makes you alive"
       ]
     },
     {
-      "lead": "",
-      "key": "Be Enthusiastic",
+      "lead": "receiving",
+      "key": "messages",
       "subs": [
-        "jump in wholeheartedly",
-        "get excited",
-        "show optimism",
-        "be the first to volunteer",
-        "be passionate",
-        "get your blood flowing"
+        "getting word of an opportunity",
+        "hearing a call to adventure",
+        "being summoned by an idea",
+        "catching a signal you'd been hoping for",
+        "getting invited into something larger",
+        "intercepting a creative impulse"
       ]
     },
     {
-      "lead": "",
-      "key": "Be Confident",
+      "lead": "beginning with",
+      "key": "boldness",
       "subs": [
-        "tackle a challenge",
-        "say \"yes, I can\"",
-        "believe in yourself",
-        "stretch your envelope",
-        "move beyond doubts",
-        "focus on success",
-        "know that where there's a will, there's a way"
+        "taking a first step without a map",
+        "leaping before fully looking",
+        "choosing energy over caution",
+        "acting on instinct",
+        "committing to the gesture",
+        "moving on the impulse while it's hot"
       ]
     },
     {
-      "lead": "",
-      "key": "Be Courageous",
+      "lead": "learning through",
+      "key": "play",
       "subs": [
-        "take a risk",
-        "be daring",
-        "have an adventure",
-        "avoid the sure thing",
-        "take assertive action",
-        "be a leader",
-        "overcome a fear"
+        "trying things just to see",
+        "prototyping rather than perfecting",
+        "chasing curiosity for its own sake",
+        "testing what excites you",
+        "learning by doing rather than reading",
+        "treating the work as experiment"
       ]
     }
   ],
   "wands12": [
     {
-      "lead": "",
-      "key": "Charming..........Superficial",
+      "lead": "charging",
+      "key": "forward",
       "subs": [
-        "is physically attractive..........focuses on style and appearance",
-        "disarms opposition with a smile..........can be thoughtless and insensitive",
-        "is sexy and seductive..........pursues sexual conquests",
-        "generates glamour and excitement..........avoids deep or serious matters",
-        "is honey-tongued..........may say or do what's expedient"
+        "pursuing what excites you",
+        "acting with full conviction",
+        "leading the way physically",
+        "cutting through hesitation",
+        "going first",
+        "moving as if the future depends on it"
       ]
     },
     {
-      "lead": "",
-      "key": "Self-confident..........Cocky",
+      "lead": "burning",
+      "key": "intensely",
       "subs": [
-        "totally lacks self-doubt..........overestimates abilities",
-        "has a can-do attitude..........may boast and brag",
-        "is convinced of his or her talent..........exaggerates accomplishments",
-        "is self-assured at all times..........is brash and nervy",
-        "doesn't sweat the small stuff..........is sometimes presumptuous"
+        "throwing yourself in completely",
+        "giving everything you've got",
+        "sustaining high heat",
+        "committing without reserve",
+        "feeling the rush of effort",
+        "operating at full draw"
       ]
     },
     {
-      "lead": "",
-      "key": "Daring..........Foolhardy",
+      "lead": "risking",
+      "key": "overshoot",
       "subs": [
-        "will risk anything without fear..........is reckless and rash",
-        "will tackle what others avoid..........will endanger self and others",
-        "is the first to volunteer for danger..........doesn't give danger due respect",
-        "loves being a hero..........is impetuous",
-        "boldly goes where no one has gone before..........is a daredevil"
+        "going further than needed",
+        "acting before thinking through",
+        "underestimating the cost",
+        "getting ahead of your support",
+        "spending more fuel than the trip required",
+        "hitting the wall hard"
       ]
     },
     {
-      "lead": "",
-      "key": "Adventurous..........Restless",
+      "lead": "inspiring",
+      "key": "movement",
       "subs": [
-        "loves travel and new experiences..........is never content to be still",
-        "seeks novelty and change..........can't set down roots or make ties",
-        "makes things happen..........lacks inner peace and serenity",
-        "rises to every challenge..........won't stop to smell the roses",
-        "is footloose and fancy-free..........must have constant stimulation"
-      ]
-    },
-    {
-      "lead": "",
-      "key": "Passionate..........Hot-tempered",
-      "subs": [
-        "is easily roused to action..........angers easily",
-        "feels strong loyalties..........is too ready for a fight",
-        "feels everything powerfully..........lashes out when riled",
-        "takes a vocal stand..........often acts without thinking",
-        "jumps in with both feet.........may have a chip on his or her shoulder"
+        "rallying others to act",
+        "making something feel urgent",
+        "converting hesitation into momentum",
+        "lighting fires under those around you",
+        "leading from the front",
+        "showing what daring looks like"
       ]
     }
   ],
   "wands13": [
     {
-      "lead": "",
-      "key": "Attractive",
+      "lead": "radiating",
+      "key": "confidence",
       "subs": [
-        "is appealing and popular",
-        "creates a powerful first impression",
-        "makes friends easily",
-        "has great sex appeal",
-        "is warm and outgoing"
+        "showing up fully as yourself",
+        "holding the room without effort",
+        "trusting your own light",
+        "moving with quiet certainty",
+        "letting your warmth do the work",
+        "being someone others gravitate toward"
       ]
     },
     {
-      "lead": "",
-      "key": "Wholehearted",
+      "lead": "holding",
+      "key": "passion",
       "subs": [
-        "is loaded with enthusiasm",
-        "tackles a task with total dedication",
-        "gives the utmost in any situation",
-        "is open and sincere",
-        "doesn't hold anything back"
+        "sustaining fire without burning out",
+        "knowing your own enthusiasm intimately",
+        "keeping the flame steady",
+        "tending what you care about",
+        "returning to your sources of joy",
+        "staying lit from within"
       ]
     },
     {
-      "lead": "",
-      "key": "Energetic",
+      "lead": "nurturing",
+      "key": "courage",
       "subs": [
-        "leads a busy and active life",
-        "is vigorous and strong",
-        "radiates health and vitality",
-        "has an inner vibrancy",
-        "is a natural athlete"
+        "encouraging others to step up",
+        "giving permission to be bold",
+        "believing in someone before they do",
+        "making bravery feel ordinary",
+        "holding space for risk",
+        "cheering on the leap"
       ]
     },
     {
-      "lead": "",
-      "key": "Cheerful",
+      "lead": "embodying",
+      "key": "magnetism",
       "subs": [
-        "is optimistic and upbeat",
-        "has an encouraging word for all",
-        "brightens whatever room he or she is in",
-        "has a warm and sunny disposition",
-        "can shake off the blues easily"
-      ]
-    },
-    {
-      "lead": "",
-      "key": "Self-Assured",
-      "subs": [
-        "quietly demonstrates self-confidence",
-        "handles any situation with aplomb",
-        "can't be easily rattled or provoked",
-        "is spontaneous and gracious in defeat",
-        "has faith in his or her abilities"
+        "drawing people in by being yourself",
+        "attracting opportunity through your presence",
+        "moving freely without performance",
+        "making warmth visible",
+        "being unmistakably alive",
+        "leading with charm"
       ]
     }
   ],
   "wands14": [
     {
-      "lead": "",
-      "key": "Creative",
+      "lead": "leading",
+      "key": "boldly",
       "subs": [
-        "develops innovative projects and ideas",
-        "opens up new areas of experience",
-        "has natural artistic ability",
-        "uses self-expression for useful purposes",
-        "masterminds new strategies",
-        "is original and inventive"
+        "taking command of a vision",
+        "directing energy with clarity",
+        "making the call others won't",
+        "shaping the course",
+        "holding the wheel",
+        "steering through fire"
       ]
     },
     {
-      "lead": "",
-      "key": "Inspiring",
+      "lead": "envisioning",
+      "key": "what's next",
       "subs": [
-        "communicates enthusiasm",
-        "creates an atmosphere of excitement",
-        "sets an example others want to follow",
-        "instills confidence",
-        "is a powerful, natural leader"
+        "seeing the larger play",
+        "thinking beyond the present move",
+        "imagining what hasn't been built",
+        "charting a long horizon",
+        "making the future feel inevitable",
+        "calling forth a new order"
       ]
     },
     {
-      "lead": "",
-      "key": "Forceful",
+      "lead": "mobilizing",
+      "key": "others",
       "subs": [
-        "seems to dominate the environment",
-        "has a commanding presence",
-        "is assertive when necessary",
-        "earns respect and willing compliance",
-        "carries authority naturally"
+        "getting people behind a plan",
+        "converting belief into action",
+        "assigning the right person to the right fire",
+        "making delegation feel like trust",
+        "holding the team in motion",
+        "turning vision into march"
       ]
     },
     {
-      "lead": "",
-      "key": "Charismatic",
+      "lead": "asserting",
+      "key": "authority",
       "subs": [
-        "is often showy and theatrical",
-        "enjoys making the gesture with flair",
-        "naturally becomes the focus of attention",
-        "magnetically attracts others",
-        "is watched, imitated and talked about"
-      ]
-    },
-    {
-      "lead": "",
-      "key": "Bold",
-      "subs": [
-        "is intrepid",
-        "is willing to take chances when the stakes are high",
-        "confronts opposition directly",
-        "dares to stand and be different",
-        "is unconcerned with what others think",
-        "has the courage of his or her convictions"
+        "speaking with conviction",
+        "making the decision and owning it",
+        "standing behind what you've said",
+        "bearing the weight of choice",
+        "claiming what's yours to direct",
+        "being the one who decides"
       ]
     }
   ],
@@ -2027,228 +2003,201 @@ const CARD_ACTIONS = {
   ],
   "cups11": [
     {
-      "lead": "",
-      "key": "Be Emotional",
+      "lead": "receiving",
+      "key": "intuition",
       "subs": [
-        "be moved or touched",
-        "let your feelings show",
-        "respond to beauty",
-        "be sentimental or romantic",
-        "shed your detachment",
-        "let your heart lead the way"
+        "listening to what isn't said",
+        "trusting a hunch",
+        "feeling something before knowing it",
+        "catching a quiet inner signal",
+        "opening to subtle information",
+        "letting the dream speak"
       ]
     },
     {
-      "lead": "",
-      "key": "Be Intuitive",
+      "lead": "dreaming",
+      "key": "openly",
       "subs": [
-        "receive guidance from within",
-        "act on a hunch",
-        "remember your dreams",
-        "have a psychic experience",
-        "experience direct knowing",
-        "trust your gut reaction"
+        "imagining without editing",
+        "letting fantasy run a while",
+        "playing with possibility",
+        "drifting into the not-yet-real",
+        "inventing in the safe space of mind",
+        "giving yourself permission to wonder"
       ]
     },
     {
-      "lead": "",
-      "key": "Be Intimate",
+      "lead": "feeling",
+      "key": "freshly",
       "subs": [
-        "start or renew a love affair",
-        "meet someone you're attracted to",
-        "get closer to someone",
-        "go beyond formalities",
-        "have a special moment of togetherness",
-        "solidify a friendship",
-        "share something personal"
+        "meeting emotion without armor",
+        "being moved by something small",
+        "allowing yourself to be touched",
+        "noticing a tender stirring",
+        "greeting feelings as visitors",
+        "keeping your heart open"
       ]
     },
     {
-      "lead": "",
-      "key": "Be Loving",
+      "lead": "exploring",
+      "key": "creativity",
       "subs": [
-        "make a thoughtful gesture",
-        "express sympathy and understanding",
-        "forgive yourself",
-        "forgive someone who has hurt you",
-        "apologize to someone you have hurt",
-        "reach out and touch someone",
-        "mend a broken relationship",
-        "brighten someone's day",
-        "respond with caring rather than anger",
-        "refuse to judge or condemn"
+        "making something just to make it",
+        "playing with form",
+        "following an artistic curiosity",
+        "trying a new medium",
+        "sketching before committing",
+        "learning through expression"
       ]
     }
   ],
   "cups12": [
     {
-      "lead": "",
-      "key": "Romantic.....Overemotional",
+      "lead": "pursuing",
+      "key": "love",
       "subs": [
-        "idealizes love..........lacks self-restraint",
-        "emphasizes feelings..........is often jealous",
-        "concentrates on the poetry of life..........tends to be gushy and melodramatic",
-        "remembers special occasions..........blows hot and cold in affections",
-        "expresses sentiments beautifully..........brings flowers, but forgets to put gas in the car"
+        "reaching for what your heart wants",
+        "acting on tender feeling",
+        "making the gesture",
+        "bringing the offering",
+        "showing up with your heart visible",
+        "choosing to be the one who tries"
       ]
     },
     {
-      "lead": "",
-      "key": "Imaginative..........Fanciful",
+      "lead": "offering",
+      "key": "yourself",
       "subs": [
-        "can tap the fertile unconscious..........indulges in idle daydreams",
-        "looks beyond the obvious..........has big ideas that come to nothing",
-        "never takes the mundane path..........has an unrealistic approach",
-        "spins marvelous tales..........has an overactive imagination",
-        "is visionary..........can shade the truth"
+        "extending an invitation",
+        "giving without certainty of return",
+        "making a vulnerable move",
+        "placing what you care about in someone's hands",
+        "bearing your feeling openly",
+        "putting heart before hedge"
       ]
     },
     {
-      "lead": "",
-      "key": "Sensitive..........Temperamental",
+      "lead": "chasing",
+      "key": "ideals",
       "subs": [
-        "is aware of moods and feelings..........is prone to mood swings",
-        "helps others open up..........can be petulant and sulky",
-        "responds deeply to life..........gels melancholy and depressed",
-        "understands the pains of others..........broods excessively",
-        "is tactful and diplomatic..........takes offense easily"
+        "acting for what could be",
+        "moving toward beauty",
+        "committing to a vision of love",
+        "choosing romance over realism",
+        "being moved by what isn't yet",
+        "serving the ideal"
       ]
     },
     {
-      "lead": "",
-      "key": "Refined..........Over-refined",
+      "lead": "risking",
+      "key": "illusion",
       "subs": [
-        "appreciates beauty in all forms..........leaves dirty work to others",
-        "seeks the finest..........can't face unpleasantness",
-        "creates a pleasing environment..........lacks robust good health",
-        "understands subtlety..........emphasizes style over substance",
-        "is suave and gracious..........gets overwhelmed by pressure"
-      ]
-    },
-    {
-      "lead": "",
-      "key": "Introspective..........Introverted",
-      "subs": [
-        "values the inner life..........focuses inward to excess",
-        "tries to understand why..........avoids active participation",
-        "questions motivations..........is driven to self-examination",
-        "seeks self-improvement..........exaggerates personal failings",
-        "sees below the surface..........can't relax around others"
+        "mistaking longing for love",
+        "falling for the image",
+        "committing before seeing clearly",
+        "believing the dream over the data",
+        "extending past what's real",
+        "chasing what isn't there"
       ]
     }
   ],
   "cups13": [
     {
-      "lead": "",
-      "key": "Loving",
+      "lead": "holding",
+      "key": "feeling",
       "subs": [
-        "turns away wrath with caring",
-        "is unconditionally accepting",
-        "is sensitive to the feelings of others",
-        "dispels anger and hate",
-        "has infinite patience"
+        "making room for emotion in yourself and others",
+        "staying steady while someone is moved",
+        "tolerating tender currents",
+        "sitting with what hasn't resolved",
+        "keeping company with sorrow or joy",
+        "being present without fixing"
       ]
     },
     {
-      "lead": "",
-      "key": "Tenderhearted",
+      "lead": "attuning",
+      "key": "deeply",
       "subs": [
-        "is easily moved by another's pain",
-        "reacts with sensitivity and compassion",
-        "is kind and gentle with all creatures",
-        "can never turn away someone in need",
-        "feels what others are feeling"
+        "sensing what's beneath the words",
+        "reading the room's emotional weather",
+        "noticing what others miss",
+        "tracking subtle shifts",
+        "hearing the unspoken",
+        "knowing through feeling"
       ]
     },
     {
-      "lead": "",
-      "key": "Intuitive",
+      "lead": "nurturing",
+      "key": "softly",
       "subs": [
-        "is always tuned to emotional undercurrents",
-        "senses the climate of a situation",
-        "is guided by the heart",
-        "trusts an inner sense of what is true",
-        "understands without having to ask"
+        "caring without overwhelming",
+        "meeting someone where they are",
+        "offering kindness as a baseline",
+        "giving comfort that doesn't ask anything back",
+        "tending without taking over",
+        "being a quiet refuge"
       ]
     },
     {
-      "lead": "",
-      "key": "Psychic",
+      "lead": "trusting",
+      "key": "intuition",
       "subs": [
-        "is open to the unconscious",
-        "has a well-developed sixth sense",
-        "can have a telepathic bond with another",
-        "has a finely-tuned sensibility",
-        "is a natural medium"
-      ]
-    },
-    {
-      "lead": "",
-      "key": "Spiritual",
-      "subs": [
-        "feels oneness with God and the universe",
-        "has reverence for all life",
-        "finds joy in communion",
-        "appreciates the deeper meanings of life",
-        "sees the world as a holy place"
+        "acting on what you feel without proof",
+        "letting the inner knowing lead",
+        "honoring impressions before evidence",
+        "moving from a deeper signal",
+        "believing your own sensing",
+        "choosing the felt over the obvious"
       ]
     }
   ],
   "cups14": [
     {
-      "lead": "",
-      "key": "Wise",
+      "lead": "holding",
+      "key": "composure",
       "subs": [
-        "gives good advice",
-        "has a deep grasp of human nature",
-        "teaches through loving attention",
-        "knows what others need for growth",
-        "sees right to the heart of the matter",
-        "understands many levels of experience"
+        "staying calm in emotional weather",
+        "keeping your center when others lose theirs",
+        "being the still point",
+        "mastering your own reactions",
+        "moving slowly through turbulence",
+        "showing what equanimity looks like"
       ]
     },
     {
-      "lead": "",
-      "key": "Calm",
+      "lead": "leading with",
+      "key": "empathy",
       "subs": [
-        "maintains his or her composure",
-        "has a quieting influence on others",
-        "is emotionally stable and secure",
-        "keeps his or her head in a crisis",
-        "never seems nervous or tense"
+        "directing while remaining tender",
+        "making decisions that honor feeling",
+        "hearing before instructing",
+        "using compassion as governance",
+        "centering people in the system",
+        "balancing rigor with care"
       ]
     },
     {
-      "lead": "",
-      "key": "Diplomatic",
+      "lead": "counseling",
+      "key": "wisely",
       "subs": [
-        "can balance the needs of many people",
-        "keeps everyone working together happily",
-        "can diffuse a tense situation",
-        "achieves goals through subtle influence",
-        "says just the right word at the right time"
+        "giving advice without prescription",
+        "meeting someone's struggle with patience",
+        "speaking from earned understanding",
+        "holding space for someone's choice",
+        "being a trusted ear",
+        "offering perspective gently"
       ]
     },
     {
-      "lead": "",
-      "key": "Caring",
+      "lead": "mastering",
+      "key": "your depths",
       "subs": [
-        "responds to emotional needs",
-        "is a natural healer and therapist",
-        "takes action to help those in need",
-        "feels compassion for the less fortunate",
-        "does volunteer and charity work"
-      ]
-    },
-    {
-      "lead": "",
-      "key": "Tolerant",
-      "subs": [
-        "has open and broad-minded views",
-        "accepts the limitations of others",
-        "is comfortable with all types of people",
-        "allows others their freedom",
-        "is patient in trying circumstances"
+        "knowing your own currents",
+        "being honest with yourself about feeling",
+        "tending your inner waters",
+        "integrating what was once turbulent",
+        "moving from a settled place",
+        "having made peace with your past"
       ]
     }
   ],
@@ -2654,226 +2603,201 @@ const CARD_ACTIONS = {
   ],
   "swords11": [
     {
-      "lead": "",
-      "key": "Use Your Mind",
+      "lead": "observing",
+      "key": "keenly",
       "subs": [
-        "analyze the problem",
-        "use logic and reason",
-        "reexamine beliefs",
-        "develop an idea or plan",
-        "study or research the facts",
-        "learn or teach",
-        "think everything through"
+        "watching what others miss",
+        "tracking the small signals",
+        "reading between the lines",
+        "holding attention steady",
+        "noticing the inconsistency",
+        "staying alert"
       ]
     },
     {
-      "lead": "",
-      "key": "Be Truthful",
+      "lead": "questioning",
+      "key": "everything",
       "subs": [
-        "act honestly",
-        "face the facts",
-        "stop deceiving",
-        "clear up any confusion",
-        "expose what is hidden",
-        "speak directly"
+        "challenging assumptions",
+        "asking why",
+        "testing what people say",
+        "probing for weakness in an idea",
+        "refusing the easy answer",
+        "poking at the seams"
       ]
     },
     {
-      "lead": "",
-      "key": "Be Just",
+      "lead": "learning",
+      "key": "fast",
       "subs": [
-        "right a wrong",
-        "act ethically",
-        "treat others equally",
-        "champion a cause",
-        "try to be fair",
-        "do what you know is right",
-        "accept responsibility",
-        "acknowledge the other point of view"
+        "picking up new mental skills",
+        "adapting quickly",
+        "turning experience into pattern",
+        "assimilating fresh material",
+        "reading widely",
+        "thinking on your feet"
       ]
     },
     {
-      "lead": "",
-      "key": "Have Fortitude",
+      "lead": "scouting for",
+      "key": "trouble",
       "subs": [
-        "face problems squarely",
-        "refuse to be discouraged",
-        "meet setbacks with renewed energy",
-        "keep a firm resolve",
-        "move out of depression",
-        "keep your chin up and head high",
-        "keep trying"
+        "spotting risk before it lands",
+        "reading the room defensively",
+        "identifying the threat early",
+        "playing devil's advocate",
+        "bringing news of incoming",
+        "keeping a sharp watch"
       ]
     }
   ],
   "swords12": [
     {
-      "lead": "",
-      "key": "Direct..........Blunt",
+      "lead": "charging with",
+      "key": "logic",
       "subs": [
-        "is frank and outspoken..........is tactless and rude",
-        "gets straight to the point..........may have a brusque manner",
-        "does not mince words..........does not spare the feelings of others",
-        "lets others know where they stand..........can't hold his or her tongue",
-        "gives an honest answer..........shows little discretion"
+        "acting on what the analysis says",
+        "moving once the conclusion is clear",
+        "cutting through to the decision",
+        "applying reason at speed",
+        "leading with the argument",
+        "prosecuting the case"
       ]
     },
     {
-      "lead": "",
-      "key": "Authoritative..........Overbearing",
+      "lead": "cutting to",
+      "key": "the point",
       "subs": [
-        "speaks with assurance..........tends to be domineering",
-        "commands attention..........forces a position on others",
-        "acts with total certainty..........expects immediate compliance",
-        "gives orders naturally..........does not welcome dissent",
-        "has great influence..........acts in a high-handed manner"
+        "skipping the niceties",
+        "saying what's true",
+        "removing what doesn't serve",
+        "speaking with edge",
+        "dispatching the irrelevant",
+        "getting to it"
       ]
     },
     {
-      "lead": "",
-      "key": "Incisive..........Cutting",
+      "lead": "pursuing",
+      "key": "truth",
       "subs": [
-        "has a keen, forceful intellect..........is prone to biting sarcasm",
-        "penetrates to the core..........lacks sensitivity",
-        "expresses ideas succinctly..........can be critical",
-        "is sharp and alert..........has a barbed wit",
-        "debates and argues well..........derides stupidity"
+        "chasing the right answer relentlessly",
+        "investigating until clear",
+        "refusing to settle for less than clarity",
+        "going where the logic leads",
+        "following the case all the way",
+        "tracking to the source"
       ]
     },
     {
-      "lead": "",
-      "key": "Knowledgeable..........Opinionated",
+      "lead": "risking",
+      "key": "harshness",
       "subs": [
-        "knows what he or she is talking about..........believes he or she is always right",
-        "can expound on any topic..........lacks tolerance of other viewpoints",
-        "is sought as an expert..........must have the last word",
-        "has well-reasoned positions..........is arrogant",
-        "is highly intelligent.........can be dogmatic and close-minded"
-      ]
-    },
-    {
-      "lead": "",
-      "key": "Logical..........Unfeeling",
-      "subs": [
-        "reasons clearly..........undervalues intuition",
-        "analyzes information well..........treats people like numbers",
-        "concentrates on what is correct..........doesn't temper justice with mercy",
-        "can set aside emotional factors..........is cut off from emotions",
-        "makes sense out of confusion..........is cold and aloof"
+        "over-cutting in your hurry",
+        "speaking before tempering",
+        "being right but unkind",
+        "leaving casualties of clarity",
+        "prioritizing speed over precision of word",
+        "bruising in the rush"
       ]
     }
   ],
   "swords13": [
     {
-      "lead": "",
-      "key": "Honest",
+      "lead": "seeing",
+      "key": "clearly",
       "subs": [
-        "faces the truth, even if unpleasant",
-        "is up front with everyone",
-        "likes everything on the table",
-        "plays by the rules",
-        "avoids lies and deception"
+        "looking past illusion",
+        "holding an honest view",
+        "refusing flattery and pity",
+        "keeping the lens clean",
+        "calling what is what it is",
+        "perceiving without distortion"
       ]
     },
     {
-      "lead": "",
-      "key": "Astute",
+      "lead": "discerning",
+      "key": "truth",
       "subs": [
-        "sizes up a situation quickly",
-        "understands hidden motives and desires",
-        "is difficult to fool, trick or con",
-        "figures out the unspoken rules and agendas",
-        "is quick on the uptake"
+        "sorting signal from noise",
+        "separating what's earned from what's claimed",
+        "testing claims against evidence",
+        "knowing your own bias",
+        "judging fairly but firmly",
+        "calling out the falsehood"
       ]
     },
     {
-      "lead": "",
-      "key": "Forthright",
+      "lead": "holding",
+      "key": "independence",
       "subs": [
-        "is direct and open in all dealings",
-        "gets to the heart of the matter",
-        "acts without pretense or guile",
-        "is straightforward and no-nonsense",
-        "can be candid when necessary"
+        "thinking for yourself",
+        "resisting the consensus when it's wrong",
+        "not borrowing your conclusions",
+        "standing alone when needed",
+        "owning your judgment",
+        "being unbought"
       ]
     },
     {
-      "lead": "",
-      "key": "Witty",
+      "lead": "teaching with",
+      "key": "clarity",
       "subs": [
-        "has a delightful sense of humor",
-        "diffuses awkward situations with a funny remark",
-        "never takes anything too seriously",
-        "laughs at everything, including him or herself"
-      ]
-    },
-    {
-      "lead": "",
-      "key": "Experienced",
-      "subs": [
-        "has seen and done it all",
-        "has strength due to life's hard knocks",
-        "is free of self-righteous judgments",
-        "has realistic expectations"
+        "explaining without softening",
+        "giving people the real picture",
+        "showing the structure of a problem",
+        "making the complicated legible",
+        "cutting through someone's fog",
+        "being the honest mirror"
       ]
     }
   ],
   "swords14": [
     {
-      "lead": "",
-      "key": "Intellectual",
+      "lead": "judging",
+      "key": "fairly",
       "subs": [
-        "is comfortable in the world of the mind",
-        "uses thought creatively",
-        "grasps information quickly and completely",
-        "inspires and challenges through ideas",
-        "ably carries out research",
-        "is knowledgeable"
+        "weighing evidence dispassionately",
+        "applying principle consistently",
+        "separating person from case",
+        "resisting partiality",
+        "rendering decisions impartially",
+        "earning trust through clarity"
       ]
     },
     {
-      "lead": "",
-      "key": "Analytical",
+      "lead": "directing with",
+      "key": "reason",
       "subs": [
-        "cuts through confusion and mental fog",
-        "applies reason and logic",
-        "is talented with games and other mental challenges",
-        "easily breaks up complicated subjects",
-        "is adept at argument and debate",
-        "understands a problem quickly"
+        "leading by what holds up",
+        "making choices defensible by argument",
+        "setting policy from principle",
+        "asking what the analysis shows",
+        "using logic as the rudder",
+        "building from first principles"
       ]
     },
     {
-      "lead": "",
-      "key": "Articulate",
+      "lead": "cutting",
+      "key": "through",
       "subs": [
-        "is adept at language and verbal skills",
-        "communicates ideas successfully",
-        "is a stimulating conversationalist",
-        "often serves as a group spokesperson",
-        "is a lucid writer and speaker"
+        "making the call others won't",
+        "ending what should have ended",
+        "severing what can't be saved",
+        "removing ambiguity",
+        "choosing the cleaner break",
+        "finishing the deliberation"
       ]
     },
     {
-      "lead": "",
-      "key": "Just",
+      "lead": "wielding",
+      "key": "authority",
       "subs": [
-        "renders honest, insightful judgments",
-        "understands and honors all sides of an issue",
-        "is concerned about truth and fairness",
-        "views situations with a dispassionate eye",
-        "is impartial and objective"
-      ]
-    },
-    {
-      "lead": "",
-      "key": "Ethical",
-      "subs": [
-        "is a moral/ethical leader",
-        "encourages high standards",
-        "works against corruption and dishonesty",
-        "takes the high road in all dealings",
-        "lives by his or her highest principles"
+        "speaking with the weight of office",
+        "claiming the role",
+        "taking responsibility for the verdict",
+        "bearing the consequences of decision",
+        "acting as the final word",
+        "holding the gavel"
       ]
     }
   ],
@@ -3294,230 +3218,201 @@ const CARD_ACTIONS = {
   ],
   "pents11": [
     {
-      "lead": "",
-      "key": "Have an Effect",
+      "lead": "learning",
+      "key": "diligently",
       "subs": [
-        "make your plans real",
-        "mold the physical world",
-        "use your body",
-        "experience nature",
-        "achieve tangible results",
-        "act on your dreams",
-        "get events in motion"
+        "studying the craft",
+        "reading the manual",
+        "practicing the fundamentals",
+        "asking how things work",
+        "apprenticing yourself",
+        "getting the basics solid"
       ]
     },
     {
-      "lead": "",
-      "key": "Be Practical",
+      "lead": "beginning to",
+      "key": "build",
       "subs": [
-        "take a realistic approach",
-        "apply the tools at hand",
-        "find a solution that works",
-        "use common sense",
-        "stop daydreaming",
-        "work with what you have",
-        "concentrate on what's effective"
+        "laying a first foundation",
+        "choosing what to invest in",
+        "putting the first brick down",
+        "committing to a long project",
+        "starting modestly",
+        "growing something from seed"
       ]
     },
     {
-      "lead": "",
-      "key": "Be Prosperous",
+      "lead": "attending to",
+      "key": "detail",
       "subs": [
-        "draw to you what you need",
-        "increase your means",
-        "grow and expand",
-        "enrich yourself",
-        "go out to meet success",
-        "seek abundance",
-        "become secure"
+        "caring about the particulars",
+        "finishing the small parts",
+        "noticing the seam",
+        "getting the spelling right",
+        "sweating the craft",
+        "polishing what others would leave rough"
       ]
     },
     {
-      "lead": "",
-      "key": "Be Trusting/Trustworthy",
+      "lead": "valuing",
+      "key": "patience",
       "subs": [
-        "accept that the solution is well in hand",
-        "have faith in others",
-        "accommodate uncertainty",
-        "accept others at their word",
-        "keep your word",
-        "prove yourself dependable",
-        "stick by your commitments",
-        "establish credibility"
+        "choosing slow over flashy",
+        "investing in compounding returns",
+        "delaying gratification",
+        "trusting the long arc",
+        "building one good day at a time",
+        "playing the long game"
       ]
     }
   ],
   "pents12": [
     {
-      "lead": "",
-      "key": "Unwavering..........Stubborn",
+      "lead": "working",
+      "key": "steadily",
       "subs": [
-        "is dogged in pursuit of a goal..........is hardheaded and obstinate",
-        "will not quit..........digs into a position",
-        "stands firm against opposition..........must have his or her own way",
-        "stays fixed to a chosen course..........refuses to listen to reason",
-        "keeps true to personal convictions..........resists compromise"
+        "showing up each day",
+        "putting in the hours",
+        "keeping the same pace",
+        "choosing reliability over flair",
+        "doing it again tomorrow",
+        "building through repetition"
       ]
     },
     {
-      "lead": "",
-      "key": "Cautious..........Unadventurous",
+      "lead": "committing",
+      "key": "thoroughly",
       "subs": [
-        "checks and double-checks..........is too conservative",
-        "examines all angles beforehand..........misses chances by waiting",
-        "proceeds slowly and carefully..........is reluctant to try something new",
-        "prefers the safe, known path..........settles for safe, small gains",
-        "is prudent and careful..........is afraid of risking"
+        "finishing what you start",
+        "honoring the long agreement",
+        "sticking with the boring middle",
+        "not abandoning when it gets dull",
+        "following through completely",
+        "giving your word and keeping it"
       ]
     },
     {
-      "lead": "",
-      "key": "Thorough..........Obsessive",
+      "lead": "moving",
+      "key": "deliberately",
       "subs": [
-        "takes care of every detail..........does not know when to quit",
-        "is meticulous..........is too picky",
-        "wraps up all loose ends..........must have everything just so",
-        "never leaves a job half done..........is inflexible and compulsive",
-        "is painstaking..........insists on perfection",
-        "completes anything started..........can't leave well enough alone"
+        "measuring twice before cutting",
+        "acting after thinking",
+        "taking the careful route",
+        "avoiding the impulsive shortcut",
+        "choosing the safe ground",
+        "planning before stepping"
       ]
     },
     {
-      "lead": "",
-      "key": "Realistic..........Pessimistic",
+      "lead": "risking",
+      "key": "stagnation",
       "subs": [
-        "is willing to look at the facts..........concentrates on what's wrong",
-        "faces the truth..........thinks others are dreamers",
-        "is not lured by false hopes..........sees a glass as half empty, not half full",
-        "assesses circumstances candidly..........takes the gloomy view",
-        "predicts problems in advance..........dooms a project from the start"
-      ]
-    },
-    {
-      "lead": "",
-      "key": "Hard-Working..........Grinding",
-      "subs": [
-        "becomes dedicated to a task..........focuses too narrowly on work",
-        "is diligent and industrious..........can be humorless and grim",
-        "produces as much as two people..........sees playtime as wasteful",
-        "tackles any chore vigorously..........drives everyone too hard",
-        "is tireless and unflagging..........forgets life should be fun"
+        "mistaking caution for wisdom",
+        "getting stuck in the routine",
+        "resisting needed change",
+        "prioritizing safety over growth",
+        "over-deliberating past the moment",
+        "settling in too long"
       ]
     }
   ],
   "pents13": [
     {
-      "lead": "",
-      "key": "Nurturing",
+      "lead": "nurturing",
+      "key": "what's yours",
       "subs": [
-        "gives love and support",
-        "creates a warm, secure environment",
-        "makes people feel better",
-        "responds to the natural world",
-        "has a green thumb",
-        "has a way with children and animals"
+        "tending the home",
+        "caring for the people in your circle",
+        "keeping the garden alive",
+        "looking after what depends on you",
+        "being a steady hand",
+        "making the daily things work"
       ]
     },
     {
-      "lead": "",
-      "key": "Bighearted",
+      "lead": "holding",
+      "key": "abundance",
       "subs": [
-        "will do any service for others",
-        "is a soft touch",
-        "always has an open door and welcoming smile",
-        "gives freely and abundantly",
-        "is warm, generous and unselfish"
+        "managing resources with care",
+        "making what you have go far",
+        "sharing without depleting",
+        "being generous from a full place",
+        "trusting the harvest",
+        "keeping the pantry stocked"
       ]
     },
     {
-      "lead": "",
-      "key": "Down-to-Earth",
+      "lead": "grounding",
+      "key": "others",
       "subs": [
-        "handles problems matter-of-factly",
-        "allows others to be themselves",
-        "has no pretensions or affectations",
-        "takes a simple, sensible approach",
-        "appreciates all the senses"
+        "offering stability",
+        "being someone others can rely on",
+        "holding the center when life shakes",
+        "making your presence steadying",
+        "being calm in someone else's storm",
+        "giving sanctuary"
       ]
     },
     {
-      "lead": "",
-      "key": "Resourceful",
+      "lead": "embodying",
+      "key": "earthy wisdom",
       "subs": [
-        "finds a use for whatever's at hand",
-        "is handy and versatile",
-        "makes a little go a long way",
-        "gets around every obstacle",
-        "comes up with what's needed"
-      ]
-    },
-    {
-      "lead": "",
-      "key": "Trustworthy",
-      "subs": [
-        "keeps confidences and secrets",
-        "is loyal and steadfast",
-        "comes through in a pinch",
-        "keeps faith with others",
-        "is true to his or her word"
+        "knowing what the body needs",
+        "cooking, planting, mending",
+        "moving in rhythm with the seasons",
+        "trusting practical knowledge",
+        "honoring craft and care",
+        "living close to the real"
       ]
     }
   ],
   "pents14": [
     {
-      "lead": "",
-      "key": "Enterprising",
+      "lead": "building",
+      "key": "what lasts",
       "subs": [
-        "makes any venture successful",
-        "finds opportunity everywhere",
-        "attracts wealth",
-        "takes an idea and makes it work",
-        "is a natural manager and businessperson",
-        "has the Midas touch"
+        "investing for the long horizon",
+        "constructing systems that hold",
+        "leaving something behind",
+        "making decisions that compound",
+        "choosing durable over flashy",
+        "thinking in decades"
       ]
     },
     {
-      "lead": "",
-      "key": "Adept",
+      "lead": "directing",
+      "key": "resources",
       "subs": [
-        "is informed about practical matters",
-        "has a wide range of natural abilities",
-        "has quick reflexes",
-        "is skillful with his or her hands",
-        "handles any situation competently"
+        "allocating capital wisely",
+        "putting people and money where they multiply",
+        "stewarding what's been entrusted",
+        "deciding what to fund",
+        "investing strategically",
+        "moving the levers"
       ]
     },
     {
-      "lead": "",
-      "key": "Reliable",
+      "lead": "providing",
+      "key": "generously",
       "subs": [
-        "meets all commitments and promises",
-        "assumes responsibility",
-        "is dependable and unfailing",
-        "can be counted on in a crisis",
-        "serves as a rock for others to lean on"
+        "sharing prosperity",
+        "lifting others through your means",
+        "being the one who can pay",
+        "patronizing the work that matters",
+        "giving without diminishing yourself",
+        "using wealth to widen the field"
       ]
     },
     {
-      "lead": "",
-      "key": "Supporting",
+      "lead": "mastering",
+      "key": "the practical",
       "subs": [
-        "encourages the accomplishments of others",
-        "readily jumps in to help",
-        "is a philantropist",
-        "gives generously of time and attention",
-        "sponsors worthwhile projects"
-      ]
-    },
-    {
-      "lead": "",
-      "key": "Steady",
-      "subs": [
-        "works toward a goal with firm resolve",
-        "avoids mood and behavior swings",
-        "has regular habits and activities",
-        "maintains a calm, even approach",
-        "is a stabilizing influence"
+        "knowing the trade fully",
+        "having both skill and wisdom",
+        "being indispensable to your domain",
+        "earning authority through competence",
+        "executing with the grain of how things work",
+        "being a master of getting things done"
       ]
     }
   ]
