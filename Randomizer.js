@@ -516,53 +516,175 @@ function openInfoOverlay(imgEl) {
   requestAnimationFrame(() => overlay.classList.add("open"));
 }
 
+// Measure the content and pick a density tier. The tiers cascade through
+// CSS custom properties (--head-size, --sub-size, --stanza-gap, --columns,
+// --measure) — so a sparse card breathes large and a dense card tightens
+// to stay comfortably on one screen. Tuned empirically against the actual
+// data: most cards have 3–4 actions × 4–6 subs ≈ ~16–24 subs total.
+function pickDensity(actions) {
+  if (!actions || actions.length === 0) return "normal";
+  let subCount = 0;
+  let charCount = 0;
+  for (const a of actions) {
+    if (a.lead) charCount += a.lead.length + 1;
+    if (a.key)  charCount += a.key.length;
+    if (Array.isArray(a.subs)) {
+      subCount += a.subs.length;
+      for (const s of a.subs) charCount += (s || "").length;
+    }
+  }
+  // Thresholds: char-count matters more than sub-count because some
+  // cards have few but very long subs (and vice versa).
+  if (subCount <= 14 && charCount <=  380) return "sparse";
+  if (subCount <= 22 && charCount <=  640) return "normal";
+  if (subCount <= 32 && charCount <=  980) return "dense";
+  return "overflow";
+}
+
+// Cards in the data fall into two regimes:
+//  - Short verb phrases (most cards) — render as a single flowing line
+//    of subs separated by hairline middots. Reads like a definition.
+//  - Compound sentences (Knight / court cards) — long subs containing
+//    an "upright .......... reversed" pair. These need block layout,
+//    one sub per line, with the dotted separator replaced by an em-dash.
+// Per-card decision based on max sub length.
+function pickFlowMode(actions) {
+  let maxLen = 0;
+  for (const a of (actions || [])) {
+    for (const s of (a.subs || [])) {
+      if (s && s.length > maxLen) maxLen = s.length;
+    }
+  }
+  return maxLen > 42 ? "list" : "flow";
+}
+
+// Build the inline content for one sub. The source data sometimes joins
+// an upright/reversed pair with a run of periods ("..........") — we
+// replace that with a typographic em-dash so it reads cleanly.
+function buildSubContent(span, text) {
+  const SEP = /\.{4,}/;
+  if (!SEP.test(text)) {
+    span.textContent = text;
+    return;
+  }
+  const parts = text.split(SEP);
+  parts.forEach((part, i) => {
+    if (i > 0) {
+      const sep = document.createElement("span");
+      sep.className = "pair-sep";
+      sep.setAttribute("aria-hidden", "true");
+      sep.textContent = " — ";
+      span.appendChild(sep);
+    }
+    span.appendChild(document.createTextNode(part.trim()));
+  });
+}
+
 function renderInfoOverlay(overlay, actions) {
   // Clear and rebuild. Building from scratch each open keeps the
   // staggered-fade animation predictable (no leftover transition states).
   overlay.innerHTML = "";
 
+  // Reset density classes from a prior open.
+  overlay.classList.remove(
+    "density-sparse", "density-normal", "density-dense", "density-overflow",
+    "animating"
+  );
+
+  // The animating flag opts every sub into the per-word fade-in. Always
+  // on for the live design; CSS handles prefers-reduced-motion.
+  overlay.classList.add("animating");
+
   if (!actions || actions.length === 0) {
-    // Fallback skeleton — 4 placeholder cells shimmering.
-    for (let i = 0; i < 4; i++) {
-      const cell = document.createElement("div");
-      cell.className = "info-cell pending";
-      cell.innerHTML =
+    overlay.classList.add("density-normal");
+    const stage = document.createElement("div");
+    stage.className = "info-stage";
+    // Three quiet shimmer stanzas as a degrade path.
+    for (let i = 0; i < 3; i++) {
+      const stanza = document.createElement("div");
+      stanza.className = "info-stanza pending";
+      stanza.innerHTML =
         '<div class="info-head">&nbsp;</div>' +
-        '<ul class="info-subs">' +
-        '<li>&nbsp;</li><li>&nbsp;</li><li>&nbsp;</li><li>&nbsp;</li>'+
-        '</ul>';
-      overlay.appendChild(cell);
+        '<p class="info-flow">&nbsp;</p>';
+      stage.appendChild(stanza);
     }
+    overlay.appendChild(stage);
     return;
   }
 
-  for (const action of actions) {
-    const cell = document.createElement("div");
-    cell.className = "info-cell";
+  overlay.classList.add("density-" + pickDensity(actions));
+  const mode = pickFlowMode(actions); // "flow" | "list"
 
+  // Reveal cadence — tuned for a contemplative beat. After the flash
+  // commits, the card mutes (700ms) while the scrim arrives (520ms);
+  // then a brief silence, then stanzas settle in one by one, and the
+  // subs of each stanza follow a beat behind their headline.
+  const INITIAL_DELAY     = 360;  // ms before the first stanza begins
+  const STANZA_STEP       = 220;  // ms between successive stanzas
+  const HEAD_HOLD         = 220;  // ms each headline gets before its subs start
+  const SUB_STEP          =  55;  // ms between subs within a stanza
+  const SUB_STEP_CAP      =  10;  // dense stanzas: cap the per-sub cascade so it
+                                  // doesn't crawl. Subs beyond this index share
+                                  // the final delay.
+
+  const stage = document.createElement("div");
+  stage.className = "info-stage";
+
+  actions.forEach((action, stanzaIdx) => {
+    const stanza = document.createElement("div");
+    stanza.className = "info-stanza";
+    const stanzaDelay = INITIAL_DELAY + stanzaIdx * STANZA_STEP;
+    stanza.style.transitionDelay = stanzaDelay + "ms";
+
+    // Headline: lead + key as one italic phrase. The key carries a hair
+    // of weight to anchor the eye, but stays in the same color/style as
+    // the lead — no two-tone treatment. For court 12 cards the key
+    // itself is an upright/reversed pair joined by "..........", which
+    // we route through the same em-dash cleanup as the subs.
     const head = document.createElement("div");
     head.className = "info-head";
-    const lead = document.createElement("span");
-    lead.className = "lead";
-    lead.textContent = action.lead ? action.lead + " " : "";
+    if (action.lead) {
+      const lead = document.createElement("span");
+      lead.className = "lead";
+      lead.textContent = action.lead + " ";
+      head.appendChild(lead);
+    }
     const key = document.createElement("span");
     key.className = "key";
-    key.textContent = action.key;
-    head.appendChild(lead);
+    buildSubContent(key, action.key || "");
     head.appendChild(key);
+    stanza.appendChild(head);
 
-    const list = document.createElement("ul");
-    list.className = "info-subs";
-    for (const sub of action.subs) {
-      const li = document.createElement("li");
-      li.textContent = sub;
-      list.appendChild(li);
-    }
+    // Sub-meanings: either a flowing line with middots (short subs) or
+    // a block list (long compound subs). Each sub is its own span so
+    // we can stagger per-sub fade-in without rebuilding the text.
+    const flow = document.createElement("p");
+    flow.className = "info-flow " + mode;
+    const subs = Array.isArray(action.subs) ? action.subs : [];
+    subs.forEach((sub, i) => {
+      if (mode === "flow" && i > 0) {
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        dot.setAttribute("aria-hidden", "true");
+        dot.textContent = "·";
+        flow.appendChild(dot);
+      }
+      const span = document.createElement("span");
+      span.className = "sub";
+      buildSubContent(span, sub);
+      // Sub delay = stanza arrival + a beat for the headline + per-sub
+      // cascade. Cap the per-sub portion so a 26-sub stanza (pents12)
+      // doesn't take 1.4s just to finish its own cascade.
+      const subDelay = stanzaDelay + HEAD_HOLD + Math.min(i, SUB_STEP_CAP) * SUB_STEP;
+      span.style.transitionDelay = subDelay + "ms";
+      flow.appendChild(span);
+    });
+    stanza.appendChild(flow);
 
-    cell.appendChild(head);
-    cell.appendChild(list);
-    overlay.appendChild(cell);
-  }
+    stage.appendChild(stanza);
+  });
+
+  overlay.appendChild(stage);
 }
 
 function closeInfoOverlay() {

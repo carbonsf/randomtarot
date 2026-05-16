@@ -4,7 +4,18 @@
   <meta charset="UTF-8" />
   <title>Random Tarot Card</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
+
+  <!-- Headline face for the card-info overlay. Cormorant Garamond italic
+       (400 + 500) gives the meanings a literary, slightly contemplative
+       voice without going ornate — and stays plainly readable. The body
+       (sub-meanings) deliberately stays in the system sans, so the page
+       keeps the same machine-quiet voice the rest of the app uses. The
+       preconnect lines shave the cold-load by skipping a separate
+       handshake when the actual woff2 fetch begins. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap" />
+
   <!-- Inline CSS to ensure background is BLACK -->
   <style>
     /* Make background black, remove margins, center the image */
@@ -119,108 +130,246 @@
     /* ---------------------------------------------------------------
        Card-info overlay (long-press on a face-up card).
 
+       Design:
+       - No frames, no fills, no bullets. Just typography on black —
+         the same vocabulary as the rest of the app (card on void).
+       - One stanza per action: an italic headline (lead + key as one
+         phrase) above a single flowing line of sub-meanings separated
+         by hairline middots. Reads like a definition entry.
+       - Density-aware: a class on the overlay (.density-sparse / -normal
+         / -dense / -overflow) drives type size, leading, vertical rhythm,
+         and column count through CSS custom properties. JS picks the
+         tier from total subs + character count on open, so a card with
+         a lot to say stays comfortably on one screen and a card with
+         little to say breathes large.
+
        Choreography:
-       1. At commit, the card behind the overlay fades to a deep dim +
-          slight blur — it stays present but recedes (img.muted).
-       2. The overlay container fades in over a translucent black scrim.
-       3. Each grid cell rises into place from a few pixels below with a
-          staggered delay — feels like text settling into the void.
+       1. The card recedes to a deep dim + slight blur (img.muted).
+       2. A translucent black wash settles in.
+       3. Each stanza rises a few pixels with a staggered delay; within
+          each stanza the headline arrives a beat before the sub-flow.
        --------------------------------------------------------------- */
     img.muted {
-      filter: brightness(0.22) blur(2px) saturate(0.7);
-      transition: filter 360ms cubic-bezier(0.2, 0, 0, 1);
+      filter: brightness(0.18) blur(3px) saturate(0.6);
+      /* The mute itself takes a contemplative beat — the world hushes
+         before the meanings arrive. cubic-bezier(0.16, 1, 0.3, 1) is a
+         deep ease-out used throughout this reveal — soft landing, no
+         late acceleration. */
+      transition: filter 700ms cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     #info-overlay {
       position: fixed;
       inset: 0;
       z-index: 100;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-auto-rows: 1fr;
-      gap: 14px;
-      padding: clamp(18px, 4vw, 36px);
       box-sizing: border-box;
-      background: rgba(0, 0, 0, 0.55);
+      padding: clamp(28px, 7vh, 72px) clamp(22px, 6vw, 80px);
+      background: rgba(0, 0, 0, 0.78);
       opacity: 0;
       pointer-events: none;
-      transition: opacity 320ms cubic-bezier(0.2, 0, 0, 1);
+      /* Scrim arrives slightly ahead of the text so the user gets a
+         moment of dimmed-card before meanings start surfacing. */
+      transition: opacity 520ms cubic-bezier(0.16, 1, 0.3, 1);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
       color: #ececec;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+
+      /* Default (normal) density. Overridden by .density-* below.
+         Headline sizes are calibrated for Cormorant Garamond (a serif
+         whose optical size runs ~10% smaller than the system sans at
+         the same nominal px) — they'd want trimming if the head face
+         were ever swapped back to sans. */
+      --head-size:   clamp(24px, 3.0vw, 30px);
+      --sub-size:    clamp(13px, 1.55vw, 16px);
+      --stanza-gap:  clamp(28px, 4.6vh, 48px);
+      --line-height: 1.55;
+      --columns:     1;
+      --col-gap:     clamp(40px, 6vw, 72px);
+      --measure:     58ch;
     }
     #info-overlay.open {
       opacity: 1;
       pointer-events: auto;
     }
 
-    /* If a card has an odd number of actions, the last cell spans both
-       columns so the layout never looks lopsided. */
-    .info-cell:last-child:nth-child(odd) {
-      grid-column: 1 / -1;
+    /* Density tiers. Picked at open time from total content volume.
+       sparse: short cards — type breathes large, lots of air.
+       normal: the common case.
+       dense:  packed cards — type tightens, columns may split on wide.
+       overflow: extreme cards — smallest type, two columns earlier. */
+    #info-overlay.density-sparse {
+      --head-size:   clamp(28px, 3.8vw, 40px);
+      --sub-size:    clamp(15px, 1.8vw, 19px);
+      --stanza-gap:  clamp(40px, 7vh, 72px);
+      --line-height: 1.65;
+      --measure:     50ch;
+    }
+    #info-overlay.density-dense {
+      --head-size:   clamp(21px, 2.5vw, 26px);
+      --sub-size:    clamp(12.5px, 1.4vw, 14.5px);
+      --stanza-gap:  clamp(20px, 3.4vh, 32px);
+      --line-height: 1.5;
+      --measure:     46ch;
+    }
+    #info-overlay.density-overflow {
+      --head-size:   clamp(19px, 2.2vw, 23px);
+      --sub-size:    clamp(11.5px, 1.25vw, 13.5px);
+      --stanza-gap:  clamp(14px, 2.4vh, 22px);
+      --line-height: 1.45;
+      --measure:     42ch;
     }
 
-    .info-cell {
+    /* Wide-viewport multi-column for the denser tiers. The stanzas flow
+       across columns naturally; break-inside keeps each stanza intact.
+       On narrow viewports (or sparse content) it stays single-column. */
+    @media (min-width: 760px) {
+      #info-overlay.density-dense    { --columns: 2; }
+      #info-overlay.density-overflow { --columns: 2; }
+    }
+    @media (min-width: 1180px) {
+      #info-overlay.density-overflow { --columns: 3; }
+    }
+
+    .info-stage {
+      max-width: var(--measure);
+      margin: 0 auto;
+      min-height: 100%;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      padding: clamp(14px, 2.6vw, 22px);
-      background: rgba(255, 255, 255, 0.045);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 8px;
-      overflow: hidden;
-      opacity: 0;
-      transform: translateY(10px);
-      transition:
-        opacity 360ms cubic-bezier(0.2, 0, 0, 1),
-        transform 360ms cubic-bezier(0.2, 0, 0, 1);
+      justify-content: center;
+      column-count: var(--columns);
+      column-gap: var(--col-gap);
+      column-fill: balance;
+      /* When in multi-column mode, the flex centering above is ignored
+         (the container is laid out by the column algorithm) — that's
+         what we want: top-aligned packed columns when dense, vertically
+         centered single column when sparse. */
     }
-    #info-overlay.open .info-cell { opacity: 1; transform: none; }
-    #info-overlay.open .info-cell:nth-child(1) { transition-delay:  80ms; }
-    #info-overlay.open .info-cell:nth-child(2) { transition-delay: 140ms; }
-    #info-overlay.open .info-cell:nth-child(3) { transition-delay: 200ms; }
-    #info-overlay.open .info-cell:nth-child(4) { transition-delay: 260ms; }
-    #info-overlay.open .info-cell:nth-child(5) { transition-delay: 320ms; }
+    /* In multi-column mode, widen the stage so the columns have room. */
+    #info-overlay.density-dense    .info-stage,
+    #info-overlay.density-overflow .info-stage {
+      max-width: min(96vw, 1280px);
+      display: block;
+    }
+
+    .info-stanza {
+      break-inside: avoid;
+      -webkit-column-break-inside: avoid;
+      page-break-inside: avoid;
+      margin: 0 0 var(--stanza-gap) 0;
+      opacity: 0;
+      transform: translateY(14px);
+      /* Long, deep ease-out — each stanza feels placed rather than popped.
+         Per-stanza transition-delay is set inline by the renderer so the
+         cadence stays consistent across density tiers. */
+      transition:
+        opacity 900ms cubic-bezier(0.16, 1, 0.3, 1),
+        transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .info-stanza:last-child { margin-bottom: 0; }
+    #info-overlay.open .info-stanza { opacity: 1; transform: none; }
 
     .info-head {
-      font-size: clamp(15px, 2.4vw, 19px);
-      letter-spacing: 0.005em;
-      line-height: 1.25;
+      font-family: "Cormorant Garamond", "EB Garamond", Garamond, Georgia, "Times New Roman", serif;
+      font-size: var(--head-size);
+      font-style: italic;
+      font-weight: 400;
+      letter-spacing: 0.002em;
+      line-height: 1.18;
+      color: #f4f3ee;
+      margin: 0 0 0.45em 0;
+      text-wrap: balance;
+      /* Cormorant ships with proper old-style figures, contextual ligatures
+         and a discretionary swash on certain letters in italic — enabling
+         them gives the heads a hand-set feel without the dramatic flourish
+         of a true display script. */
+      font-feature-settings: "liga" 1, "calt" 1, "dlig" 1, "onum" 1;
+      font-variant-ligatures: common-ligatures discretionary-ligatures;
     }
-    .info-head .lead { color: #b9b9b9; font-weight: 400; }
-    .info-head .key  { color: #ffffff; font-weight: 700; }
+    /* The key (the semantic anchor of each stanza) gets a hair of weight
+       so the eye lands on the verb-phrase first; lead and key still share
+       a tone and style. */
+    .info-head .key { font-weight: 500; }
 
-    .info-subs {
-      list-style: none;
+    .info-flow {
+      font-size: var(--sub-size);
+      font-weight: 300;
+      line-height: var(--line-height);
+      color: rgba(236, 236, 236, 0.62);
       margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: clamp(12px, 1.8vw, 14px);
-      line-height: 1.45;
-      color: #bcbcbc;
+      text-wrap: pretty;
     }
-    .info-subs li::before {
-      content: "·";
-      color: rgba(255,255,255,0.4);
-      margin-right: 0.55em;
+    /* Flow mode (short subs): one continuous thought separated by mid-dots. */
+    .info-flow.flow .dot {
+      display: inline-block;
+      margin: 0 0.5em;
+      color: rgba(236, 236, 236, 0.26);
+      transform: translateY(-0.08em);
+    }
+    /* List mode (long subs / compound sentences): each sub on its own line,
+       no marker, slight hanging indent so wraps align with their first
+       character. Still no chrome — just typographic structure. */
+    .info-flow.list {
+      display: block;
+    }
+    .info-flow.list .sub {
+      display: block;
+      padding-left: 1.1em;
+      text-indent: -1.1em;
+      margin: 0 0 0.22em 0;
+    }
+    .info-flow.list .sub:last-child { margin-bottom: 0; }
+    .info-flow.list .sub::before {
+      /* A near-invisible spacer so the hanging indent has something to hang
+         against — keeps line-starts perfectly aligned for both wrapped
+         and short subs. */
+      content: "";
+      display: inline-block;
+      width: 1.1em;
+    }
+    /* The em-dash inside compound subs (upright — reversed) gets dimmed so
+       the two halves read as related, not as a list of two. */
+    .info-flow .pair-sep {
+      color: rgba(236, 236, 236, 0.36);
+      margin: 0 0.15em;
+    }
+    .info-flow .sub {
+      /* Individual subs fade in within the stanza for a dynamic settling
+         pass. Default state is "in" so non-JS / no-animation works. */
+      opacity: 1;
+    }
+    #info-overlay.animating .info-flow .sub {
+      opacity: 0;
+      transform: translateY(4px);
+      /* Subs cascade in 55ms apart after their headline, with the deep
+         ease-out so each one settles softly. The inline transition-delay
+         set by the renderer is what carries the cascade. */
+      transition:
+        opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+        transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #info-overlay.animating.open .info-flow .sub {
+      opacity: 1;
+      transform: none;
     }
 
-    /* Pending skeleton — shown if the data for the current card isn't
-       in memory yet (with bundled data this realistically never fires,
-       but the path exists so it degrades gracefully). */
-    .info-cell.pending .info-head,
-    .info-cell.pending .info-subs li {
+    /* Pending skeleton — shown if data for the current card isn't in
+       memory (cardActions.js failed to load). Three quiet shimmer lines. */
+    .info-stanza.pending .info-head,
+    .info-stanza.pending .info-flow {
       color: transparent;
       background:
         linear-gradient(90deg,
-          rgba(255,255,255,0.06) 0%,
-          rgba(255,255,255,0.14) 50%,
-          rgba(255,255,255,0.06) 100%);
+          rgba(255,255,255,0.04) 0%,
+          rgba(255,255,255,0.12) 50%,
+          rgba(255,255,255,0.04) 100%);
       background-size: 200% 100%;
       animation: skeletonShimmer 1.4s linear infinite;
-      border-radius: 3px;
+      border-radius: 2px;
+      min-height: 1em;
     }
+    .info-stanza.pending .info-flow { min-height: 2.6em; margin-top: 0.4em; }
     @keyframes skeletonShimmer {
       0%   { background-position: 200% 0; }
       100% { background-position: -200% 0; }
@@ -228,20 +377,28 @@
 
     @media (prefers-reduced-motion: reduce) {
       #info-overlay,
-      .info-cell { transition: opacity 120ms linear !important; transform: none !important; }
-      #info-overlay.open .info-cell { transition-delay: 0ms !important; }
-      .info-cell.pending .info-head,
-      .info-cell.pending .info-subs li { animation: none; }
+      .info-stanza,
+      .info-flow .sub {
+        transition: opacity 140ms linear !important;
+        transform: none !important;
+        transition-delay: 0ms !important;
+      }
+      .info-stanza.pending .info-head,
+      .info-stanza.pending .info-flow { animation: none; }
     }
 
-    /* Portrait phones: stack to a single column so each cell has room. */
+    /* Portrait phones: always single column, tighter padding, slightly
+       smaller measure. The density tier still drives the type sizes. */
     @media (max-width: 520px) and (orientation: portrait) {
       #info-overlay {
-        grid-template-columns: 1fr;
-        gap: 10px;
-        padding: 14px;
+        padding: clamp(20px, 5vh, 36px) 18px;
+        --columns: 1 !important;
+        --measure: 100%;
       }
-      .info-subs { font-size: 12.5px; }
+      #info-overlay.density-dense    .info-stage,
+      #info-overlay.density-overflow .info-stage {
+        max-width: 100%;
+      }
     }
   </style>
 </head>
