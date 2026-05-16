@@ -65,21 +65,23 @@
       will-change: filter;
     }
 
-    /* Commit / auto-reshuffle flare: the card punches forward toward the
-       glass with a bright flash, then rebounds and settles. The whole
-       effect lives inside the card's own pixels — scale + brightness +
-       a touch of saturation — so it reads as a kinetic impact whether
-       the card fills the viewport edge-to-edge or sits with space
-       around it. No outward halo to get clipped. */
+    /* Commit / auto-reshuffle flare: the card compresses briefly (windup)
+       then surges outward with a bright flash, then settles. The
+       compress-then-grow gives the eye a baseline to perceive growth from
+       — without the windup, a 2.8% peak on a phone is too brief and too
+       small a motion (≈11px over 4 frames) and gets overshadowed by the
+       simultaneous brightness flash. With the windup the visible range
+       widens to ~8% and the surge takes ~200ms instead of ~65ms, so the
+       grow reads clearly on a phone screen as well as a desktop. */
     @keyframes deckSettle {
       0%   { filter: brightness(1.0)  saturate(1.0);  transform: scale(1.0); }
-      9%   { filter: brightness(1.65) saturate(1.15); transform: scale(1.028); }
-      22%  { filter: brightness(1.3)  saturate(1.05); transform: scale(0.992); }
-      42%  { filter: brightness(1.08) saturate(1.0);  transform: scale(1.004); }
+      11%  { filter: brightness(1.35) saturate(1.08); transform: scale(0.965); }  /* windup: compress */
+      33%  { filter: brightness(1.6)  saturate(1.18); transform: scale(1.045); }  /* surge: grow + flash */
+      58%  { filter: brightness(1.18) saturate(1.02); transform: scale(0.997); }
       100% { filter: brightness(1.0)  saturate(1.0);  transform: scale(1.0); }
     }
     img.settling {
-      animation: deckSettle 720ms cubic-bezier(0.2, 0, 0, 1);
+      animation: deckSettle 880ms cubic-bezier(0.2, 0, 0, 1);
       will-change: filter, transform;
     }
 
