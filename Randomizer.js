@@ -21,6 +21,11 @@ function freshDeck() {
 }
 let deck = freshDeck();
 
+// Filename key (e.g. "maj19") of the currently revealed card, used to
+// look up actions in CARD_ACTIONS. Set whenever drawCard completes so
+// the info overlay can read it instantly on long-press.
+let currentCardName = null;
+
 // Timestamp (performance.now ms) until which click events should be
 // ignored. Set by the long-press handlers after a pulse/commit fires so
 // the trailing click from finger-release does NOT also draw a card.
@@ -284,12 +289,21 @@ async function drawCard(imgEl, event, allCards) {
   // Swap the source while still dimmed (any flash is masked by low opacity),
   // then on the next frame release the dim — the card fades up into focus.
   imgEl.src = chosenUrl;
+  // Stash the filename key so the info overlay can look it up on long-press.
+  currentCardName = cardNameFromUrl(chosenUrl);
   requestAnimationFrame(() => {
     imgEl.classList.remove("dimmed");
     haptic(10); // a contemplative beat — the card has arrived
     showingBack = false;
     setTimeout(() => { drawing = false; }, 260);
   });
+}
+
+// Extract the filename key (e.g. "maj19", "swords10") from a card URL,
+// matching the keys in CARD_ACTIONS.
+function cardNameFromUrl(url) {
+  const m = url.match(/\/([a-z]+\d+)\.jpg$/i);
+  return m ? m[1].toLowerCase() : null;
 }
 
 // "Set down": face-up card drifts down + fades out, then is replaced by
@@ -312,6 +326,7 @@ async function setDownToBack(imgEl) {
     imgEl.classList.remove("resetting");
     haptic(4); // a quieter beat — the card is placed
     showingBack = true;
+    currentCardName = null;
     setTimeout(() => { drawing = false; }, 300);
   });
 }
@@ -362,14 +377,21 @@ function pressStart() {
   // Idempotent: if any timer/flag is already active for this gesture,
   // a duplicate start event (e.g. pointerdown after touchstart) is a no-op.
   if (pulseTimer || commitTimer || pulseStarted || pressCommitted) return;
-  if (!showingBack || drawing) return;
+  // The long-press is active on EITHER side of the card — back triggers a
+  // reshuffle, front opens the info overlay. Ignore while a draw/reset is
+  // in flight, or while the overlay is already open.
+  if (drawing || infoOverlayOpen) return;
+
+  // Record which face was up when the press began. The commit acts on
+  // that, even if state somehow changes by the time the timer fires.
+  const onBackAtStart = showingBack;
 
   const imgEl = document.querySelector("img");
   if (!imgEl) return;
 
   pulseTimer = setTimeout(() => {
     pulseTimer = null;
-    if (!showingBack || drawing) return;
+    if (drawing || infoOverlayOpen) return;
     pulseStarted = true;
     imgEl.classList.add("charging");
     // Force a style/layout flush so the animation definitely starts on
@@ -380,24 +402,31 @@ function pressStart() {
 
     commitTimer = setTimeout(() => {
       commitTimer = null;
-      if (!showingBack || drawing) return;
+      if (drawing || infoOverlayOpen) return;
       pressCommitted = true;
       imgEl.classList.remove("charging");
       haptic(12);
 
-      // Suppress the click that may follow finger-release so the
-      // reshuffle isn't chased by an unwanted draw.
+      // Suppress the click that may follow finger-release so the gesture
+      // isn't chased by an unwanted draw / set-down.
       suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
 
-      // Commit: play the flare, then reset the deck. Use the same
-      // `drawing` flag so nothing else fires during the animation.
-      drawing = true;
-      playSettle(imgEl).then(() => {
-        deck = freshDeck();
-        drawing = false;
+      if (onBackAtStart) {
+        // Back commit: reshuffle. Play the flare, then reset the deck.
+        drawing = true;
+        playSettle(imgEl).then(() => {
+          deck = freshDeck();
+          drawing = false;
+          pulseStarted = false;
+          pressCommitted = false;
+        });
+      } else {
+        // Front commit: open the info overlay over the dimmed card.
+        openInfoOverlay(imgEl);
+        // Reset state — the overlay's own dismissal handles the rest.
         pulseStarted = false;
         pressCommitted = false;
-      });
+      }
     }, PRESS_COMMIT_MS - PRESS_PULSE_MS);
   }, PRESS_PULSE_MS);
 }
@@ -453,4 +482,98 @@ if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", wireLongPress);
 } else {
   wireLongPress();
+}
+
+// --- Info overlay -----------------------------------------------------
+// Long-press on a face-up card reveals a small grid of the card's
+// "actions" (scraped from learntarot.com, bundled in cardActions.js).
+// The data is in memory at page load, so on long-press the overlay
+// opens instantly. A skeleton-shimmer fallback exists if data somehow
+// isn't present (e.g. cardActions.js failed to load) — graceful degrade.
+
+let infoOverlayOpen = false;
+
+function openInfoOverlay(imgEl) {
+  const overlay = document.getElementById("info-overlay");
+  if (!overlay) return;
+
+  infoOverlayOpen = true;
+
+  // Mute the card behind the overlay so it recedes without disappearing.
+  imgEl.classList.add("muted");
+
+  // Look up the card's actions. With cardActions.js loaded this is always
+  // an array; if missing we render a placeholder skeleton.
+  const actions = (typeof CARD_ACTIONS !== "undefined" && currentCardName)
+    ? CARD_ACTIONS[currentCardName]
+    : null;
+
+  renderInfoOverlay(overlay, actions);
+
+  // Force the cell DOM to commit, then add .open on the next frame so the
+  // staggered transitions actually animate (not just snap to final state).
+  void overlay.offsetHeight;
+  requestAnimationFrame(() => overlay.classList.add("open"));
+}
+
+function renderInfoOverlay(overlay, actions) {
+  // Clear and rebuild. Building from scratch each open keeps the
+  // staggered-fade animation predictable (no leftover transition states).
+  overlay.innerHTML = "";
+
+  if (!actions || actions.length === 0) {
+    // Fallback skeleton — 4 placeholder cells shimmering.
+    for (let i = 0; i < 4; i++) {
+      const cell = document.createElement("div");
+      cell.className = "info-cell pending";
+      cell.innerHTML =
+        '<div class="info-head">&nbsp;</div>' +
+        '<ul class="info-subs">' +
+        '<li>&nbsp;</li><li>&nbsp;</li><li>&nbsp;</li><li>&nbsp;</li>'+
+        '</ul>';
+      overlay.appendChild(cell);
+    }
+    return;
+  }
+
+  for (const action of actions) {
+    const cell = document.createElement("div");
+    cell.className = "info-cell";
+
+    const head = document.createElement("div");
+    head.className = "info-head";
+    const lead = document.createElement("span");
+    lead.className = "lead";
+    lead.textContent = action.lead ? action.lead + " " : "";
+    const key = document.createElement("span");
+    key.className = "key";
+    key.textContent = action.key;
+    head.appendChild(lead);
+    head.appendChild(key);
+
+    const list = document.createElement("ul");
+    list.className = "info-subs";
+    for (const sub of action.subs) {
+      const li = document.createElement("li");
+      li.textContent = sub;
+      list.appendChild(li);
+    }
+
+    cell.appendChild(head);
+    cell.appendChild(list);
+    overlay.appendChild(cell);
+  }
+}
+
+function closeInfoOverlay() {
+  if (!infoOverlayOpen) return;
+  const overlay = document.getElementById("info-overlay");
+  const imgEl = document.querySelector("img");
+  if (overlay) overlay.classList.remove("open");
+  if (imgEl) imgEl.classList.remove("muted");
+  // Hold the suppress-clicks window briefly so the dismissing tap doesn't
+  // also flip the card to back.
+  suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
+  // Defer flag reset slightly so a new press doesn't start mid-fade.
+  setTimeout(() => { infoOverlayOpen = false; }, 320);
 }

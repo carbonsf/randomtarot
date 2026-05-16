@@ -115,17 +115,152 @@
         filter: brightness(1.0);
       }
     }
+
+    /* ---------------------------------------------------------------
+       Card-info overlay (long-press on a face-up card).
+
+       Choreography:
+       1. At commit, the card behind the overlay fades to a deep dim +
+          slight blur — it stays present but recedes (img.muted).
+       2. The overlay container fades in over a translucent black scrim.
+       3. Each grid cell rises into place from a few pixels below with a
+          staggered delay — feels like text settling into the void.
+       --------------------------------------------------------------- */
+    img.muted {
+      filter: brightness(0.22) blur(2px) saturate(0.7);
+      transition: filter 360ms cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    #info-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-auto-rows: 1fr;
+      gap: 14px;
+      padding: clamp(18px, 4vw, 36px);
+      box-sizing: border-box;
+      background: rgba(0, 0, 0, 0.55);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 320ms cubic-bezier(0.2, 0, 0, 1);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+      color: #ececec;
+    }
+    #info-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* If a card has an odd number of actions, the last cell spans both
+       columns so the layout never looks lopsided. */
+    .info-cell:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+
+    .info-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: clamp(14px, 2.6vw, 22px);
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(10px);
+      transition:
+        opacity 360ms cubic-bezier(0.2, 0, 0, 1),
+        transform 360ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    #info-overlay.open .info-cell { opacity: 1; transform: none; }
+    #info-overlay.open .info-cell:nth-child(1) { transition-delay:  80ms; }
+    #info-overlay.open .info-cell:nth-child(2) { transition-delay: 140ms; }
+    #info-overlay.open .info-cell:nth-child(3) { transition-delay: 200ms; }
+    #info-overlay.open .info-cell:nth-child(4) { transition-delay: 260ms; }
+    #info-overlay.open .info-cell:nth-child(5) { transition-delay: 320ms; }
+
+    .info-head {
+      font-size: clamp(15px, 2.4vw, 19px);
+      letter-spacing: 0.005em;
+      line-height: 1.25;
+    }
+    .info-head .lead { color: #b9b9b9; font-weight: 400; }
+    .info-head .key  { color: #ffffff; font-weight: 700; }
+
+    .info-subs {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: clamp(12px, 1.8vw, 14px);
+      line-height: 1.45;
+      color: #bcbcbc;
+    }
+    .info-subs li::before {
+      content: "·";
+      color: rgba(255,255,255,0.4);
+      margin-right: 0.55em;
+    }
+
+    /* Pending skeleton — shown if the data for the current card isn't
+       in memory yet (with bundled data this realistically never fires,
+       but the path exists so it degrades gracefully). */
+    .info-cell.pending .info-head,
+    .info-cell.pending .info-subs li {
+      color: transparent;
+      background:
+        linear-gradient(90deg,
+          rgba(255,255,255,0.06) 0%,
+          rgba(255,255,255,0.14) 50%,
+          rgba(255,255,255,0.06) 100%);
+      background-size: 200% 100%;
+      animation: skeletonShimmer 1.4s linear infinite;
+      border-radius: 3px;
+    }
+    @keyframes skeletonShimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #info-overlay,
+      .info-cell { transition: opacity 120ms linear !important; transform: none !important; }
+      #info-overlay.open .info-cell { transition-delay: 0ms !important; }
+      .info-cell.pending .info-head,
+      .info-cell.pending .info-subs li { animation: none; }
+    }
+
+    /* Portrait phones: stack to a single column so each cell has room. */
+    @media (max-width: 520px) and (orientation: portrait) {
+      #info-overlay {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 14px;
+      }
+      .info-subs { font-size: 12.5px; }
+    }
   </style>
 </head>
 <body>
   <!-- Local image to start (RoseLilyRed.jpg must be in the same folder) -->
-  <img 
-    src="RoseLilyRed.jpg" 
-    onclick="newPage(event)" 
+  <img
+    src="RoseLilyRed.jpg"
+    onclick="newPage(event)"
     alt="Tarot Card"
   />
 
-  <!-- Load the JavaScript AFTER the HTML so it can attach to the img -->
+  <!-- Card-info overlay (long-press on a face-up card reveals this).
+       Contents are populated by Randomizer.js on open. Tapping anywhere
+       on the overlay dismisses it. -->
+  <div id="info-overlay" onclick="closeInfoOverlay()"></div>
+
+  <!-- Bundled action data (78 cards, ~91 KB). Loaded before Randomizer.js
+       so CARD_ACTIONS is available the moment the page is interactive. -->
+  <script src="cardActions.js"></script>
   <script src="Randomizer.js"></script>
 </body>
 </html>
