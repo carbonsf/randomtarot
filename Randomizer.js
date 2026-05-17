@@ -11,6 +11,26 @@ let showingBack = true;
 
 const BACK_SRC = "RoseLilyRed.jpg";
 
+// --- Reversal config --------------------------------------------------
+// Percentage chance that any given draw resolves to a reversed card.
+// TESTING: 100 = every card reverses, so the glitch sequence is exercised
+// on every draw. Back this off to e.g. 5 (a sober 1-in-20) or 10 (one in
+// ten) for real use. Float, accepts e.g. 0.1 for 1-in-1000.
+//
+// The reversal roll is INDEPENDENT of the deck pick — it uses its own
+// fresh entropy call after the card has been chosen, so changing this
+// value cannot perturb which card is drawn. Setting it to 0 disables the
+// glitch path entirely (skipped before any roll happens).
+const REVERSAL_PERCENT = 100;
+
+// Time between the card landing face-up and the glitch starting. A beat
+// of "...wait, something's wrong" before the visual breakdown.
+const REVERSAL_DELAY_MS = 500;
+
+// Total glitch duration and per-frame cadence. 20 frames at 100ms each.
+const GLITCH_DURATION_MS = 2000;
+const GLITCH_FRAME_MS = 100;
+
 // --- Deck state: draw-without-replacement -----------------------------
 // `deck` is the set of card indices not yet drawn this shuffle. When it
 // empties we reshuffle (auto-visualized as a settle), or the querent can
@@ -278,6 +298,11 @@ async function drawCard(imgEl, event, allCards) {
   const pickAt = await pickRandomIndex(deck.length, event);
   const cardIdx = deck.splice(pickAt, 1)[0];
   const chosenUrl = allCards[cardIdx];
+
+  // INDEPENDENT reversal roll — fresh entropy fetch, own hashing stream,
+  // can't perturb the deck pick (which already happened). See rollReversal.
+  const reversal = await rollReversal(event);
+
   await preloadImage(chosenUrl);
 
   // Honor a minimum hold so the transition has rhythm even on cache hits.
@@ -295,7 +320,18 @@ async function drawCard(imgEl, event, allCards) {
     imgEl.classList.remove("dimmed");
     haptic(10); // a contemplative beat — the card has arrived
     showingBack = false;
-    setTimeout(() => { drawing = false; }, 260);
+
+    if (!reversal) {
+      // Normal upright draw — release the input gate after the reveal.
+      setTimeout(() => { drawing = false; }, 260);
+    } else {
+      // Reversal: hold the input gate through the 500ms beat and the
+      // full glitch sequence so taps during the breakdown are ignored.
+      setTimeout(async () => {
+        await playGlitchSequence(imgEl);
+        drawing = false;
+      }, REVERSAL_DELAY_MS);
+    }
   });
 }
 
@@ -319,6 +355,9 @@ async function setDownToBack(imgEl) {
 
   // Now invisible — swap to the back without a visible flash.
   imgEl.src = BACK_SRC;
+  // The back is always upright; clear any reversal carryover from the
+  // face-up state at the same time so the back fades in unrotated.
+  imgEl.classList.remove("reversed");
 
   // Next frame: drop the .resetting class, letting the back fade back in
   // from opacity 0 / translateY(6px) → 1 / 0 via the same transition.
@@ -698,4 +737,194 @@ function closeInfoOverlay() {
   suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
   // Defer flag reset slightly so a new press doesn't start mid-fade.
   setTimeout(() => { infoOverlayOpen = false; }, 320);
+}
+
+// --- Reversal: independent roll + glitch sequence ---------------------
+//
+// Design constraints:
+// 1. Cannot perturb the deck draw in any way. The deck pick happens
+//    first; THIS function runs after the card is already chosen.
+// 2. Uses the same entropy pipeline (NIST beacon + gesture + SHA-256)
+//    but with a fresh cosmic-bytes fetch — different bytes go into the
+//    hash, so the streams are independent.
+// 3. Works at any threshold from 0% through 100% without bias.
+//
+// Implementation: pickRandomIndex(10000) is an unbiased uniform integer
+// in [0, 10000). We compare against REVERSAL_PERCENT * 100, which gives
+// us 0.01% granularity — enough for any threshold we'd realistically
+// configure. The "100%" and "0%" cases short-circuit so we don't burn a
+// beacon fetch when the answer is deterministic.
+async function rollReversal(event) {
+  if (REVERSAL_PERCENT <= 0)   return false;
+  if (REVERSAL_PERCENT >= 100) return true;
+  const roll = await pickRandomIndex(10000, event);
+  return roll < Math.round(REVERSAL_PERCENT * 100);
+}
+
+// --- Glitch sequence --------------------------------------------------
+// 20 frames × 100ms = 2000ms of frenetic visual breakdown. Each frame
+// picks one of 5 effects at random and applies it with randomized
+// parameters. The host <img> is mutated directly for single-layer
+// effects (chroma, rotflip, shutter) and additional overlay clones are
+// spawned per-frame for layered effects (hbars, rgbsplit). Overlays
+// from the previous frame are discarded at the start of each new frame.
+//
+// Final landing: clean state, then add .reversed class so the card
+// settles into a 180° rotation via the CSS transition.
+
+const GLITCH_EFFECTS = ["shutter", "hbars", "rgbsplit", "chroma", "rotflip"];
+
+function gRand(min, max) { return min + Math.random() * (max - min); }
+function gPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// Track overlay <img>s created this frame so we can clear them next frame.
+let glitchOverlays = [];
+function clearGlitchOverlays() {
+  for (const el of glitchOverlays) {
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  }
+  glitchOverlays = [];
+}
+function makeGlitchOverlay(src) {
+  const el = document.createElement("img");
+  el.className = "glitch-overlay";
+  el.src = src;
+  document.body.appendChild(el);
+  glitchOverlays.push(el);
+  return el;
+}
+
+// Reset all inline styles we touch on the host img between frames.
+function clearHostInline(imgEl) {
+  imgEl.style.filter = "";
+  imgEl.style.transform = "";
+  imgEl.style.clipPath = "";
+  imgEl.style.opacity = "";
+  imgEl.style.visibility = "";
+}
+
+function applyGlitchFrame(imgEl, src) {
+  clearGlitchOverlays();
+  clearHostInline(imgEl);
+
+  const effect = gPick(GLITCH_EFFECTS);
+
+  if (effect === "shutter") {
+    // 3 rapid blackouts inside this 100ms frame — visibility toggles so the
+    // image truly vanishes rather than just dimming. The asymmetric timing
+    // keeps it feeling broken, not metronomic.
+    imgEl.style.visibility = "hidden";
+    setTimeout(() => { imgEl.style.visibility = ""; },        14);
+    setTimeout(() => { imgEl.style.visibility = "hidden"; },  30);
+    setTimeout(() => { imgEl.style.visibility = ""; },        46);
+    setTimeout(() => { imgEl.style.visibility = "hidden"; },  62);
+    setTimeout(() => { imgEl.style.visibility = ""; },        80);
+    return;
+  }
+
+  if (effect === "hbars") {
+    // Jittered horizontal bars: 6–10 clip-path slices of the same image,
+    // each translated horizontally by a random amount and sometimes
+    // inverted or hue-shifted. The host img itself goes invisible so the
+    // overlays read as the "real" image breaking apart.
+    imgEl.style.opacity = "0";
+    const n = 6 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < n; i++) {
+      const layer = makeGlitchOverlay(src);
+      const top    = (i       * 100 / n).toFixed(2);
+      const bottom = ((n - i - 1) * 100 / n).toFixed(2);
+      const tx = (Math.random() - 0.5) * 80;     // ±40px lateral jitter
+      layer.style.clipPath  = `inset(${top}% 0 ${bottom}% 0)`;
+      layer.style.transform = `translateX(${tx.toFixed(1)}px)`;
+      const r = Math.random();
+      if (r < 0.4) layer.style.filter = "invert(1)";
+      else if (r < 0.65) layer.style.filter = `hue-rotate(${Math.floor(gRand(40, 320))}deg) saturate(2.2)`;
+      else if (r < 0.8)  layer.style.filter = "brightness(1.6) contrast(1.4)";
+    }
+    return;
+  }
+
+  if (effect === "rgbsplit") {
+    // Chromatic-aberration breakdown: red-saturated copy left, cyan-saturated
+    // copy right, dimmed base under. mix-blend-mode: screen lets the colored
+    // ghosts add up to near-full-color where they overlap, so the split
+    // reads as a real channel separation rather than two tinted overlays.
+    imgEl.style.opacity = "0";
+    const split = gRand(6, 22);
+    const yJit  = gRand(-6, 6);
+    const base = makeGlitchOverlay(src);
+    base.style.opacity = "0.55";
+    base.style.filter  = "brightness(0.8) contrast(1.1)";
+    const red = makeGlitchOverlay(src);
+    red.style.transform = `translate(${(-split).toFixed(1)}px, ${yJit.toFixed(1)}px)`;
+    red.style.filter    = "hue-rotate(0deg) saturate(3) brightness(1.1)";
+    red.style.mixBlendMode = "screen";
+    const cyan = makeGlitchOverlay(src);
+    cyan.style.transform = `translate(${split.toFixed(1)}px, ${(-yJit).toFixed(1)}px)`;
+    cyan.style.filter    = "hue-rotate(180deg) saturate(3) brightness(1.1)";
+    cyan.style.mixBlendMode = "screen";
+    return;
+  }
+
+  if (effect === "chroma") {
+    // Filter slam on the host img — extreme hue/sat/contrast plus a small
+    // translate/scale shudder. The whole card stays in one piece; the
+    // damage is "to the signal" rather than "to the geometry".
+    const hue = Math.floor(gRand(0, 360));
+    const sat = gRand(2, 4).toFixed(2);
+    const con = gRand(1.2, 2.2).toFixed(2);
+    const bri = gRand(0.9, 1.6).toFixed(2);
+    const tx  = gRand(-10, 10).toFixed(1);
+    const ty  = gRand(-7, 7).toFixed(1);
+    const sc  = gRand(0.97, 1.04).toFixed(3);
+    const inv = Math.random() < 0.3 ? " invert(1)" : "";
+    imgEl.style.filter    = `hue-rotate(${hue}deg) saturate(${sat}) contrast(${con}) brightness(${bri})${inv}`;
+    imgEl.style.transform = `translate(${tx}px, ${ty}px) scale(${sc})`;
+    return;
+  }
+
+  if (effect === "rotflip") {
+    // Geometry breakdown: pick a wild rotation, randomly flip on each
+    // axis, jitter the position. Half the frames also push extreme
+    // contrast through the filter so the flipped pose reads as a strobe.
+    const rot = gPick([0, 45, -45, 90, -90, 180, 270]);
+    const sx  = Math.random() < 0.45 ? -1 : 1;
+    const sy  = Math.random() < 0.3  ? -1 : 1;
+    const tx  = gRand(-14, 14).toFixed(1);
+    const ty  = gRand(-10, 10).toFixed(1);
+    imgEl.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${sx}, ${sy})`;
+    imgEl.style.filter    = Math.random() < 0.5
+      ? "invert(1) brightness(1.2) contrast(1.5)"
+      : "brightness(1.4) contrast(1.6) saturate(1.6)";
+    return;
+  }
+}
+
+async function playGlitchSequence(imgEl) {
+  const src = imgEl.src;
+  imgEl.classList.add("glitching"); // suppresses the smooth transition
+
+  const frames = Math.floor(GLITCH_DURATION_MS / GLITCH_FRAME_MS);
+  for (let i = 0; i < frames; i++) {
+    applyGlitchFrame(imgEl, src);
+    // Brief tactile flicker on the first frame and at the resolution —
+    // a tiny breaker-trips beat, distinct from the contemplative draw tick.
+    if (i === 0 || i === frames - 1) haptic(6);
+    await new Promise(r => setTimeout(r, GLITCH_FRAME_MS));
+  }
+
+  // Resolution: clear everything glitch-specific and let the card settle
+  // into the reversed orientation via the standard CSS transform transition.
+  clearGlitchOverlays();
+  clearHostInline(imgEl);
+  imgEl.classList.remove("glitching");
+  // Force a style flush so the next frame applies .reversed with the
+  // restored transform transition (otherwise it can snap on some browsers).
+  void imgEl.offsetHeight;
+  imgEl.classList.add("reversed");
+  // Hold the input gate through the settle transition itself (~320ms,
+  // matching the base transform transition above). drawCard releases
+  // `drawing` immediately after we return; that 320ms gate is implicit
+  // because we don't return until the await below resolves.
+  await new Promise(r => setTimeout(r, 340));
 }

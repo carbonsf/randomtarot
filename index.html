@@ -92,6 +92,39 @@
       transform: scale(0.985);
     }
 
+    /* ---------------------------------------------------------------
+       Reversal: after the glitch sequence resolves, the card lands
+       rotated 180°. Because .dimmed and .resetting also set transform,
+       we need combo rules so the rotation is preserved during those
+       states. (The base .reversed transform is also overridable by
+       inline style during the glitch frames themselves.)
+       --------------------------------------------------------------- */
+    img.reversed                 { transform: rotate(180deg); }
+    img.reversed.dimmed          { transform: rotate(180deg) scale(0.985); }
+    img.reversed.resetting       { transform: rotate(180deg) translateY(6px); }
+
+    /* Glitch overlay clones (rgbsplit / hbars). Match the host <img>
+       so object-fit letterboxing stays identical. The .glitch-overlay
+       img is sized like the original via the same width/height rules. */
+    .glitch-overlay {
+      display: block;
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      object-fit: contain;
+      pointer-events: none;
+      z-index: 50;
+      /* No transition — glitch frames are explicit per-frame jumps. */
+      will-change: transform, filter, clip-path, opacity;
+    }
+    /* While the glitch sequence is active, suppress the host img's
+       smooth transitions so per-frame jumps stay crisp. */
+    img.glitching {
+      transition: none !important;
+    }
+
     /* "Setting down": when a face-up card is tapped, the card drifts
        downward and fades out before being replaced by the back. Different
        axis (vertical, not depth), different easing (firmer ease-in-out),
