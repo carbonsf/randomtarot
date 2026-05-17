@@ -94,14 +94,18 @@
 
     /* ---------------------------------------------------------------
        Reversal: after the glitch sequence resolves, the card lands
-       rotated 180°. There are NO combo rules with .dimmed / .resetting
-       on purpose — when the user taps a reversed card to return to the
-       deck, setDownToBack snaps the card to upright (transition: none)
-       BEFORE adding .resetting, so the return-to-deck animation looks
-       identical to the upright case. Same logic at draw time: the deck
-       is always upright, so .dimmed never co-occurs with .reversed.
+       rotated 180°. When the user taps to return to the deck, the
+       card must stay rotated through the fade-out (otherwise it
+       visibly un-rotates while fading, which reads as broken). The
+       combo rule below preserves the rotation during .resetting while
+       still applying the standard translate-down + opacity-out. The
+       transform list is kept the same length on both rules so CSS
+       interpolation tweens translateY cleanly without touching rotate.
+       setDownToBack snaps the rotation away later, while the card is
+       at opacity 0 (invisible), so the back card fades in upright.
        --------------------------------------------------------------- */
-    img.reversed { transform: rotate(180deg); }
+    img.reversed            { transform: translateY(0)   rotate(180deg); }
+    img.reversed.resetting  { transform: translateY(6px) rotate(180deg); opacity: 0; }
 
     /* Glitch overlay clones (rgbsplit / hbars). Match the host <img>
        so object-fit letterboxing stays identical. The .glitch-overlay
@@ -438,6 +442,24 @@
   </style>
 </head>
 <body>
+  <!-- Hidden SVG filter for the PIXEL-CRUSH glitch effect: a soft blur
+       followed by 4-level posterization per channel chunks colors into
+       blocky regions, giving a chunky 8-bit feel without needing canvas
+       (which can't read learntarot.com's CORS-blocked source pixels).
+       The brightness bump at the end pops the result so it reads as a
+       transmission artifact rather than just a faded image. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <filter id="glitch-pixelcrush">
+      <feGaussianBlur stdDeviation="5"/>
+      <feComponentTransfer>
+        <feFuncR type="discrete" tableValues="0 0.3 0.6 0.85 1"/>
+        <feFuncG type="discrete" tableValues="0 0.3 0.6 0.85 1"/>
+        <feFuncB type="discrete" tableValues="0 0.3 0.6 0.85 1"/>
+      </feComponentTransfer>
+      <feColorMatrix values="1.3 0 0 0 0  0 1.3 0 0 0  0 0 1.3 0 0  0 0 0 1 0"/>
+    </filter>
+  </svg>
+
   <!-- Local image to start (RoseLilyRed.jpg must be in the same folder) -->
   <img
     src="RoseLilyRed.jpg"

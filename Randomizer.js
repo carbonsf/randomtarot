@@ -349,23 +349,23 @@ async function setDownToBack(imgEl) {
   // swap is instant and the fade-in is smooth.
   await preloadImage(BACK_SRC);
 
-  // If the card was reversed, snap it back to upright instantly (with
-  // transitions suppressed) BEFORE adding .resetting. This way the
-  // return-to-deck animation is the original translate-down + fade,
-  // unchanged from before reversals existed — no rotational tween.
-  // The snap is one frame, immediately at the tap; the user's eye is
-  // still moving from the tap point and doesn't register it.
-  if (imgEl.classList.contains("reversed")) {
-    imgEl.style.transition = "none";
-    imgEl.classList.remove("reversed");
-    void imgEl.offsetHeight; // commit the un-rotation instantly
-    imgEl.style.transition = ""; // restore base CSS transitions
-  }
-
+  // Add .resetting WITHOUT pre-clearing .reversed. The combo CSS rule
+  // (img.reversed.resetting) keeps the rotation pinned at 180° while
+  // tweening translateY and opacity — so a reversed card fades out
+  // staying upside-down, exactly like an upright card fades out staying
+  // upright. No visible orientation flicker before the fade.
   imgEl.classList.add("resetting");
   await new Promise((r) => setTimeout(r, 300));
 
-  // Now invisible — swap to the back without a visible flash.
+  // Card is now invisible (opacity 0). Snap the rotation off while
+  // invisible — borrow .glitching's transition:none so the un-rotation
+  // happens in one frame, not as an animated tween. Then swap src.
+  if (imgEl.classList.contains("reversed")) {
+    imgEl.classList.add("glitching");
+    imgEl.classList.remove("reversed");
+    void imgEl.offsetHeight;
+    imgEl.classList.remove("glitching");
+  }
   imgEl.src = BACK_SRC;
 
   // Next frame: drop the .resetting class, letting the back fade back in
@@ -805,36 +805,52 @@ async function rollReversal(event) {
 //
 // During the glitch the host img carries .glitching, which suppresses
 // the smooth transform/filter transitions so per-frame jumps stay crisp.
+// Schedule below totals ≈ 3545ms of scheduled steps + ~80ms post-hold,
+// roughly 2× the prior duration. The doubling lives almost entirely in
+// the lead-in: Phase 1 and Phase 2 are slowed and have additional
+// breaths between effects, so the breakdown feels prolonged before
+// committing to the rotation. Phase 3 and Phase 4 are unchanged in
+// pacing — the resolution should still feel snappy.
+//
+// Progress at key boundaries (for tuning):
+//   end of P1 → ~37%   (well below the reversal threshold, pure upright)
+//   reversal threshold (50%) → midway through P2
+//   end of P2 → ~83%   (reversal bias strong but still statistical)
+//   end of P3 → ~94%   (final stretch, near-guaranteed reversed)
+//   P4         → forced-reversed in any case
 const GLITCH_SCHEDULE = [
-  // Phase 1: sparse opening
-  { t: "effect", ms: 110 },
-  { t: "pause",  ms: 170 },
-  { t: "effect", ms: 130 },
-  // Phase 2: irregular middle (rotflip peak zone)
-  { t: "effect", ms:  80 },
-  { t: "effect", ms:  90 },
-  { t: "pause",  ms: 120 },
-  { t: "effect", ms: 100 },
-  { t: "effect", ms:  70 },
-  { t: "pause",  ms:  90 },
-  { t: "effect", ms:  90 },
-  { t: "effect", ms: 100 },
-  // Phase 3: frenetic burst
-  { t: "effect", ms:  55 },
-  { t: "effect", ms:  50 },
-  { t: "effect", ms:  65 },
+  // Phase 1: slow sparse opening — single hits with long breaths.
+  { t: "effect", ms: 240 },
+  { t: "pause",  ms: 380 },
+  { t: "effect", ms: 280 },
+  { t: "pause",  ms: 220 },
+  { t: "effect", ms: 200 },
+  // Phase 2: irregular middle — varied lengths with syncopated pauses.
+  // rotflip peaks in this zone, pulling geometry into the transition.
+  { t: "effect", ms: 180 },
+  { t: "effect", ms: 200 },
+  { t: "pause",  ms: 240 },
+  { t: "effect", ms: 220 },
+  { t: "effect", ms: 160 },
+  { t: "pause",  ms: 220 },
+  { t: "effect", ms: 200 },
+  { t: "effect", ms: 220 },
+  // Phase 3: frenetic burst — short snappy frames, no pauses.
+  { t: "effect", ms:  60 },
   { t: "effect", ms:  55 },
   { t: "effect", ms:  70 },
   { t: "effect", ms:  60 },
-  // Phase 4: locked-reversed final bursts (no smooth tween after these)
-  { t: "effect", ms:  80, forceReversed: true },
-  { t: "effect", ms: 100, forceReversed: true },
+  { t: "effect", ms:  75 },
+  { t: "effect", ms:  65 },
+  // Phase 4: locked-reversed final bursts — guaranteed reversed landing.
+  { t: "effect", ms:  90, forceReversed: true },
+  { t: "effect", ms: 110, forceReversed: true },
 ];
 
 function gRand(min, max) { return min + Math.random() * (max - min); }
 function gPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-// Track overlay <img>s created this frame so we can clear them next frame.
+// Track overlay elements created this frame so we can clear them next frame.
 let glitchOverlays = [];
 function clearGlitchOverlays() {
   for (const el of glitchOverlays) {
@@ -850,6 +866,72 @@ function makeGlitchOverlay(src) {
   glitchOverlays.push(el);
   return el;
 }
+// Some effects (DEAD-SIGNAL, STATIC-SNOW, STROBE, CRT-ROLL, VOID-RIFT,
+// VHS-TEAR seam) want a non-image full-viewport overlay element with a
+// CSS background or solid fill rather than an image source.
+function makeGlitchOverlayDiv() {
+  const el = document.createElement("div");
+  el.className = "glitch-overlay";
+  document.body.appendChild(el);
+  glitchOverlays.push(el);
+  return el;
+}
+
+// Some effects (shutter, shake-cam) schedule sub-frame timeouts inside a
+// single glitch frame — e.g. "blackout for 16ms, visible for 16ms" five
+// times within a 70ms frame. If those timeouts fire AFTER the next frame
+// starts, they'd clobber the next effect's inline state. Track them so
+// we can cancel any pending ones at frame boundaries.
+let glitchTimers = [];
+function clearGlitchTimers() {
+  for (const t of glitchTimers) clearTimeout(t);
+  glitchTimers = [];
+}
+function gTimeout(fn, ms) {
+  glitchTimers.push(setTimeout(fn, ms));
+}
+
+// STATIC-SNOW uses 4 pre-rendered noise tiles cycled at random per frame.
+// Generating them lazily on the first reversal keeps the page-load cost
+// at zero for users who never trigger a reversal. 128px tiles repeat
+// across the viewport — small enough to be cheap, large enough that the
+// pattern doesn't read as a regular grid. Drawing math, not an external
+// image, so there's no CORS issue (unlike trying to canvas the card jpg).
+let STATIC_NOISE_URLS = null;
+function ensureNoise() {
+  if (STATIC_NOISE_URLS) return;
+  STATIC_NOISE_URLS = [];
+  for (let n = 0; n < 4; n++) {
+    const c = document.createElement("canvas");
+    c.width = 128; c.height = 128;
+    const ctx = c.getContext("2d");
+    const img = ctx.createImageData(128, 128);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = (Math.random() * 256) | 0;
+      img.data[i] = v; img.data[i+1] = v; img.data[i+2] = v; img.data[i+3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    STATIC_NOISE_URLS.push(c.toDataURL());
+  }
+}
+
+// DEAD-SIGNAL uses the classic 8-bar SMPTE-ish color stripe as a base.
+// 8px wide × 1px tall, stretched to fill the viewport — pure vertical
+// bars without anti-aliasing, exactly the TV-test-pattern feel.
+let COLOR_BAR_URL = null;
+function ensureColorBars() {
+  if (COLOR_BAR_URL) return;
+  const c = document.createElement("canvas");
+  c.width = 8; c.height = 1;
+  const ctx = c.getContext("2d");
+  const bars = ["#c0c0c0", "#c0c000", "#00c0c0", "#00c000",
+                "#c000c0", "#c00000", "#0000c0", "#1a1a1a"];
+  for (let i = 0; i < bars.length; i++) {
+    ctx.fillStyle = bars[i];
+    ctx.fillRect(i, 0, 1, 1);
+  }
+  COLOR_BAR_URL = c.toDataURL();
+}
 
 // Reset all inline styles we touch on the host img between frames.
 function clearHostInline(imgEl) {
@@ -860,6 +942,31 @@ function clearHostInline(imgEl) {
   imgEl.style.visibility = "";
 }
 
+// The full pool of non-rotational glitch effects. rotflip is special-
+// cased (center-loaded around progress=0.5) so it's not in this pool.
+//
+// Catalog (15 total with rotflip):
+//   SHUTTER       - rapid blackout flicker
+//   HBARS         - jittered horizontal bands of clipped image
+//   RGBSPLIT      - red/cyan channel separation
+//   CHROMA        - extreme hue/sat/contrast filter slam
+//   ROTFLIP       - random rotation + per-axis flip (center-loaded)
+//   HYPERWARP     - card flung to extreme x/y offsets, partly offscreen
+//   PIXEL-CRUSH   - chunky 8-bit posterize via SVG filter
+//   STATIC-SNOW   - white-noise tile overlay
+//   DEAD-SIGNAL   - SMPTE color-bar test pattern + noise
+//   VHS-TEAR      - top/bottom halves offset, bright seam
+//   CRT-ROLL      - rolling bright horizontal scanband
+//   PHANTOM       - 3-4 layered ghost copies, mixed blend modes
+//   SHAKE-CAM     - rapid sub-frame translate jitter
+//   STROBE        - solid color difference flash
+//   VOID-RIFT     - diagonal black slash exposing void
+const SIDE_EFFECTS = [
+  "shutter", "hbars", "rgbsplit", "chroma",
+  "hyperwarp", "pixelcrush", "staticsnow", "deadsignal", "vhstear",
+  "crtroll", "phantom", "shakecam", "strobe", "voidrift"
+];
+
 // Pick an effect for this frame, with rotflip center-loaded around
 // progress=0.5 so the rotational chaos clusters in the middle of the
 // sequence (where the upright→reversed transition is most ambiguous).
@@ -868,14 +975,11 @@ function clearHostInline(imgEl) {
 // invariant — we want forced-reversed frames to clearly show the
 // reversed orientation.
 function pickGlitchEffect(progress, forceReversed) {
-  if (forceReversed) {
-    return gPick(["shutter", "hbars", "rgbsplit", "chroma"]);
-  }
-  // Hat function peaked at 0.5: ~0.12 at the edges, ~0.50 at the middle.
+  if (forceReversed) return gPick(SIDE_EFFECTS);
   const peak = 1 - Math.abs((progress - 0.5) * 2);
-  const rotProb = 0.12 + 0.38 * Math.max(0, peak);
+  const rotProb = 0.10 + 0.34 * Math.max(0, peak);
   if (Math.random() < rotProb) return "rotflip";
-  return gPick(["shutter", "hbars", "rgbsplit", "chroma"]);
+  return gPick(SIDE_EFFECTS);
 }
 
 // Render one glitch frame. `progress` is 0..1 through the schedule.
@@ -884,6 +988,7 @@ function pickGlitchEffect(progress, forceReversed) {
 // reversed transition unfolds, frame by frame, without a smooth tween.
 function applyGlitchFrame(imgEl, src, progress, useReversed) {
   clearGlitchOverlays();
+  clearGlitchTimers();   // cancel pending sub-frame timeouts from prior frame
   clearHostInline(imgEl);
 
   const effect = pickGlitchEffect(progress, useReversed);
@@ -895,11 +1000,11 @@ function applyGlitchFrame(imgEl, src, progress, useReversed) {
     // card briefly visible in upside-down form.
     if (useReversed) imgEl.style.transform = "rotate(180deg)";
     imgEl.style.visibility = "hidden";
-    setTimeout(() => { imgEl.style.visibility = ""; },        14);
-    setTimeout(() => { imgEl.style.visibility = "hidden"; },  30);
-    setTimeout(() => { imgEl.style.visibility = ""; },        46);
-    setTimeout(() => { imgEl.style.visibility = "hidden"; },  62);
-    setTimeout(() => { imgEl.style.visibility = ""; },        80);
+    gTimeout(() => { imgEl.style.visibility = ""; },        14);
+    gTimeout(() => { imgEl.style.visibility = "hidden"; },  30);
+    gTimeout(() => { imgEl.style.visibility = ""; },        46);
+    gTimeout(() => { imgEl.style.visibility = "hidden"; },  62);
+    gTimeout(() => { imgEl.style.visibility = ""; },        80);
     return;
   }
 
@@ -983,6 +1088,206 @@ function applyGlitchFrame(imgEl, src, progress, useReversed) {
       : "brightness(1.4) contrast(1.6) saturate(1.6)";
     return;
   }
+
+  if (effect === "hyperwarp") {
+    // HYPERWARP: the card is yanked across the viewport — up to ±50vw and
+    // ±45vh, so half the image is reliably offscreen. Adds a stark
+    // brightness/invert filter for added "signal-flung-across-the-void"
+    // energy. The remaining visible chunk reads as the card being
+    // physically thrown by the glitch rather than just distorted.
+    const tx = (Math.random() - 0.5) * window.innerWidth  * 1.0;
+    const ty = (Math.random() - 0.5) * window.innerHeight * 0.9;
+    const sc = gRand(0.5, 1.25).toFixed(3);
+    imgEl.style.transform = `translate(${tx.toFixed(0)}px, ${ty.toFixed(0)}px) scale(${sc})${rotSuffix}`;
+    imgEl.style.filter = Math.random() < 0.5
+      ? "brightness(1.5) contrast(1.6)"
+      : "invert(1) saturate(2.2) brightness(1.1)";
+    return;
+  }
+
+  if (effect === "pixelcrush") {
+    // PIXEL-CRUSH: SVG filter blurs slightly and quantizes each channel
+    // to 5 levels, producing chunky color blobs that read as severe
+    // 8-bit-era pixelation/banding. Note: SVG filters can't fully
+    // replicate true nearest-neighbor pixelation without canvas (which
+    // CORS blocks for the source jpgs) — this is the most "chunky retro"
+    // we can get with pure CSS+SVG.
+    imgEl.style.filter = "url(#glitch-pixelcrush)";
+    const sc = gRand(0.95, 1.05).toFixed(3);
+    imgEl.style.transform = `scale(${sc})${rotSuffix}`;
+    imgEl.style.imageRendering = "pixelated";
+    return;
+  }
+
+  if (effect === "staticsnow") {
+    // STATIC-SNOW: white noise overlay tiled across the viewport, blended
+    // SCREEN over a dimmed card so the original imagery is buried under
+    // analog snow. Four pre-rendered noise tiles cycle randomly per
+    // frame for animated grain. Pure static / off-air look.
+    ensureNoise();
+    imgEl.style.opacity = "0.35";
+    if (useReversed) imgEl.style.transform = "rotate(180deg)";
+    const noise = makeGlitchOverlayDiv();
+    const url = STATIC_NOISE_URLS[(Math.random() * STATIC_NOISE_URLS.length) | 0];
+    noise.style.backgroundImage = `url(${url})`;
+    noise.style.backgroundRepeat = "repeat";
+    const tile = 64 + ((Math.random() * 96) | 0);
+    noise.style.backgroundSize = `${tile}px ${tile}px`;
+    noise.style.mixBlendMode = "screen";
+    noise.style.opacity = "0.92";
+    return;
+  }
+
+  if (effect === "deadsignal") {
+    // DEAD-SIGNAL: SMPTE-ish vertical color bars covering the entire
+    // viewport, with a noise overlay above them for chunky retro
+    // transmission feel. The card itself is fully hidden — the
+    // "signal" has been lost and replaced by test-pattern static.
+    ensureColorBars();
+    ensureNoise();
+    imgEl.style.opacity = "0";
+    const bars = makeGlitchOverlayDiv();
+    bars.style.backgroundImage = `url(${COLOR_BAR_URL})`;
+    bars.style.backgroundSize = "100% 100%";
+    bars.style.backgroundRepeat = "no-repeat";
+    bars.style.imageRendering = "pixelated";
+    bars.style.filter = "saturate(1.6) brightness(1.1) contrast(1.1)";
+    const noise = makeGlitchOverlayDiv();
+    const url = STATIC_NOISE_URLS[(Math.random() * STATIC_NOISE_URLS.length) | 0];
+    noise.style.backgroundImage = `url(${url})`;
+    noise.style.backgroundRepeat = "repeat";
+    noise.style.backgroundSize = "96px 96px";
+    noise.style.mixBlendMode = "overlay";
+    noise.style.opacity = "0.55";
+    return;
+  }
+
+  if (effect === "vhstear") {
+    // VHS-TEAR: the card is split at its horizontal midline and the two
+    // halves are offset by different amounts. A bright white seam runs
+    // across the cut — the kind of artifact a damaged tape head produces
+    // on an analog VHS replay.
+    imgEl.style.opacity = "0";
+    const top = makeGlitchOverlay(src);
+    top.style.clipPath  = "inset(0 0 50% 0)";
+    top.style.transform = `translateX(${((Math.random() - 0.5) * 140).toFixed(1)}px)${rotSuffix}`;
+    const bot = makeGlitchOverlay(src);
+    bot.style.clipPath  = "inset(50% 0 0 0)";
+    bot.style.transform = `translateX(${((Math.random() - 0.5) * 140).toFixed(1)}px)${rotSuffix}`;
+    const seam = makeGlitchOverlayDiv();
+    seam.style.inset      = "auto 0 auto 0"; // overrides class' inset:0
+    seam.style.top        = "calc(50% - 3px)";
+    seam.style.height     = "6px";
+    seam.style.background = "rgba(255,255,255,0.85)";
+    seam.style.boxShadow  = "0 0 18px 4px rgba(255,255,255,0.6)";
+    return;
+  }
+
+  if (effect === "crtroll") {
+    // CRT-ROLL: a bright horizontal scanband sits at a random vertical
+    // position, mimicking a CRT that's lost its vertical hold and is
+    // rolling. The card is dimmed and slightly de-saturated beneath so
+    // the scanband reads as the dominant element. One band per frame —
+    // chunky, not subtle.
+    imgEl.style.opacity = "0.6";
+    if (useReversed) imgEl.style.transform = "rotate(180deg)";
+    imgEl.style.filter = "contrast(1.4) brightness(0.85) saturate(0.7)";
+    const band = makeGlitchOverlayDiv();
+    band.style.inset = "auto 0 auto 0";
+    band.style.top   = `${(Math.random() * 88).toFixed(1)}%`;
+    band.style.height = `${(6 + Math.random() * 10).toFixed(1)}%`;
+    band.style.background =
+      "linear-gradient(to bottom, rgba(255,255,255,0) 0%, " +
+      "rgba(255,255,255,0.7) 40%, rgba(255,255,255,0.85) 50%, " +
+      "rgba(255,255,255,0.7) 60%, rgba(255,255,255,0) 100%)";
+    band.style.mixBlendMode = "screen";
+    return;
+  }
+
+  if (effect === "phantom") {
+    // PHANTOM: 3-4 ghost copies of the card stacked with different
+    // offsets, slight rotations, and hue-shifts. Lighten/screen blend
+    // modes let them sum to a blown-out apparition of the card. The
+    // base img is dimmed underneath so it reads as the haunted source
+    // for the ghosts rather than a separate layer.
+    imgEl.style.opacity = "0.32";
+    if (useReversed) imgEl.style.transform = "rotate(180deg)";
+    const count = 3 + ((Math.random() * 2) | 0);
+    for (let i = 0; i < count; i++) {
+      const layer = makeGlitchOverlay(src);
+      const tx = (Math.random() - 0.5) * 70;
+      const ty = (Math.random() - 0.5) * 50;
+      const r  = (Math.random() - 0.5) * 16;
+      layer.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) rotate(${r.toFixed(1)}deg)${rotSuffix}`;
+      layer.style.opacity = (0.40 + Math.random() * 0.25).toFixed(2);
+      layer.style.mixBlendMode = (i % 2) ? "screen" : "lighten";
+      layer.style.filter = `hue-rotate(${((Math.random() * 360) | 0)}deg) saturate(1.6)`;
+    }
+    return;
+  }
+
+  if (effect === "shakecam") {
+    // SHAKE-CAM: rapid translate jitter within this single frame. 5
+    // re-jitters via gTimeout — short of vibration, but the eye
+    // registers it as a frame of physical violence. Filter adds the
+    // hard contrast pop that comes with a shaken-cam moment.
+    const baseRot = useReversed ? " rotate(180deg)" : "";
+    const jitter = () => {
+      const tx = (Math.random() - 0.5) * 24;
+      const ty = (Math.random() - 0.5) * 20;
+      imgEl.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px)${baseRot}`;
+    };
+    jitter();
+    gTimeout(jitter, 14);
+    gTimeout(jitter, 28);
+    gTimeout(jitter, 42);
+    gTimeout(jitter, 56);
+    imgEl.style.filter = "contrast(1.55) brightness(1.18) saturate(1.2)";
+    return;
+  }
+
+  if (effect === "strobe") {
+    // STROBE: a single solid-color rectangle covers the entire viewport
+    // in DIFFERENCE blend mode, inverting every pixel underneath toward
+    // its complement of the chosen color. Lands as a hard frame-flash in
+    // a startling color. Drawn from a pure primary/secondary palette so
+    // it reads as old-display-strobing rather than a tasteful tint.
+    const palette = ["#ff0033", "#33ff00", "#0033ff", "#ffffff",
+                     "#ffff00", "#ff00ff", "#00ffff"];
+    if (useReversed) imgEl.style.transform = "rotate(180deg)";
+    const flash = makeGlitchOverlayDiv();
+    flash.style.background = palette[(Math.random() * palette.length) | 0];
+    flash.style.mixBlendMode = "difference";
+    flash.style.opacity = "0.92";
+    return;
+  }
+
+  if (effect === "voidrift") {
+    // VOID-RIFT: a thick diagonal black band cuts across the card,
+    // exposing literal void (the page background) through a clip-path
+    // polygon. The card sits beneath, slightly contrast-boosted, so the
+    // rift reads as something punched through the image rather than
+    // drawn on top.
+    if (useReversed) imgEl.style.transform = "rotate(180deg)";
+    imgEl.style.filter = "contrast(1.2) brightness(0.95)";
+    const angle = (Math.random() < 0.5 ? -1 : 1) * gRand(30, 60);
+    const w     = gRand(14, 28); // band half-width as % of viewport
+    const rift  = makeGlitchOverlayDiv();
+    rift.style.background = "black";
+    rift.style.transform  = `rotate(${angle.toFixed(1)}deg)`;
+    rift.style.clipPath   = `polygon(0% ${(50 - w/2).toFixed(1)}%, 100% ${(50 - w/2).toFixed(1)}%, 100% ${(50 + w/2).toFixed(1)}%, 0% ${(50 + w/2).toFixed(1)}%)`;
+    // A thin bright fringe along the cut for chunky-retro pop.
+    const fringe = makeGlitchOverlayDiv();
+    fringe.style.transform = `rotate(${angle.toFixed(1)}deg)`;
+    fringe.style.background =
+      `linear-gradient(to bottom, transparent ${(50 - w/2 - 0.6).toFixed(2)}%, ` +
+      `rgba(255,255,255,0.85) ${(50 - w/2).toFixed(2)}%, ` +
+      `transparent ${(50 - w/2 + 0.6).toFixed(2)}%, ` +
+      `transparent ${(50 + w/2 - 0.6).toFixed(2)}%, ` +
+      `rgba(255,255,255,0.85) ${(50 + w/2).toFixed(2)}%, ` +
+      `transparent ${(50 + w/2 + 0.6).toFixed(2)}%)`;
+    return;
+  }
 }
 
 async function playGlitchSequence(imgEl) {
@@ -1003,11 +1308,14 @@ async function playGlitchSequence(imgEl) {
     const progress = totalMs > 0 ? elapsed / totalMs : 0;
 
     if (step.t === "effect") {
-      // useReversed probability grows with progress. Slight multiplier
-      // (×1.1) so the late frames are reliably reversed even without
-      // hitting the forceReversed flag.
-      const useReversed = step.forceReversed
-        || (Math.random() < Math.min(1, progress * 1.1));
+      // Reversal probability: exactly 0 before progress=0.5, then linear
+      // ramp to ~0.9 by progress=1.0. So the first half is pure upright
+      // glitch chaos, reversals appear statistically in the second half,
+      // and even the very last unforced frame is only ~90% likely to be
+      // reversed — the forceReversed flag on the final two scheduled
+      // entries is what guarantees the rotated landing.
+      const halfwayBias = Math.max(0, (progress - 0.5) * 1.8);
+      const useReversed = step.forceReversed || (Math.random() < halfwayBias);
       applyGlitchFrame(imgEl, src, progress, useReversed);
       lastReversed = useReversed;
     } else if (step.t === "pause") {
@@ -1027,8 +1335,11 @@ async function playGlitchSequence(imgEl) {
   // forceReversed frames have already established the reversed view —
   // we just clear residual filters/overlays/translates while keeping
   // the rotation. Because .glitching is still active, this is one
-  // instant snap rather than an animated state change.
+  // instant snap rather than an animated state change. Also cancel any
+  // pending sub-frame timeouts (shutter/shake-cam) so they can't fire
+  // after the sequence ends and clobber the .reversed state.
   clearGlitchOverlays();
+  clearGlitchTimers();
   clearHostInline(imgEl);
   imgEl.style.transform = "rotate(180deg)";
 
