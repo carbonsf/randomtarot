@@ -349,14 +349,24 @@ async function setDownToBack(imgEl) {
   // swap is instant and the fade-in is smooth.
   await preloadImage(BACK_SRC);
 
+  // If the card was reversed, snap it back to upright instantly (with
+  // transitions suppressed) BEFORE adding .resetting. This way the
+  // return-to-deck animation is the original translate-down + fade,
+  // unchanged from before reversals existed — no rotational tween.
+  // The snap is one frame, immediately at the tap; the user's eye is
+  // still moving from the tap point and doesn't register it.
+  if (imgEl.classList.contains("reversed")) {
+    imgEl.style.transition = "none";
+    imgEl.classList.remove("reversed");
+    void imgEl.offsetHeight; // commit the un-rotation instantly
+    imgEl.style.transition = ""; // restore base CSS transitions
+  }
+
   imgEl.classList.add("resetting");
   await new Promise((r) => setTimeout(r, 300));
 
   // Now invisible — swap to the back without a visible flash.
   imgEl.src = BACK_SRC;
-  // The back is always upright; clear any reversal carryover from the
-  // face-up state at the same time so the back fades in unrotated.
-  imgEl.classList.remove("reversed");
 
   // Next frame: drop the .resetting class, letting the back fade back in
   // from opacity 0 / translateY(6px) → 1 / 0 via the same transition.
@@ -762,37 +772,45 @@ async function rollReversal(event) {
 
 // --- Glitch sequence --------------------------------------------------
 // Roughly two seconds of visual breakdown, paced as bursts rather than
-// a steady stream. The schedule has four phases:
-//   1. Sparse opening — one effect, a breath, another effect. Establishes
-//      "something is wrong" without yet committing to chaos.
-//   2. Irregular middle — effects of varying lengths interleaved with
-//      shorter pauses, so the rhythm never settles into a beat.
-//   3. Frenetic burst — quick effects back-to-back, no pauses.
-//   4. Deliberate settle — overlays cleared, host image locked at 165°
-//      with no other distortion, so the brain has a moment of "wait,
-//      it's resolving" before the final 15° smooth tween to 180°. That
-//      last tween is the only intentional, eased motion in the whole
-//      sequence — distinct from the chaos because it IS deliberate.
+// a steady stream. The orientation transition (upright → reversed) is
+// integral to the glitch itself rather than a separate post-glitch tween:
 //
-// Each effect frame picks one of 5 effects at random and applies it
-// with randomized parameters. The host <img> is mutated directly for
-// single-layer effects (chroma, rotflip, shutter) and additional
-// overlay clones are spawned per-frame for layered effects (hbars,
-// rgbsplit). Overlays and inline styles are discarded between frames.
+// - Each non-rotation effect frame independently flips a coin (weighted
+//   by progress through the schedule) to decide whether to render the
+//   reversed orientation this frame. So the start is mostly upright, the
+//   middle is mixed, the end is mostly reversed — the orientation flicker
+//   IS the chaos.
+//
+// - The rotflip effect (90/180/270/45° geometry breakdown) is
+//   center-loaded: very rare at the start and end of the schedule, peaks
+//   in the middle. This makes the rotational pivot feel like the heart
+//   of the transition — the moment where geometry breaks down before
+//   resolving to the new orientation.
+//
+// - The last two frames are forced-reversed so the sequence reliably
+//   lands on a reversed view. The final cleanup snaps any remaining
+//   overlay/filter state away while keeping the rotation, hands off to
+//   the .reversed class, all with transitions suppressed. No smooth
+//   tween at the end — the orientation change has already happened
+//   inside the chaos.
+//
+// Schedule phases:
+//   1. Sparse opening — one hit, breath, another hit.
+//   2. Irregular middle — varied lengths with short pauses for
+//      syncopation. rotflip peaks here.
+//   3. Frenetic burst — short effects back-to-back, no pauses. Reversed
+//      bias is now strong.
+//   4. Final reversed-locked bursts — two more effects, forceReversed,
+//      so the card definitively lands rotated.
 //
 // During the glitch the host img carries .glitching, which suppresses
 // the smooth transform/filter transitions so per-frame jumps stay crisp.
-// Removing .glitching at the very end re-enables the transition for the
-// final 15° tween to .reversed.
-
-// Schedule entries: {t:"effect"|"pause"|"settle", ms}. Total ≈ 1685ms
-// of scheduled steps + ~280ms final smooth tween = ~1965ms.
 const GLITCH_SCHEDULE = [
-  // Phase 1: sparse opening — one hit, breath, another hit.
+  // Phase 1: sparse opening
   { t: "effect", ms: 110 },
   { t: "pause",  ms: 170 },
   { t: "effect", ms: 130 },
-  // Phase 2: irregular middle — varied lengths, short pauses for syncopation.
+  // Phase 2: irregular middle (rotflip peak zone)
   { t: "effect", ms:  80 },
   { t: "effect", ms:  90 },
   { t: "pause",  ms: 120 },
@@ -801,23 +819,17 @@ const GLITCH_SCHEDULE = [
   { t: "pause",  ms:  90 },
   { t: "effect", ms:  90 },
   { t: "effect", ms: 100 },
-  // Phase 3: frenetic burst — no pauses, short frames.
+  // Phase 3: frenetic burst
   { t: "effect", ms:  55 },
   { t: "effect", ms:  50 },
   { t: "effect", ms:  65 },
   { t: "effect", ms:  55 },
   { t: "effect", ms:  70 },
   { t: "effect", ms:  60 },
-  // Phase 4: deliberate settle — lock at 165°, then the smooth tween.
-  { t: "settle", ms: 180 },
+  // Phase 4: locked-reversed final bursts (no smooth tween after these)
+  { t: "effect", ms:  80, forceReversed: true },
+  { t: "effect", ms: 100, forceReversed: true },
 ];
-
-// Where the deliberate settle lands. The remaining 15° is tweened smoothly
-// by the standard transition after .glitching is removed.
-const PRE_SETTLE_DEG = 165;
-const FINAL_DEG = 180;
-
-const GLITCH_EFFECTS = ["shutter", "hbars", "rgbsplit", "chroma", "rotflip"];
 
 function gRand(min, max) { return min + Math.random() * (max - min); }
 function gPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -848,16 +860,40 @@ function clearHostInline(imgEl) {
   imgEl.style.visibility = "";
 }
 
-function applyGlitchFrame(imgEl, src) {
+// Pick an effect for this frame, with rotflip center-loaded around
+// progress=0.5 so the rotational chaos clusters in the middle of the
+// sequence (where the upright→reversed transition is most ambiguous).
+// When the frame is forced-reversed, rotflip is excluded because its
+// own random rotation would fight the "this frame shows reversed"
+// invariant — we want forced-reversed frames to clearly show the
+// reversed orientation.
+function pickGlitchEffect(progress, forceReversed) {
+  if (forceReversed) {
+    return gPick(["shutter", "hbars", "rgbsplit", "chroma"]);
+  }
+  // Hat function peaked at 0.5: ~0.12 at the edges, ~0.50 at the middle.
+  const peak = 1 - Math.abs((progress - 0.5) * 2);
+  const rotProb = 0.12 + 0.38 * Math.max(0, peak);
+  if (Math.random() < rotProb) return "rotflip";
+  return gPick(["shutter", "hbars", "rgbsplit", "chroma"]);
+}
+
+// Render one glitch frame. `progress` is 0..1 through the schedule.
+// `useReversed` (for non-rotflip effects) means the visible imagery
+// should be drawn in the 180° orientation — that's how the upright→
+// reversed transition unfolds, frame by frame, without a smooth tween.
+function applyGlitchFrame(imgEl, src, progress, useReversed) {
   clearGlitchOverlays();
   clearHostInline(imgEl);
 
-  const effect = gPick(GLITCH_EFFECTS);
+  const effect = pickGlitchEffect(progress, useReversed);
+  const rotSuffix = useReversed ? " rotate(180deg)" : "";
 
   if (effect === "shutter") {
-    // 3 rapid blackouts inside this 100ms frame — visibility toggles so the
-    // image truly vanishes rather than just dimming. The asymmetric timing
-    // keeps it feeling broken, not metronomic.
+    // 3 rapid blackouts inside the frame. Orientation, if reversed,
+    // applies between blackouts so the brief flashes show the rotated
+    // card briefly visible in upside-down form.
+    if (useReversed) imgEl.style.transform = "rotate(180deg)";
     imgEl.style.visibility = "hidden";
     setTimeout(() => { imgEl.style.visibility = ""; },        14);
     setTimeout(() => { imgEl.style.visibility = "hidden"; },  30);
@@ -868,10 +904,9 @@ function applyGlitchFrame(imgEl, src) {
   }
 
   if (effect === "hbars") {
-    // Jittered horizontal bars: 6–10 clip-path slices of the same image,
-    // each translated horizontally by a random amount and sometimes
-    // inverted or hue-shifted. The host img itself goes invisible so the
-    // overlays read as the "real" image breaking apart.
+    // Jittered horizontal bars. When reversed, each band is also rotated
+    // 180° around its own center — the arrangement reads as a fractured
+    // upside-down card rather than a fractured upright one.
     imgEl.style.opacity = "0";
     const n = 6 + Math.floor(Math.random() * 5);
     for (let i = 0; i < n; i++) {
@@ -880,7 +915,7 @@ function applyGlitchFrame(imgEl, src) {
       const bottom = ((n - i - 1) * 100 / n).toFixed(2);
       const tx = (Math.random() - 0.5) * 80;     // ±40px lateral jitter
       layer.style.clipPath  = `inset(${top}% 0 ${bottom}% 0)`;
-      layer.style.transform = `translateX(${tx.toFixed(1)}px)`;
+      layer.style.transform = `translateX(${tx.toFixed(1)}px)${rotSuffix}`;
       const r = Math.random();
       if (r < 0.4) layer.style.filter = "invert(1)";
       else if (r < 0.65) layer.style.filter = `hue-rotate(${Math.floor(gRand(40, 320))}deg) saturate(2.2)`;
@@ -890,31 +925,31 @@ function applyGlitchFrame(imgEl, src) {
   }
 
   if (effect === "rgbsplit") {
-    // Chromatic-aberration breakdown: red-saturated copy left, cyan-saturated
-    // copy right, dimmed base under. mix-blend-mode: screen lets the colored
-    // ghosts add up to near-full-color where they overlap, so the split
-    // reads as a real channel separation rather than two tinted overlays.
+    // Chromatic-aberration breakdown. All three layers (base, red, cyan)
+    // share the frame's orientation, so the split reads as a coherent
+    // rotated image breaking into channels.
     imgEl.style.opacity = "0";
     const split = gRand(6, 22);
     const yJit  = gRand(-6, 6);
     const base = makeGlitchOverlay(src);
     base.style.opacity = "0.55";
     base.style.filter  = "brightness(0.8) contrast(1.1)";
+    if (useReversed) base.style.transform = "rotate(180deg)";
     const red = makeGlitchOverlay(src);
-    red.style.transform = `translate(${(-split).toFixed(1)}px, ${yJit.toFixed(1)}px)`;
+    red.style.transform = `translate(${(-split).toFixed(1)}px, ${yJit.toFixed(1)}px)${rotSuffix}`;
     red.style.filter    = "hue-rotate(0deg) saturate(3) brightness(1.1)";
     red.style.mixBlendMode = "screen";
     const cyan = makeGlitchOverlay(src);
-    cyan.style.transform = `translate(${split.toFixed(1)}px, ${(-yJit).toFixed(1)}px)`;
+    cyan.style.transform = `translate(${split.toFixed(1)}px, ${(-yJit).toFixed(1)}px)${rotSuffix}`;
     cyan.style.filter    = "hue-rotate(180deg) saturate(3) brightness(1.1)";
     cyan.style.mixBlendMode = "screen";
     return;
   }
 
   if (effect === "chroma") {
-    // Filter slam on the host img — extreme hue/sat/contrast plus a small
-    // translate/scale shudder. The whole card stays in one piece; the
-    // damage is "to the signal" rather than "to the geometry".
+    // Filter slam plus translate/scale shudder, on the host img directly.
+    // Orientation is appended to the transform so the slam happens to a
+    // rotated card when this frame is reversed.
     const hue = Math.floor(gRand(0, 360));
     const sat = gRand(2, 4).toFixed(2);
     const con = gRand(1.2, 2.2).toFixed(2);
@@ -924,15 +959,20 @@ function applyGlitchFrame(imgEl, src) {
     const sc  = gRand(0.97, 1.04).toFixed(3);
     const inv = Math.random() < 0.3 ? " invert(1)" : "";
     imgEl.style.filter    = `hue-rotate(${hue}deg) saturate(${sat}) contrast(${con}) brightness(${bri})${inv}`;
-    imgEl.style.transform = `translate(${tx}px, ${ty}px) scale(${sc})`;
+    imgEl.style.transform = `translate(${tx}px, ${ty}px) scale(${sc})${rotSuffix}`;
     return;
   }
 
   if (effect === "rotflip") {
-    // Geometry breakdown: pick a wild rotation, randomly flip on each
-    // axis, jitter the position. Half the frames also push extreme
-    // contrast through the filter so the flipped pose reads as a strobe.
-    const rot = gPick([0, 45, -45, 90, -90, 180, 270]);
+    // Geometry breakdown — picks its own random rotation. Weight the
+    // pool toward 180° as the schedule progresses, so this effect
+    // actively pulls the orientation toward reversed during the
+    // center-loaded zone where it's most likely to fire.
+    const pool = [0, 45, -45, 90, -90, 270];
+    const w180 = 1 + Math.round(progress * 6);
+    const weighted = pool.slice();
+    for (let k = 0; k < w180; k++) weighted.push(180);
+    const rot = gPick(weighted);
     const sx  = Math.random() < 0.45 ? -1 : 1;
     const sy  = Math.random() < 0.3  ? -1 : 1;
     const tx  = gRand(-14, 14).toFixed(1);
@@ -951,42 +991,59 @@ async function playGlitchSequence(imgEl) {
 
   haptic(6); // opening tick — the breakdown begins
 
+  const totalMs = GLITCH_SCHEDULE.reduce((s, e) => s + e.ms, 0);
+  let elapsed = 0;
+  // Tracks orientation of the previous effect frame so pauses can hold
+  // the same orientation (rather than blinking back to upright between
+  // bursts). rotflip frames don't update this — they introduce their
+  // own random rotation that isn't a clean upright/reversed state.
+  let lastReversed = false;
+
   for (const step of GLITCH_SCHEDULE) {
+    const progress = totalMs > 0 ? elapsed / totalMs : 0;
+
     if (step.t === "effect") {
-      applyGlitchFrame(imgEl, src);
+      // useReversed probability grows with progress. Slight multiplier
+      // (×1.1) so the late frames are reliably reversed even without
+      // hitting the forceReversed flag.
+      const useReversed = step.forceReversed
+        || (Math.random() < Math.min(1, progress * 1.1));
+      applyGlitchFrame(imgEl, src, progress, useReversed);
+      lastReversed = useReversed;
     } else if (step.t === "pause") {
-      // Brief moment of relative calm — clean image, no distortion. Makes
-      // the next burst feel like a burst, not a continuation.
+      // Brief moment of relative calm — clean image, no distortion. The
+      // orientation matches whatever the last effect frame established,
+      // so the orientation doesn't yo-yo between bursts.
       clearGlitchOverlays();
       clearHostInline(imgEl);
-    } else if (step.t === "settle") {
-      // Deliberate pre-rotation: chaos resolves, the card holds at 165°.
-      // The eye registers "ok, this is where it's landing" before the
-      // smooth final tween.
-      clearGlitchOverlays();
-      imgEl.style.filter = "";
-      imgEl.style.clipPath = "";
-      imgEl.style.opacity = "";
-      imgEl.style.visibility = "";
-      imgEl.style.transform = "rotate(" + PRE_SETTLE_DEG + "deg)";
+      if (lastReversed) imgEl.style.transform = "rotate(180deg)";
     }
+
     await new Promise(r => setTimeout(r, step.ms));
+    elapsed += step.ms;
   }
 
-  // Final 15° smooth tween. Removing .glitching re-enables the
-  // transform transition (240ms ease-out from the base img rule), then
-  // setting inline transform to rotate(180deg) animates from 165 → 180.
-  // This is the ONLY eased motion in the whole sequence — by being the
-  // only deliberate thing in a stream of chaos, it reads as deliberate.
-  imgEl.classList.remove("glitching");
-  void imgEl.offsetHeight;
-  imgEl.style.transform = "rotate(" + FINAL_DEG + "deg)";
-  haptic(8); // resolution tick — the card has settled
+  // Final cleanup: no smooth tween, no pre-settle hold. The last two
+  // forceReversed frames have already established the reversed view —
+  // we just clear residual filters/overlays/translates while keeping
+  // the rotation. Because .glitching is still active, this is one
+  // instant snap rather than an animated state change.
+  clearGlitchOverlays();
+  clearHostInline(imgEl);
+  imgEl.style.transform = "rotate(180deg)";
 
-  // Wait out the tween, then hand state to the .reversed class so that
-  // future state classes (.dimmed, .resetting) can compose with their
-  // combo rules — they can't override an inline transform.
-  await new Promise(r => setTimeout(r, 260));
+  haptic(8); // resolution tick — the card has landed
+
+  // A short beat to let the eye register the clean reversed pose before
+  // we hand state to the .reversed class. (Still inside .glitching, so
+  // it's just a hold — no animation.)
+  await new Promise(r => setTimeout(r, 80));
+
+  // Hand off: remove .glitching first so future state changes (next
+  // tap → setDownToBack) can tween normally. .reversed and the inline
+  // transform agree (both rotate(180deg)), so removing inline after
+  // adding the class is a no-op visually.
+  imgEl.classList.remove("glitching");
   imgEl.classList.add("reversed");
-  imgEl.style.transform = ""; // class takes over (rotate(180deg))
+  imgEl.style.transform = "";
 }

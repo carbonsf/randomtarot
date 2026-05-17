@@ -94,14 +94,14 @@
 
     /* ---------------------------------------------------------------
        Reversal: after the glitch sequence resolves, the card lands
-       rotated 180°. Because .dimmed and .resetting also set transform,
-       we need combo rules so the rotation is preserved during those
-       states. (The base .reversed transform is also overridable by
-       inline style during the glitch frames themselves.)
+       rotated 180°. There are NO combo rules with .dimmed / .resetting
+       on purpose — when the user taps a reversed card to return to the
+       deck, setDownToBack snaps the card to upright (transition: none)
+       BEFORE adding .resetting, so the return-to-deck animation looks
+       identical to the upright case. Same logic at draw time: the deck
+       is always upright, so .dimmed never co-occurs with .reversed.
        --------------------------------------------------------------- */
-    img.reversed                 { transform: rotate(180deg); }
-    img.reversed.dimmed          { transform: rotate(180deg) scale(0.985); }
-    img.reversed.resetting       { transform: rotate(180deg) translateY(6px); }
+    img.reversed { transform: rotate(180deg); }
 
     /* Glitch overlay clones (rgbsplit / hbars). Match the host <img>
        so object-fit letterboxing stays identical. The .glitch-overlay
