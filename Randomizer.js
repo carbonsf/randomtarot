@@ -27,9 +27,8 @@ const REVERSAL_PERCENT = 100;
 // of "...wait, something's wrong" before the visual breakdown.
 const REVERSAL_DELAY_MS = 500;
 
-// Total glitch duration and per-frame cadence. 20 frames at 100ms each.
-const GLITCH_DURATION_MS = 2000;
-const GLITCH_FRAME_MS = 100;
+// Glitch cadence is no longer a uniform frame loop — see GLITCH_SCHEDULE
+// below for the irregular four-phase pacing.
 
 // --- Deck state: draw-without-replacement -----------------------------
 // `deck` is the set of card indices not yet drawn this shuffle. When it
@@ -762,15 +761,61 @@ async function rollReversal(event) {
 }
 
 // --- Glitch sequence --------------------------------------------------
-// 20 frames × 100ms = 2000ms of frenetic visual breakdown. Each frame
-// picks one of 5 effects at random and applies it with randomized
-// parameters. The host <img> is mutated directly for single-layer
-// effects (chroma, rotflip, shutter) and additional overlay clones are
-// spawned per-frame for layered effects (hbars, rgbsplit). Overlays
-// from the previous frame are discarded at the start of each new frame.
+// Roughly two seconds of visual breakdown, paced as bursts rather than
+// a steady stream. The schedule has four phases:
+//   1. Sparse opening — one effect, a breath, another effect. Establishes
+//      "something is wrong" without yet committing to chaos.
+//   2. Irregular middle — effects of varying lengths interleaved with
+//      shorter pauses, so the rhythm never settles into a beat.
+//   3. Frenetic burst — quick effects back-to-back, no pauses.
+//   4. Deliberate settle — overlays cleared, host image locked at 165°
+//      with no other distortion, so the brain has a moment of "wait,
+//      it's resolving" before the final 15° smooth tween to 180°. That
+//      last tween is the only intentional, eased motion in the whole
+//      sequence — distinct from the chaos because it IS deliberate.
 //
-// Final landing: clean state, then add .reversed class so the card
-// settles into a 180° rotation via the CSS transition.
+// Each effect frame picks one of 5 effects at random and applies it
+// with randomized parameters. The host <img> is mutated directly for
+// single-layer effects (chroma, rotflip, shutter) and additional
+// overlay clones are spawned per-frame for layered effects (hbars,
+// rgbsplit). Overlays and inline styles are discarded between frames.
+//
+// During the glitch the host img carries .glitching, which suppresses
+// the smooth transform/filter transitions so per-frame jumps stay crisp.
+// Removing .glitching at the very end re-enables the transition for the
+// final 15° tween to .reversed.
+
+// Schedule entries: {t:"effect"|"pause"|"settle", ms}. Total ≈ 1685ms
+// of scheduled steps + ~280ms final smooth tween = ~1965ms.
+const GLITCH_SCHEDULE = [
+  // Phase 1: sparse opening — one hit, breath, another hit.
+  { t: "effect", ms: 110 },
+  { t: "pause",  ms: 170 },
+  { t: "effect", ms: 130 },
+  // Phase 2: irregular middle — varied lengths, short pauses for syncopation.
+  { t: "effect", ms:  80 },
+  { t: "effect", ms:  90 },
+  { t: "pause",  ms: 120 },
+  { t: "effect", ms: 100 },
+  { t: "effect", ms:  70 },
+  { t: "pause",  ms:  90 },
+  { t: "effect", ms:  90 },
+  { t: "effect", ms: 100 },
+  // Phase 3: frenetic burst — no pauses, short frames.
+  { t: "effect", ms:  55 },
+  { t: "effect", ms:  50 },
+  { t: "effect", ms:  65 },
+  { t: "effect", ms:  55 },
+  { t: "effect", ms:  70 },
+  { t: "effect", ms:  60 },
+  // Phase 4: deliberate settle — lock at 165°, then the smooth tween.
+  { t: "settle", ms: 180 },
+];
+
+// Where the deliberate settle lands. The remaining 15° is tweened smoothly
+// by the standard transition after .glitching is removed.
+const PRE_SETTLE_DEG = 165;
+const FINAL_DEG = 180;
 
 const GLITCH_EFFECTS = ["shutter", "hbars", "rgbsplit", "chroma", "rotflip"];
 
@@ -902,29 +947,46 @@ function applyGlitchFrame(imgEl, src) {
 
 async function playGlitchSequence(imgEl) {
   const src = imgEl.src;
-  imgEl.classList.add("glitching"); // suppresses the smooth transition
+  imgEl.classList.add("glitching"); // suppresses smooth transitions
 
-  const frames = Math.floor(GLITCH_DURATION_MS / GLITCH_FRAME_MS);
-  for (let i = 0; i < frames; i++) {
-    applyGlitchFrame(imgEl, src);
-    // Brief tactile flicker on the first frame and at the resolution —
-    // a tiny breaker-trips beat, distinct from the contemplative draw tick.
-    if (i === 0 || i === frames - 1) haptic(6);
-    await new Promise(r => setTimeout(r, GLITCH_FRAME_MS));
+  haptic(6); // opening tick — the breakdown begins
+
+  for (const step of GLITCH_SCHEDULE) {
+    if (step.t === "effect") {
+      applyGlitchFrame(imgEl, src);
+    } else if (step.t === "pause") {
+      // Brief moment of relative calm — clean image, no distortion. Makes
+      // the next burst feel like a burst, not a continuation.
+      clearGlitchOverlays();
+      clearHostInline(imgEl);
+    } else if (step.t === "settle") {
+      // Deliberate pre-rotation: chaos resolves, the card holds at 165°.
+      // The eye registers "ok, this is where it's landing" before the
+      // smooth final tween.
+      clearGlitchOverlays();
+      imgEl.style.filter = "";
+      imgEl.style.clipPath = "";
+      imgEl.style.opacity = "";
+      imgEl.style.visibility = "";
+      imgEl.style.transform = "rotate(" + PRE_SETTLE_DEG + "deg)";
+    }
+    await new Promise(r => setTimeout(r, step.ms));
   }
 
-  // Resolution: clear everything glitch-specific and let the card settle
-  // into the reversed orientation via the standard CSS transform transition.
-  clearGlitchOverlays();
-  clearHostInline(imgEl);
+  // Final 15° smooth tween. Removing .glitching re-enables the
+  // transform transition (240ms ease-out from the base img rule), then
+  // setting inline transform to rotate(180deg) animates from 165 → 180.
+  // This is the ONLY eased motion in the whole sequence — by being the
+  // only deliberate thing in a stream of chaos, it reads as deliberate.
   imgEl.classList.remove("glitching");
-  // Force a style flush so the next frame applies .reversed with the
-  // restored transform transition (otherwise it can snap on some browsers).
   void imgEl.offsetHeight;
+  imgEl.style.transform = "rotate(" + FINAL_DEG + "deg)";
+  haptic(8); // resolution tick — the card has settled
+
+  // Wait out the tween, then hand state to the .reversed class so that
+  // future state classes (.dimmed, .resetting) can compose with their
+  // combo rules — they can't override an inline transform.
+  await new Promise(r => setTimeout(r, 260));
   imgEl.classList.add("reversed");
-  // Hold the input gate through the settle transition itself (~320ms,
-  // matching the base transform transition above). drawCard releases
-  // `drawing` immediately after we return; that 320ms gate is implicit
-  // because we don't return until the await below resolves.
-  await new Promise(r => setTimeout(r, 340));
+  imgEl.style.transform = ""; // class takes over (rotate(180deg))
 }
