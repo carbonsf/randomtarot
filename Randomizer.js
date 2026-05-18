@@ -820,8 +820,11 @@ async function rollReversal(event) {
 //   P4         → forced-reversed in any case
 const GLITCH_SCHEDULE = [
   // Phase 1: slow sparse opening — single hits with long breaths.
+  // The first pause is intentionally extra-long (380 + 600ms hesitation):
+  // after the first glitch lands the viewer should have time to wonder
+  // whether they imagined it before the next hit confirms it.
   { t: "effect", ms: 240 },
-  { t: "pause",  ms: 380 },
+  { t: "pause",  ms: 980 },
   { t: "effect", ms: 280 },
   { t: "pause",  ms: 220 },
   { t: "effect", ms: 200 },
@@ -960,11 +963,10 @@ function clearHostInline(imgEl) {
 //   PHANTOM       - 3-4 layered ghost copies, mixed blend modes
 //   SHAKE-CAM     - rapid sub-frame translate jitter
 //   STROBE        - solid color difference flash
-//   VOID-RIFT     - diagonal black slash exposing void
 const SIDE_EFFECTS = [
   "shutter", "hbars", "rgbsplit", "chroma",
   "hyperwarp", "pixelcrush", "staticsnow", "deadsignal", "vhstear",
-  "crtroll", "phantom", "shakecam", "strobe", "voidrift"
+  "crtroll", "phantom", "shakecam", "strobe"
 ];
 
 // Pick an effect for this frame, with rotflip center-loaded around
@@ -1262,32 +1264,6 @@ function applyGlitchFrame(imgEl, src, progress, useReversed) {
     return;
   }
 
-  if (effect === "voidrift") {
-    // VOID-RIFT: a thick diagonal black band cuts across the card,
-    // exposing literal void (the page background) through a clip-path
-    // polygon. The card sits beneath, slightly contrast-boosted, so the
-    // rift reads as something punched through the image rather than
-    // drawn on top.
-    if (useReversed) imgEl.style.transform = "rotate(180deg)";
-    imgEl.style.filter = "contrast(1.2) brightness(0.95)";
-    const angle = (Math.random() < 0.5 ? -1 : 1) * gRand(30, 60);
-    const w     = gRand(14, 28); // band half-width as % of viewport
-    const rift  = makeGlitchOverlayDiv();
-    rift.style.background = "black";
-    rift.style.transform  = `rotate(${angle.toFixed(1)}deg)`;
-    rift.style.clipPath   = `polygon(0% ${(50 - w/2).toFixed(1)}%, 100% ${(50 - w/2).toFixed(1)}%, 100% ${(50 + w/2).toFixed(1)}%, 0% ${(50 + w/2).toFixed(1)}%)`;
-    // A thin bright fringe along the cut for chunky-retro pop.
-    const fringe = makeGlitchOverlayDiv();
-    fringe.style.transform = `rotate(${angle.toFixed(1)}deg)`;
-    fringe.style.background =
-      `linear-gradient(to bottom, transparent ${(50 - w/2 - 0.6).toFixed(2)}%, ` +
-      `rgba(255,255,255,0.85) ${(50 - w/2).toFixed(2)}%, ` +
-      `transparent ${(50 - w/2 + 0.6).toFixed(2)}%, ` +
-      `transparent ${(50 + w/2 - 0.6).toFixed(2)}%, ` +
-      `rgba(255,255,255,0.85) ${(50 + w/2).toFixed(2)}%, ` +
-      `transparent ${(50 + w/2 + 0.6).toFixed(2)}%)`;
-    return;
-  }
 }
 
 async function playGlitchSequence(imgEl) {
