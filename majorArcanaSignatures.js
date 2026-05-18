@@ -1119,16 +1119,53 @@
   // phase, width, speed, and direction — they overlap in changing
   // ways, never quite aligning, giving the chaotic "tide" feeling.
   // All use mix-blend-mode: screen with pale-white gradients.
+  //
+  // While the tides traverse the card the card itself dims
+  // significantly (brightness 0.55) and wavers — sinusoidal motion in
+  // x, y, rotation, and scale, so it looks like an image seen
+  // underwater. The dimming + screen-blended tides make the bands
+  // read as the only light source: the moonlit areas of the card.
   async function moonShimmer(imgEl) {
     const cr = getContentRect(imgEl);
     const totalMs = 2400;
 
-    // Slight cool tint on the card while the tides move across.
+    // Dim the card and cool the hue while the tides move. Hold the
+    // dimmed state through the middle so the tides are the dominant
+    // light, then release.
     trackAnim(imgEl.animate([
-      { filter: 'hue-rotate(0deg)   saturate(1)' },
-      { filter: 'hue-rotate(-12deg) saturate(0.88)', offset: 0.5 },
-      { filter: 'hue-rotate(0deg)   saturate(1)' }
+      { filter: 'brightness(1)    saturate(1)    hue-rotate(0deg)' },
+      { filter: 'brightness(0.55) saturate(0.85) hue-rotate(-14deg)', offset: 0.18 },
+      { filter: 'brightness(0.55) saturate(0.85) hue-rotate(-14deg)', offset: 0.82 },
+      { filter: 'brightness(1)    saturate(1)    hue-rotate(0deg)' }
     ], { duration: totalMs, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'none' }));
+
+    // Card waver — subtle sin-driven motion in x, y, rotation, and
+    // scale, with a fade-in/out envelope so the waver doesn't snap
+    // on or off. Frequencies are non-commensurate (0.45 / 0.65 /
+    // 0.55 / 0.7 Hz) so the four axes never align, giving the card
+    // a continuously-shifting "underwater" quality through the
+    // dimness rather than a regular wobble.
+    const waverN = 48;
+    const waverKeys = [];
+    for (let i = 0; i <= waverN; i++) {
+      const t   = i / waverN;
+      const tau = t * totalMs / 1000;
+      const dx  = 2.6 * Math.sin(2 * Math.PI * 0.45 * tau);
+      const dy  = 1.6 * Math.sin(2 * Math.PI * 0.65 * tau + 0.7);
+      const rot = 0.42 * Math.sin(2 * Math.PI * 0.55 * tau + 1.2);
+      const sc  = 1 + 0.006 * Math.sin(2 * Math.PI * 0.70 * tau + 2.1);
+      // Envelope so the waver fades in/out with the dim phase.
+      let env = 1;
+      if      (t < 0.18) env = t / 0.18;
+      else if (t > 0.82) env = (1 - t) / 0.18;
+      waverKeys.push({
+        transform: `translate(${(dx * env).toFixed(2)}px, ${(dy * env).toFixed(2)}px)` +
+                   ` rotate(${(rot * env).toFixed(4)}deg)` +
+                   ` scale(${sc.toFixed(4)})`,
+        offset: parseFloat(t.toFixed(6))
+      });
+    }
+    trackAnim(imgEl.animate(waverKeys, { duration: totalMs, fill: 'none' }));
 
     // Band configs — different shapes (waves, amp), different speeds,
     // mixed directions (some LTR, some RTL) for the chaotic feel.
