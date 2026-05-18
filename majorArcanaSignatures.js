@@ -148,85 +148,97 @@
     await sleep(260);
   }
 
-  // ---- 02 The High Priestess : the all-seeing eye --------------------
-  // Vignette closes in around the card; a vertical dark pupil emerges
-  // at center, dilates, then expands outward and dissolves — the gaze
-  // through the veil, rather than the veil sliding past. The SVG group
-  // is scaled via CSS transforms so the pupil grows organically.
+  // ---- 02 The High Priestess : two pillars breathe in the darkness --
+  // Boaz and Jachin — the twin pillars that flank the High Priestess.
+  // Two thin vertical light bars at the card's edges fade in, pulse
+  // with independent sinusoidal oscillations on opacity and height,
+  // and fade out. Nothing emerges from the center. The card itself
+  // takes on a subtle contrast lift and slight desaturation between
+  // them, as if the air between the pillars has become more present.
   async function priestessVeil(imgEl) {
     const cr = getContentRect(imgEl);
+    const totalMs = 1900;
 
-    // Slow vignette closing in: edges darken so the eye reads as
-    // emerging from the card's depths, not painted over its surface.
-    const vignette = newOverlayDiv(
-      `left:${cr.left}px;top:${cr.top}px;width:${cr.width}px;height:${cr.height}px;` +
-      `background:radial-gradient(ellipse 82% 72% at center, transparent 28%, rgba(4,6,14,0.9) 96%);`
-    );
-    trackAnim(vignette.animate([
-      { opacity: 0, transform: 'scale(1.25)' },
-      { opacity: 1, transform: 'scale(1)',    offset: 0.22 },
-      { opacity: 1, transform: 'scale(1)',    offset: 0.74 },
-      { opacity: 0, transform: 'scale(1.18)' }
-    ], { duration: 1300, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'forwards' }));
-
-    // SVG containing iris + pupil. Both are vertical ellipses (taller
-    // than wide) — the elongation reads as something other than a
-    // simple human eye, leaning toward the uncanny.
-    const svg = svgEl('svg');
-    svg.setAttribute('viewBox', `0 0 ${cr.width} ${cr.height}`);
-    svg.style.cssText =
-      `position:fixed;left:${cr.left}px;top:${cr.top}px;` +
+    // Atmospheric dimming — light retreats from everything except the
+    // pillars themselves and the air between them.
+    const dim = newOverlayDiv(
+      `left:${cr.left}px;top:${cr.top}px;` +
       `width:${cr.width}px;height:${cr.height}px;` +
-      `pointer-events:none;z-index:41;overflow:visible;`;
+      `background:rgba(8,12,28,0.42);`
+    );
+    trackAnim(dim.animate([
+      { opacity: 0 },
+      { opacity: 1, offset: 0.22 },
+      { opacity: 1, offset: 0.78 },
+      { opacity: 0 }
+    ], { duration: totalMs, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'forwards' }));
 
-    const minDim = Math.min(cr.width, cr.height);
-    const baseR  = minDim * 0.045;
+    // Card itself: a quiet contrast lift while the pillars are present,
+    // with a hint of cool desaturation. Subtle enough that the eye
+    // doesn't see it directly — it registers as atmosphere.
+    trackAnim(imgEl.animate([
+      { filter: 'brightness(1)    saturate(1)    contrast(1)' },
+      { filter: 'brightness(0.92) saturate(0.86) contrast(1.08)', offset: 0.32 },
+      { filter: 'brightness(0.88) saturate(0.82) contrast(1.1)',  offset: 0.5  },
+      { filter: 'brightness(0.92) saturate(0.86) contrast(1.08)', offset: 0.68 },
+      { filter: 'brightness(1)    saturate(1)    contrast(1)' }
+    ], { duration: totalMs, easing: 'cubic-bezier(0.45, 0, 0.55, 1)', fill: 'none' }));
 
-    const g = svgEl('g');
-    g.style.transformOrigin = `${cr.width / 2}px ${cr.height / 2}px`;
-    g.style.transform = `translate(${cr.width / 2}px, ${cr.height / 2}px) scale(0)`;
+    // Two pillars. Inset slightly so they sit at the card's edges
+    // rather than the viewport's. Each pillar's keyframes are computed
+    // from independent sine oscillations on opacity (breathing) and
+    // scaleY (the column visibly elongating and contracting), with
+    // different phases so the two never reach peak together.
+    const xPositions = [0.06, 0.94];      // fractional x within the card
+    const N = 40;
+    const pillarColor = 'rgba(232,240,255,';
 
-    // Faint iris ring around the pupil — implies an eye without
-    // drawing a full eyeball outline.
-    const iris = svgEl('ellipse', {
-      cx: 0, cy: 0,
-      rx: baseR * 1.6, ry: baseR * 2.4,
-      fill: 'none', stroke: 'rgba(190,200,225,0.62)', 'stroke-width': 1.6
-    });
-    iris.style.filter = 'drop-shadow(0 0 6px rgba(180,200,230,0.65))';
-    g.appendChild(iris);
+    for (let i = 0; i < 2; i++) {
+      const px = cr.left + cr.width * xPositions[i];
+      const pillar = newOverlayDiv(
+        `left:${px - 1.5}px;top:${cr.top + cr.height * 0.06}px;` +
+        `width:3px;height:${cr.height * 0.88}px;` +
+        `background:linear-gradient(to bottom,` +
+          `transparent 0%,${pillarColor}0.78) 14%,${pillarColor}0.96) 50%,` +
+          `${pillarColor}0.78) 86%,transparent 100%);` +
+        `box-shadow:0 0 14px 1px rgba(210,225,255,0.82),` +
+          `0 0 32px 4px rgba(180,200,250,0.45);` +
+        `mix-blend-mode:screen;` +
+        `transform-origin:center center;` +
+        `opacity:0;`
+      );
 
-    // Pupil — dark elongated ellipse, slightly taller than the iris's
-    // ratio so it reads as a vertical slit rather than a round dot.
-    const pupil = svgEl('ellipse', {
-      cx: 0, cy: 0,
-      rx: baseR, ry: baseR * 1.6,
-      fill: 'rgba(0,0,0,0.96)'
-    });
-    pupil.style.filter = 'drop-shadow(0 0 7px rgba(0,0,0,0.85))';
-    g.appendChild(pupil);
+      // Phase offset between the two pillars so their breathing is
+      // out of sync — left peaks while right is dim and vice versa,
+      // with intermediate states.
+      const oPhase = i * 2.1;
+      const sPhase = i * 1.4 + 0.7;
+      const oFreq  = 0.95;  // breathing rate in Hz
+      const sFreq  = 0.72;  // height oscillation rate
 
-    svg.appendChild(g);
-    trackEl(svg); document.body.appendChild(svg);
+      const keys = [];
+      for (let j = 0; j <= N; j++) {
+        const t   = j / N;
+        const tau = t * totalMs / 1000;
+        const oSin = 0.5 + 0.5 * Math.sin(2 * Math.PI * oFreq * tau + oPhase);
+        const sSin = 0.5 + 0.5 * Math.sin(2 * Math.PI * sFreq * tau + sPhase);
+        const op = 0.55 + 0.45 * oSin;
+        const sc = 0.92 + 0.10 * sSin;
+        // Outer envelope so the pillars fade in and out gracefully.
+        let env;
+        if      (t < 0.20) env = t / 0.20;
+        else if (t > 0.84) env = (1 - t) / 0.16;
+        else               env = 1;
+        keys.push({
+          opacity:   (op * env).toFixed(4),
+          transform: `scaleY(${sc.toFixed(4)})`,
+          offset:    parseFloat(t.toFixed(6))
+        });
+      }
+      trackAnim(pillar.animate(keys, { duration: totalMs, fill: 'forwards' }));
+    }
 
-    // Let the vignette close in before the pupil emerges.
-    await sleep(290);
-
-    // Emerge, dilate, then expand outward as it dissolves. The end
-    // state's scale(2.3) carries the gaze beyond the card before it
-    // vanishes — that final expansion is what makes the moment land
-    // as "the eye opens" rather than "a dot appeared."
-    trackAnim(g.animate([
-      { transform: `translate(${cr.width / 2}px, ${cr.height / 2}px) scale(0)`,    opacity: 0 },
-      { transform: `translate(${cr.width / 2}px, ${cr.height / 2}px) scale(0.9)`,  opacity: 1, offset: 0.30 },
-      { transform: `translate(${cr.width / 2}px, ${cr.height / 2}px) scale(1.45)`, opacity: 1, offset: 0.62 },
-      { transform: `translate(${cr.width / 2}px, ${cr.height / 2}px) scale(1.55)`, opacity: 0.85, offset: 0.78 },
-      { transform: `translate(${cr.width / 2}px, ${cr.height / 2}px) scale(2.3)`,  opacity: 0 }
-    ], { duration: 870, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }));
-    await sleep(870);
-
-    // Let the vignette finish releasing.
-    await sleep(160);
+    await sleep(totalMs);
   }
 
   // ---- 03 The Empress : warm bloom outward --------------------------
@@ -462,65 +474,132 @@
     await sleep(950);
   }
 
-  // ---- 09 The Hermit : the lantern swings on a damped pendulum ------
-  // The lantern follows a parabolic arc, swinging back and forth with
-  // pendulum-like motion. Position is governed by cos(omega*t) *
-  // exp(-decay*t), naturally producing the pendulum's signature speed
-  // profile — fast through the bottom of the swing, slow at the
-  // extremes where it briefly hangs before reversing. Three visible
-  // swings of decreasing amplitude, ending near rest.
-  //
-  // Forty pre-computed keyframes give the curve enough resolution
-  // that linear interpolation between them reads as smooth motion.
+  // ---- 09 The Hermit : the lantern wanders, searching ---------------
+  // The lantern follows a Lissajous path with non-commensurate
+  // frequencies on x and y (0.38 and 0.53 Hz), so the trajectory
+  // never closes — the light visibly searches the card without
+  // settling into a recognizable pattern. Three overlapping light
+  // sources (two ellipse-shaped radial gradients with different
+  // aspect ratios + a brighter core), each pulsing on its own sine
+  // with phase offset, give the lantern an irregular, breathing
+  // quality rather than a clean gradient circle. Different blend
+  // modes (screen, lighten, plus-lighter) layer them into a non-
+  // uniform glow that shifts shape as it travels.
   async function hermitLantern(imgEl) {
     const cr = getContentRect(imgEl);
-    const cx = cr.left + cr.width / 2;
-    const yRest = cr.top + cr.height * 0.72;  // bottom of swing arc
-    const yHigh = cr.top + cr.height * 0.22;  // top of swing at extremes
-    const rx    = cr.width * 0.38;            // horizontal swing amplitude
-    const lanternSize = cr.width * 0.42;
+    const cx = cr.left + cr.width  / 2;
+    const cy = cr.top  + cr.height / 2;
+    const totalMs = 2400;
+    const N = 60;
 
+    // Atmospheric dimming over the card.
     const dim = newOverlayDiv(
       `left:${cr.left}px;top:${cr.top}px;` +
-      `width:${cr.width}px;height:${cr.height}px;background:rgba(6,8,16,0.58);`
+      `width:${cr.width}px;height:${cr.height}px;background:rgba(4,7,14,0.68);`
     );
-    const lantern = newOverlayDiv(
-      `left:${cx - lanternSize / 2}px;top:${yRest - lanternSize / 2}px;` +
-      `width:${lanternSize}px;height:${lanternSize}px;border-radius:50%;` +
-      `background:radial-gradient(circle,rgba(255,235,180,0.92) 0%,rgba(255,210,130,0.45) 25%,rgba(255,180,80,0) 65%);` +
-      `mix-blend-mode:screen;opacity:0;`
-    );
+    trackAnim(dim.animate([
+      { opacity: 0 },
+      { opacity: 1, offset: 0.10 },
+      { opacity: 1, offset: 0.90 },
+      { opacity: 0 }
+    ], { duration: totalMs, fill: 'forwards' }));
 
-    const totalMs = 1500;
-    const N = 40;
-    const omega = 2 * Math.PI * 1.05; // ~1.05 oscillation cycles per second
-    const decay = 0.85;               // amplitude e-folds in ~1.18s
+    // The three light layers. Each is anchored at (cx, cy) so the
+    // transform: translate(...) we apply per-keyframe moves them
+    // together. Different ellipse aspect ratios + different gradient
+    // colors + different blend modes give visibly distinct shapes
+    // that combine into an irregular glow.
+    const layers = [
+      {
+        // Wide soft halo — the bulk of the light volume.
+        w: 220, h: 180, ox: 0, oy: 0,
+        bg: 'radial-gradient(ellipse 70% 60% at 48% 52%,' +
+            'rgba(255,222,150,0.55) 0%,rgba(255,190,100,0.28) 32%,transparent 68%)',
+        blend: 'screen',
+        sizeFreq: 0.7, sizePhase: 0.0, sizeAmp: 0.12,
+        opFreq:   1.1, opPhase:   0.3, opAmp:   0.30, opBase: 0.65,
+        wanderAmp: 6, wanderFreq: 0.9, wanderPhase: 0.0
+      },
+      {
+        // Hot core — smaller, brighter, with `lighten` so it always
+        // wins over the card's mid-tones, giving a bright punch.
+        w: 90,  h: 110, ox: 0, oy: 0,
+        bg: 'radial-gradient(ellipse 60% 75% at 50% 48%,' +
+            'rgba(255,240,180,0.92) 0%,rgba(255,210,130,0.5) 30%,transparent 68%)',
+        blend: 'lighten',
+        sizeFreq: 1.4, sizePhase: 1.7, sizeAmp: 0.18,
+        opFreq:   1.6, opPhase:   2.0, opAmp:   0.22, opBase: 0.78,
+        wanderAmp: 9, wanderFreq: 1.4, wanderPhase: 1.2
+      },
+      {
+        // Asymmetric flare — offset from the others and elongated on
+        // a different axis. Its independent wander creates the
+        // "lumpy" silhouette as it moves through the dim card.
+        w: 130, h: 90,  ox: 12, oy: -8,
+        bg: 'radial-gradient(ellipse 55% 70% at 55% 45%,' +
+            'rgba(255,230,170,0.5) 0%,rgba(255,200,120,0.22) 38%,transparent 70%)',
+        blend: 'screen',
+        sizeFreq: 1.0, sizePhase: 3.4, sizeAmp: 0.20,
+        opFreq:   0.9, opPhase:   4.1, opAmp:   0.34, opBase: 0.55,
+        wanderAmp: 14, wanderFreq: 0.6, wanderPhase: 2.4
+      }
+    ];
 
-    const lanternKeys = [];
-    const dimKeys     = [];
-    for (let i = 0; i <= N; i++) {
-      const t  = i / N;
-      const ts = t * totalMs / 1000;
-      const theta = Math.cos(omega * ts) * Math.exp(-decay * ts);
-      const dx = rx * theta;
-      const dy = (yHigh - yRest) * (theta * theta);
-      // Opacity envelope: fade in over first 8%, fade out over last 8%.
-      let op = 1;
-      if      (t < 0.08) op = t / 0.08;
-      else if (t > 0.92) op = (1 - t) / 0.08;
-      // Slight scale lift near the apex of each swing so the lantern
-      // feels brighter when held high.
-      const sc = 0.92 + 0.10 * Math.abs(theta);
-      lanternKeys.push({
-        transform: `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px) scale(${sc.toFixed(4)})`,
-        opacity: op.toFixed(4),
-        offset: parseFloat(t.toFixed(6))
-      });
-      dimKeys.push({ opacity: op.toFixed(4), offset: parseFloat(t.toFixed(6)) });
+    // Lissajous parameters — non-commensurate frequencies so the
+    // search path never closes back on itself.
+    const xAmp = cr.width  * 0.34;
+    const yAmp = cr.height * 0.30;
+    const xFreq = 0.38;  // Hz
+    const yFreq = 0.53;  // Hz
+    const xPhase = 0;
+    const yPhase = Math.PI / 3;
+
+    for (const layer of layers) {
+      const el = newOverlayDiv(
+        `left:${cx + layer.ox - layer.w / 2}px;` +
+        `top:${cy + layer.oy - layer.h / 2}px;` +
+        `width:${layer.w}px;height:${layer.h}px;` +
+        `background:${layer.bg};` +
+        `mix-blend-mode:${layer.blend};` +
+        `opacity:0;`
+      );
+      const keys = [];
+      for (let j = 0; j <= N; j++) {
+        const t   = j / N;
+        const tau = t * totalMs / 1000;
+
+        // Main Lissajous position (shared across layers via the
+        // same formula — sub-layer wander is added below).
+        const mainX = xAmp * Math.sin(2 * Math.PI * xFreq * tau + xPhase);
+        const mainY = yAmp * Math.sin(2 * Math.PI * yFreq * tau + yPhase);
+        // Per-layer micro-wander so the layers drift relative to one
+        // another, breaking the otherwise-uniform glow into a shape
+        // that visibly shifts as it travels.
+        const wX = layer.wanderAmp *
+                   Math.sin(2 * Math.PI * layer.wanderFreq * tau + layer.wanderPhase);
+        const wY = layer.wanderAmp *
+                   Math.cos(2 * Math.PI * layer.wanderFreq * tau + layer.wanderPhase);
+
+        const sc = 1 + layer.sizeAmp *
+                       Math.sin(2 * Math.PI * layer.sizeFreq * tau + layer.sizePhase);
+        const opSin = 0.5 + 0.5 *
+                            Math.sin(2 * Math.PI * layer.opFreq * tau + layer.opPhase);
+        const op = layer.opBase + layer.opAmp * (opSin - 0.5) * 2;
+
+        // Outer envelope: fade in over first 8%, hold, fade out.
+        let env = 1;
+        if      (t < 0.08) env = t / 0.08;
+        else if (t > 0.92) env = (1 - t) / 0.08;
+
+        keys.push({
+          transform: `translate(${(mainX + wX).toFixed(2)}px, ${(mainY + wY).toFixed(2)}px) scale(${sc.toFixed(3)})`,
+          opacity:   Math.max(0, op * env).toFixed(4),
+          offset:    parseFloat(t.toFixed(6))
+        });
+      }
+      trackAnim(el.animate(keys, { duration: totalMs, fill: 'forwards' }));
     }
 
-    trackAnim(lantern.animate(lanternKeys, { duration: totalMs, fill: 'forwards' }));
-    trackAnim(dim.animate(    dimKeys,     { duration: totalMs, fill: 'forwards' }));
     await sleep(totalMs);
   }
 
@@ -878,26 +957,110 @@
     await sleep((positions.length - 1) * stagger + lifeMs + 140);
   }
 
-  // ---- 18 The Moon : blue-tinted shimmer wave -----------------------
+  // ---- 18 The Moon : four chaotic white tides ------------------------
+  // Four SVG path bands sweep across the card. Each band is a tall
+  // vertical strip whose left and right edges are sinusoidally
+  // warped (path vertices computed from sin(2π·waves·y/h + phase) at
+  // 40 samples), so the band's silhouette is a wavy ribbon rather
+  // than a rectangle. Each band has its own wave count, amplitude,
+  // phase, width, speed, and direction — they overlap in changing
+  // ways, never quite aligning, giving the chaotic "tide" feeling.
+  // All use mix-blend-mode: screen with pale-white gradients.
   async function moonShimmer(imgEl) {
     const cr = getContentRect(imgEl);
-    const wave = newOverlayDiv(
-      `left:${cr.left}px;top:${cr.top}px;width:${cr.width}px;height:${cr.height}px;` +
-      `background:linear-gradient(90deg,transparent 0%,rgba(120,160,210,0.36) 45%,rgba(140,180,230,0.52) 50%,rgba(120,160,210,0.36) 55%,transparent 100%);` +
-      `mix-blend-mode:screen;`
-    );
-    trackAnim(wave.animate([
-      { transform: 'translateX(-100%)', opacity: 0 },
-      { transform: 'translateX(-25%)',  opacity: 1, offset: 0.22 },
-      { transform: 'translateX(55%)',   opacity: 1, offset: 0.75 },
-      { transform: 'translateX(100%)',  opacity: 0 }
-    ], { duration: 1100, easing: 'cubic-bezier(0.45, 0.05, 0.55, 0.95)', fill: 'forwards' }));
+    const totalMs = 2400;
+
+    // Slight cool tint on the card while the tides move across.
     trackAnim(imgEl.animate([
-      { filter: 'hue-rotate(0deg) saturate(1)' },
-      { filter: 'hue-rotate(-10deg) saturate(0.88)', offset: 0.5 },
-      { filter: 'hue-rotate(0deg) saturate(1)' }
-    ], { duration: 1100, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'none' }));
-    await sleep(1100);
+      { filter: 'hue-rotate(0deg)   saturate(1)' },
+      { filter: 'hue-rotate(-12deg) saturate(0.88)', offset: 0.5 },
+      { filter: 'hue-rotate(0deg)   saturate(1)' }
+    ], { duration: totalMs, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'none' }));
+
+    // Band configs — different shapes (waves, amp), different speeds,
+    // mixed directions (some LTR, some RTL) for the chaotic feel.
+    const bands = [
+      { width: cr.width * 0.18, waves: 3.2, amp: 14, dur: 1700, delay:   0, dir:  1, color: '230,240,255' },
+      { width: cr.width * 0.12, waves: 4.6, amp: 10, dur: 2000, delay: 260, dir:  1, color: '215,228,250' },
+      { width: cr.width * 0.22, waves: 2.7, amp: 16, dur: 1900, delay: 540, dir: -1, color: '225,238,255' },
+      { width: cr.width * 0.15, waves: 3.8, amp: 12, dur: 2100, delay: 820, dir: -1, color: '220,234,255' }
+    ];
+
+    for (let i = 0; i < bands.length; i++) {
+      const cfg = bands[i];
+      const phaseL = Math.random() * Math.PI * 2;
+      const phaseR = Math.random() * Math.PI * 2;
+
+      // Inset the SVG's bounds so the wave amplitude has room outside
+      // the band's nominal width without clipping.
+      const A     = cfg.amp + 4;
+      const svgW  = cfg.width + 2 * A;
+
+      // The band's starting screen position: just off the leading
+      // edge of the card so it can fully enter from one side.
+      const enterLeft = cr.left - svgW;
+      const enterRight = cr.left + cr.width;
+      const startX = (cfg.dir > 0) ? enterLeft  : enterRight;
+      const endX   = (cfg.dir > 0) ? enterRight : enterLeft;
+
+      const svg = svgEl('svg');
+      svg.setAttribute('viewBox', `0 0 ${svgW} ${cr.height}`);
+      svg.style.cssText =
+        `position:fixed;left:${startX}px;top:${cr.top}px;` +
+        `width:${svgW}px;height:${cr.height}px;` +
+        `pointer-events:none;z-index:40;` +
+        `mix-blend-mode:screen;` +
+        `overflow:visible;opacity:0;`;
+
+      // Build the wavy band path. Center line at x = svgW/2; each
+      // edge is offset by ±width/2 then warped by sin(...).
+      const N = 40;
+      const cxLocal = svgW / 2;
+      let d = '';
+      for (let j = 0; j <= N; j++) {
+        const y = (j / N) * cr.height;
+        const wave = Math.sin(2 * Math.PI * cfg.waves * (y / cr.height) + phaseL);
+        const x = cxLocal - cfg.width / 2 + cfg.amp * wave;
+        d += (j === 0 ? 'M ' : 'L ') + x.toFixed(2) + ' ' + y.toFixed(2) + ' ';
+      }
+      for (let j = N; j >= 0; j--) {
+        const y = (j / N) * cr.height;
+        const wave = Math.sin(2 * Math.PI * cfg.waves * (y / cr.height) + phaseR);
+        const x = cxLocal + cfg.width / 2 + cfg.amp * wave;
+        d += 'L ' + x.toFixed(2) + ' ' + y.toFixed(2) + ' ';
+      }
+      d += 'Z';
+
+      // Horizontal gradient: transparent → soft white → transparent
+      // so the band's edges feather rather than slamming on/off.
+      const gradId = `moon-tide-${i}-${(Math.random() * 99999) | 0}`;
+      const defs = svgEl('defs');
+      const grad = svgEl('linearGradient', {
+        id: gradId, x1: '0%', y1: '50%', x2: '100%', y2: '50%'
+      });
+      grad.appendChild(svgEl('stop', { offset: '0%',   'stop-color': `rgba(${cfg.color},0)` }));
+      grad.appendChild(svgEl('stop', { offset: '50%',  'stop-color': `rgba(${cfg.color},0.92)` }));
+      grad.appendChild(svgEl('stop', { offset: '100%', 'stop-color': `rgba(${cfg.color},0)` }));
+      defs.appendChild(grad);
+      svg.appendChild(defs);
+
+      const path = svgEl('path', { d: d, fill: `url(#${gradId})` });
+      svg.appendChild(path);
+      trackEl(svg); document.body.appendChild(svg);
+
+      const dx = endX - startX;
+      setTimeout(() => {
+        if (!svg.parentNode) return;
+        trackAnim(svg.animate([
+          { transform: 'translateX(0)',       opacity: 0 },
+          { transform: 'translateX(0)',       opacity: 0.9, offset: 0.07 },
+          { transform: `translateX(${dx}px)`, opacity: 0.9, offset: 0.93 },
+          { transform: `translateX(${dx}px)`, opacity: 0 }
+        ], { duration: cfg.dur, easing: 'cubic-bezier(0.45, 0.05, 0.55, 0.95)', fill: 'forwards' }));
+      }, cfg.delay);
+    }
+
+    await sleep(totalMs);
   }
 
   // ---- 19 The Sun : starburst bloom with radial rays ----------------
@@ -941,39 +1104,84 @@
     // they appear to emanate FROM the bloom rather than alongside it.
     await sleep(280);
 
-    // Sixteen radial rays as SVG <line> elements rotated around the
-    // card center. The whole assembly scales and rotates slightly so
-    // the rays read as alive, not static.
+    // Twenty radial rays around the card center. Each ray gets its
+    // own pre-computed animation driven by two independent sine
+    // waves: one controls length-scale (the ray pulses longer and
+    // shorter), the other controls opacity (the ray flares and
+    // dims). Different frequency multipliers and phase offsets per
+    // ray mean no two rays are doing the same thing at the same
+    // moment — the field shimmers chaotically rather than rotating
+    // as a rigid wheel.
+    //
+    // Length scale is achieved with scaleY on the line element,
+    // anchored at the inner endpoint via transform-origin so the
+    // ray grows outward (toward the viewport edge) rather than
+    // stretching from its center.
     const raySvg = svgEl('svg');
     raySvg.style.cssText =
       `position:fixed;left:${cx}px;top:${cy}px;` +
       `width:1px;height:1px;overflow:visible;` +
       `pointer-events:none;z-index:40;`;
-    const numRays = 16;
-    const rayLen   = maxDim * 0.95;
-    const rayInner = maxDim * 0.16;
+    document.body.appendChild(raySvg);
+    trackEl(raySvg);
+
+    const numRays  = 20;
+    const rayMax   = maxDim * 1.05;  // length when scaleY = 1
+    const rayInner = maxDim * 0.13;
+    const rayMs    = 1300;
+    const N        = 36;
+
     for (let i = 0; i < numRays; i++) {
       const angle = (i / numRays) * 360;
       const ray = svgEl('line', {
         x1: 0, y1: -rayInner,
-        x2: 0, y2: -(rayInner + rayLen),
-        stroke: 'rgba(255,235,170,0.85)',
-        'stroke-width': 2.5,
-        'stroke-linecap': 'round',
-        transform: `rotate(${angle})`
+        x2: 0, y2: -(rayInner + rayMax),
+        stroke: 'rgba(255,238,175,0.95)',
+        'stroke-width': 2.4 + Math.random() * 1.2,  // slight thickness variance
+        'stroke-linecap': 'round'
       });
-      ray.style.filter = 'drop-shadow(0 0 8px rgba(255,220,120,0.9))';
+      ray.style.filter = 'drop-shadow(0 0 8px rgba(255,220,120,0.95))';
+      ray.style.transformOrigin = `0px ${-rayInner}px`;
+      ray.style.transformBox = 'fill-box'; // SVG transforms apply in user-space
       raySvg.appendChild(ray);
-    }
-    trackEl(raySvg); document.body.appendChild(raySvg);
-    trackAnim(raySvg.animate([
-      { transform: 'scale(0.25) rotate(0deg)',  opacity: 0   },
-      { transform: 'scale(1.00) rotate(16deg)', opacity: 1,   offset: 0.32 },
-      { transform: 'scale(1.18) rotate(30deg)', opacity: 0.7, offset: 0.66 },
-      { transform: 'scale(1.45) rotate(46deg)', opacity: 0 }
-    ], { duration: 1180, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }));
 
-    await sleep(1220);
+      // Per-ray sin parameters.
+      const phaseA  = (i / numRays) * Math.PI * 4 + (i % 5) * 0.7;
+      const phaseB  =  phaseA + 1.1;
+      const freqA   = 1.6 + (i % 4) * 0.55;  // length pulse frequency
+      const freqB   = 1.2 + (i % 3) * 0.45;  // opacity pulse frequency
+
+      const keys = [];
+      for (let j = 0; j <= N; j++) {
+        const t   = j / N;
+        const tau = t * rayMs / 1000;
+        // Length scale: oscillates between ~0.45 and ~1.05.
+        const lenScale = 0.50 + 0.55 *
+                                (0.5 + 0.5 * Math.sin(2 * Math.PI * freqA * tau + phaseA));
+        // Opacity: oscillates between ~0.30 and ~1.00.
+        const opSin = 0.5 + 0.5 * Math.sin(2 * Math.PI * freqB * tau + phaseB);
+        const op = 0.30 + 0.70 * opSin;
+        // Outer envelope: fade in over 12%, fade out over 18%.
+        let env = 1;
+        if      (t < 0.12) env = t / 0.12;
+        else if (t > 0.82) env = (1 - t) / 0.18;
+        keys.push({
+          transform: `rotate(${angle}deg) scaleY(${lenScale.toFixed(4)})`,
+          opacity:   Math.max(0, op * env).toFixed(4),
+          offset:    parseFloat(t.toFixed(6))
+        });
+      }
+      trackAnim(ray.animate(keys, { duration: rayMs, fill: 'forwards' }));
+    }
+
+    // The whole assembly also drifts a small angle so the shimmer
+    // isn't perfectly stationary — atmosphere, not motion.
+    trackAnim(raySvg.animate([
+      { transform: 'rotate(0deg)' },
+      { transform: 'rotate(10deg)' }
+    ], { duration: rayMs, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'forwards' }));
+
+    await sleep(rayMs);
   }
 
   // ---- 20 Judgement : bell-tone hum (vertical scale ringing) --------
