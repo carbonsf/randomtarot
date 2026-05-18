@@ -1253,131 +1253,149 @@
     await sleep(totalMs);
   }
 
-  // ---- 19 The Sun : starburst bloom with radial rays ----------------
-  // The central bloom is bigger and bolder than the original; on top
-  // of it, sixteen radial rays project outward from the card center
-  // (an SVG starburst), rotating slightly as they extend. The card
-  // brightens and saturates significantly at the peak. Longer than
-  // before for full sunrise gravitas.
+  // ---- 19 The Sun : punch out the sun, brighten and shake it --------
+  // The Sun (Rider-Waite, maj19) has its actual sun in the upper-
+  // center of the card. We clone the card image, clip it to a
+  // circular region at the sun's known location, and layer the
+  // clone over the original with mix-blend-mode: screen so the
+  // sun area ADDS to its already-bright pixels. The clone is then
+  // shaken (multi-frequency sin combinations for nervous energy),
+  // its filter brightened and saturated, and given two drop-shadows
+  // (inner tight + outer wide) that supply a glowing halo extending
+  // beyond the clipped circle. From the sun's edge, sixteen
+  // sparkles emanate outward at randomized angles, drifting and
+  // twinkling as they go. Total ~1700ms.
   async function sunBloom(imgEl) {
     const cr = getContentRect(imgEl);
-    const cx = cr.left + cr.width / 2;
-    const cy = cr.top  + cr.height / 2;
-    const maxDim = Math.max(cr.width, cr.height);
+    const src = imgEl.src;
+    const totalMs = 1700;
 
-    // Inner bloom — bigger and more saturated than the prior version.
-    const bloomSize = maxDim * 1.6;
-    const bloom = newOverlayDiv(
-      `left:${cx}px;top:${cy}px;` +
-      `width:${bloomSize}px;height:${bloomSize}px;` +
-      `margin:${-bloomSize / 2}px 0 0 ${-bloomSize / 2}px;border-radius:50%;` +
-      `background:radial-gradient(circle,rgba(255,240,170,0.95) 0%,rgba(255,210,100,0.55) 14%,rgba(255,170,50,0.28) 32%,transparent 58%);` +
-      `mix-blend-mode:screen;`
-    );
-    trackAnim(bloom.animate([
-      { transform: 'scale(0.05)', opacity: 0 },
-      { transform: 'scale(0.40)', opacity: 1,   offset: 0.22 },
-      { transform: 'scale(0.85)', opacity: 1,   offset: 0.50 },
-      { transform: 'scale(1.10)', opacity: 0.5, offset: 0.78 },
-      { transform: 'scale(1.40)', opacity: 0 }
-    ], { duration: 1500, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }));
+    // Known location of the sun on the Rider-Waite Sun card: roughly
+    // centered horizontally, in the upper third vertically.
+    const sunCxFrac = 0.50;
+    const sunCyFrac = 0.25;
+    const sunRFrac  = 0.24;   // radius as fraction of card width
+    const sunCx = cr.left + cr.width  * sunCxFrac;
+    const sunCy = cr.top  + cr.height * sunCyFrac;
+    const sunR  = cr.width * sunRFrac;
 
-    // Card itself: stronger brightness/saturation lift at the peak.
+    // === Clone the card, clipped to the sun. ===
+    const sunClip = `circle(${sunR}px at ${(sunCxFrac * 100).toFixed(1)}% ${(sunCyFrac * 100).toFixed(1)}%)`;
+    const sunClone = document.createElement('img');
+    sunClone.src = src;
+    sunClone.style.cssText =
+      `position:fixed;` +
+      `left:${cr.left}px;top:${cr.top}px;` +
+      `width:${cr.width}px;height:${cr.height}px;` +
+      `object-fit:fill;` +
+      `clip-path:${sunClip};` +
+      `-webkit-clip-path:${sunClip};` +
+      `mix-blend-mode:screen;` +
+      `pointer-events:none;` +
+      `z-index:40;` +
+      `opacity:0;` +
+      `will-change:transform,filter,opacity;`;
+    trackEl(sunClone);
+    document.body.appendChild(sunClone);
+
+    // === Shake / brighten / glow the punched sun. ===
+    // Dense keyframes (80 over 1700ms ≈ every 21ms) so the 5-8 Hz
+    // shake is sampled finely enough to read as continuous jitter
+    // rather than steps. Two sin waves per axis at non-commensurate
+    // frequencies sum into chaotic-but-organic nervous motion.
+    const N = 80;
+    const sunKeys = [];
+    for (let i = 0; i <= N; i++) {
+      const t   = i / N;
+      const tau = t * totalMs / 1000;
+      const dx = 2.6 * Math.sin(2 * Math.PI * 5.0 * tau) +
+                 1.4 * Math.sin(2 * Math.PI * 7.5 * tau + 1.2);
+      const dy = 2.1 * Math.sin(2 * Math.PI * 6.0 * tau + 0.7) +
+                 1.1 * Math.sin(2 * Math.PI * 8.5 * tau + 2.1);
+      const sc = 1 + 0.025 * Math.sin(2 * Math.PI * 3.5 * tau);
+      const brightness = 1.35 + 0.22 *
+                                (0.5 + 0.5 * Math.sin(2 * Math.PI * 3.5 * tau + 0.5));
+      const saturate   = 1.30 + 0.18 *
+                                (0.5 + 0.5 * Math.sin(2 * Math.PI * 3.0 * tau + 1.0));
+      // Glow halos pulse on their own slower rhythms so the bloom
+      // breathes around the shaking shape.
+      const innerR = 18 + 8  * Math.sin(2 * Math.PI * 2.5 * tau);
+      const outerR = 44 + 18 * Math.sin(2 * Math.PI * 1.8 * tau + 0.9);
+      let env = 1;
+      if      (t < 0.10) env = t / 0.10;
+      else if (t > 0.86) env = (1 - t) / 0.14;
+      sunKeys.push({
+        transform: `translate(${(dx * env).toFixed(2)}px, ${(dy * env).toFixed(2)}px) scale(${sc.toFixed(4)})`,
+        filter:    `brightness(${(1 + (brightness - 1) * env).toFixed(3)}) ` +
+                   `saturate(${(1 + (saturate - 1) * env).toFixed(3)}) ` +
+                   `drop-shadow(0 0 ${innerR.toFixed(1)}px rgba(255,225,140,${(0.88 * env).toFixed(3)})) ` +
+                   `drop-shadow(0 0 ${outerR.toFixed(1)}px rgba(255,190,80,${(0.55 * env).toFixed(3)}))`,
+        opacity:   env.toFixed(4),
+        offset:    parseFloat(t.toFixed(6))
+      });
+    }
+    trackAnim(sunClone.animate(sunKeys, { duration: totalMs, fill: 'forwards' }));
+
+    // Card itself: a smaller overall brightness/saturation lift so
+    // the rest of the card still feels touched by the sun's
+    // intensity without competing with the punched-out shape.
     trackAnim(imgEl.animate([
       { filter: 'brightness(1)    saturate(1)' },
-      { filter: 'brightness(1.30) saturate(1.34)', offset: 0.40 },
-      { filter: 'brightness(1.12) saturate(1.18)', offset: 0.70 },
+      { filter: 'brightness(1.10) saturate(1.14)', offset: 0.45 },
       { filter: 'brightness(1)    saturate(1)' }
-    ], { duration: 1500, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'none' }));
+    ], { duration: totalMs, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'none' }));
 
-    // Wait briefly for the bloom to begin, then launch the rays so
-    // they appear to emanate FROM the bloom rather than alongside it.
-    await sleep(280);
+    // === Sparkles emanating from the sun's edge. ===
+    // Each starts just inside the sun's edge, drifts outward to a
+    // randomized end distance, twinkles in scale + rotates, and
+    // fades. Stagger launches throughout most of the duration so
+    // the sparkles read as continuous emission, not a single salvo.
+    const numSparkles = 18;
+    for (let i = 0; i < numSparkles; i++) {
+      const angle      = Math.random() * Math.PI * 2;
+      const startDist  = sunR * (0.86 + Math.random() * 0.12);
+      const endDist    = sunR * (1.35 + Math.random() * 0.7);
+      const sx = sunCx + Math.cos(angle) * startDist;
+      const sy = sunCy + Math.sin(angle) * startDist;
+      const dx = (endDist - startDist) * Math.cos(angle);
+      const dy = (endDist - startDist) * Math.sin(angle);
+      const size = 6 + Math.random() * 5;
+      const spinDir = Math.random() < 0.5 ? 1 : -1;
 
-    // Effervescent ray-bursts. Instead of a static field of rays
-    // oscillating in place, we LAUNCH individual rays one after
-    // another over the duration of the effect — each one grows out
-    // from the center, holds briefly, and fades. Different lengths,
-    // durations, stroke widths, and angles per ray. The result is
-    // a continuous bubbling-up of light spikes rather than a wheel
-    // pulsing in place — champagne for the sun.
-    //
-    // Angles are stratified across 24 sectors so coverage is even
-    // around the full 360, but each ray's actual angle is jittered
-    // within its sector so the pattern never looks regular.
-    const raySvg = svgEl('svg');
-    raySvg.style.cssText =
-      `position:fixed;left:${cx}px;top:${cy}px;` +
-      `width:1px;height:1px;overflow:visible;` +
-      `pointer-events:none;z-index:40;`;
-    document.body.appendChild(raySvg);
-    trackEl(raySvg);
+      // 4-point star sparkle, like the Star card but smaller and
+      // tinted gold/cream to match the Sun's palette.
+      const svg = svgEl('svg');
+      svg.style.cssText =
+        `position:fixed;left:${sx}px;top:${sy}px;` +
+        `width:1px;height:1px;overflow:visible;` +
+        `pointer-events:none;z-index:41;opacity:0;`;
+      const s = size;
+      const sparkle = svgEl('path', {
+        d: `M0 ${-s} L${s * 0.20} ${-s * 0.20} L${s} 0 L${s * 0.20} ${s * 0.20} ` +
+           `L0 ${s} L${-s * 0.20} ${s * 0.20} L${-s} 0 L${-s * 0.20} ${-s * 0.20} Z`,
+        fill: 'rgba(255,248,200,1)'
+      });
+      sparkle.style.filter =
+        'drop-shadow(0 0 9px rgba(255,225,130,0.92)) ' +
+        'drop-shadow(0 0 3px rgba(255,250,220,1))';
+      svg.appendChild(sparkle);
+      trackEl(svg); document.body.appendChild(svg);
 
-    const rayInner   = maxDim * 0.13;
-    const rayMaxBase = maxDim * 1.05;
-    const numRays    = 64;          // total bursts over the duration
-    const launchSpan = 1300;        // ms over which to spread launches
-    const sectorN    = 24;          // angle sectors for stratification
-
-    for (let i = 0; i < numRays; i++) {
-      // Stagger the launch times. Slight jitter so the bursts aren't
-      // metronomic.
-      const launchAt = 60 + (i / numRays) * launchSpan + Math.random() * 50;
-
-      // Stratified angle: cycle through sectors so coverage is even
-      // even with fewer rays per sector, then jitter within sector.
-      const sectorIdx    = i % sectorN;
-      const sectorBase   = (sectorIdx / sectorN) * 360;
-      const sectorWidth  = 360 / sectorN;
-      const angle        = sectorBase + (Math.random() - 0.5) * sectorWidth * 0.85;
-
-      // Per-ray geometry / timing.
-      const lifeMs   = 520 + Math.random() * 360;
-      const maxLen   = rayMaxBase * (0.45 + Math.random() * 0.65);
-      const strokeW  = 1.6 + Math.random() * 1.8;
-      const opPeak   = 0.75 + Math.random() * 0.25;
-      // Tone shift toward gold or pale-white per ray for variety.
-      const warmHue  = 'rgba(255,' + (220 + ((Math.random() * 30) | 0)) +
-                       ',' + (140 + ((Math.random() * 60) | 0)) + ',0.95)';
+      const lifeMs  = 580 + Math.random() * 380;
+      const startAt = 180 + Math.random() * (totalMs - 850);
 
       setTimeout(() => {
-        if (!raySvg.parentNode) return;
-
-        const ray = svgEl('line', {
-          x1: 0, y1: -rayInner,
-          x2: 0, y2: -(rayInner + maxLen),
-          stroke: warmHue,
-          'stroke-width': strokeW,
-          'stroke-linecap': 'round'
-        });
-        ray.style.filter = 'drop-shadow(0 0 8px rgba(255,220,120,0.95))';
-        ray.style.transformOrigin = `0px ${-rayInner}px`;
-        ray.style.transformBox = 'fill-box';
-        raySvg.appendChild(ray);
-
-        // Life cycle: rapid emergence (scaleY 0 -> 1, opacity 0 -> peak),
-        // brief sustain at full length, dissolution (opacity to 0,
-        // scaleY trimming back slightly as the ray "pinches off").
-        const a = ray.animate([
-          { transform: `rotate(${angle}deg) scaleY(0.04)`, opacity: 0      },
-          { transform: `rotate(${angle}deg) scaleY(1.00)`, opacity: opPeak, offset: 0.22 },
-          { transform: `rotate(${angle}deg) scaleY(1.00)`, opacity: opPeak, offset: 0.55 },
-          { transform: `rotate(${angle}deg) scaleY(0.72)`, opacity: 0      }
-        ], { duration: lifeMs, easing: 'cubic-bezier(0.30, 1.05, 0.50, 1)', fill: 'forwards' });
-        trackAnim(a);
-
-        // Remove the line when its life ends so the SVG doesn't
-        // accumulate 64 finished children. Guarded against the case
-        // where the parent SVG was removed by cancelMajorEffect.
-        a.addEventListener('finish', () => {
-          if (ray.parentNode) ray.parentNode.removeChild(ray);
-        });
-      }, launchAt);
+        if (!svg.parentNode) return;
+        trackAnim(svg.animate([
+          { opacity: 0,    transform: 'translate(0,0) scale(0.2) rotate(0deg)' },
+          { opacity: 1,    transform: `translate(${(dx * 0.30).toFixed(1)}px, ${(dy * 0.30).toFixed(1)}px) scale(1.45) rotate(${spinDir * 30}deg)`, offset: 0.30 },
+          { opacity: 0.72, transform: `translate(${(dx * 0.70).toFixed(1)}px, ${(dy * 0.70).toFixed(1)}px) scale(1.18) rotate(${spinDir * 60}deg)`, offset: 0.62 },
+          { opacity: 0,    transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(0.5) rotate(${spinDir * 95}deg)` }
+        ], { duration: lifeMs, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }));
+      }, startAt);
     }
 
-    // Wait long enough for the last ray-burst to finish (latest
-    // launchAt + max lifeMs).
-    await sleep(60 + launchSpan + 50 + 880 + 60);
+    await sleep(totalMs + 100);
   }
 
   // ---- 20 Judgement : bell-tone hum (vertical scale ringing) --------
