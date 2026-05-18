@@ -34,7 +34,14 @@ const REVERSAL_DELAY_MS = 500;
 // `deck` is the set of card indices not yet drawn this shuffle. When it
 // empties we reshuffle (auto-visualized as a settle), or the querent can
 // reshuffle manually via long-press on the back.
-const DECK_SIZE = 78;
+//
+// TESTING_MAJOR_ONLY: when true, the deck only contains the 22 Major
+// Arcana (indices 0-21 of allCards). Set false to restore the full 78-
+// card deck. Reversal rate (1/78) is unchanged either way — Majors can
+// still reverse and skip their signature effect.
+// TODO: REVERT this flag to false before going back to production.
+const TESTING_MAJOR_ONLY = true;
+const DECK_SIZE = TESTING_MAJOR_ONLY ? 22 : 78;
 function freshDeck() {
   return Array.from({ length: DECK_SIZE }, (_, i) => i);
 }
@@ -323,6 +330,14 @@ async function drawCard(imgEl, event, allCards) {
     if (!reversal) {
       // Normal upright draw — release the input gate after the reveal.
       setTimeout(() => { drawing = false; }, 260);
+      // If this is a Major Arcana card (and not reversed), schedule the
+      // card's signature effect: a polished, themed moment that plays
+      // 1200ms after the reveal. Start/end states are the normal card.
+      // Any tap or long-press before/during the effect cancels it via
+      // setDownToBack / openInfoOverlay calling MajorArcanaSignature.cancel().
+      if (window.MajorArcanaSignature && window.MajorArcanaSignature.isMajor(currentCardName)) {
+        window.MajorArcanaSignature.schedule(imgEl, currentCardName, 1200);
+      }
     } else {
       // Reversal: hold the input gate through the 500ms beat and the
       // full glitch sequence so taps during the breakdown are ignored.
@@ -345,6 +360,10 @@ function cardNameFromUrl(url) {
 // the back, which fades in crisply. Qualitatively different from the draw
 // (vertical, not depth; firmer easing; no scale).
 async function setDownToBack(imgEl) {
+  // Cancel any pending or in-flight Major Arcana signature effect so it
+  // can't keep painting over a card that's no longer on screen.
+  if (window.MajorArcanaSignature) window.MajorArcanaSignature.cancel();
+
   // Make sure the back is in cache before we start the motion, so the
   // swap is instant and the fade-in is smooth.
   await preloadImage(BACK_SRC);
@@ -544,6 +563,11 @@ let infoOverlayOpen = false;
 function openInfoOverlay(imgEl) {
   const overlay = document.getElementById("info-overlay");
   if (!overlay) return;
+
+  // Cancel any Major Arcana signature in flight — the .muted filter
+  // we're about to apply would otherwise fight whatever filter the
+  // effect is animating.
+  if (window.MajorArcanaSignature) window.MajorArcanaSignature.cancel();
 
   infoOverlayOpen = true;
 
