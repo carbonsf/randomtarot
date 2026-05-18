@@ -1253,34 +1253,50 @@
     await sleep(totalMs);
   }
 
-  // ---- 19 The Sun : punch out the sun, brighten and shake it --------
-  // The Sun (Rider-Waite, maj19) has its actual sun in the upper-
-  // center of the card. We clone the card image, clip it to a
-  // circular region at the sun's known location, and layer the
-  // clone over the original with mix-blend-mode: screen so the
-  // sun area ADDS to its already-bright pixels. The clone is then
-  // shaken (multi-frequency sin combinations for nervous energy),
-  // its filter brightened and saturated, and given two drop-shadows
-  // (inner tight + outer wide) that supply a glowing halo extending
-  // beyond the clipped circle. From the sun's edge, sixteen
-  // sparkles emanate outward at randomized angles, drifting and
-  // twinkling as they go. Total ~1700ms.
+  // ---- 19 The Sun : punch out the sun, soft warmth and drifting embers
+  // Same structural idea as before — punch out the actual sun region
+  // of the Rider-Waite card — but tuned for warmth instead of energy:
+  //
+  //   - SOFT EDGE via mask-image: the disc fades at its rim (radial
+  //     gradient 60% white -> 100% transparent), so it reads as a
+  //     glow rather than a cut-out shape.
+  //
+  //   - BLUR(3px) in the filter chain: softens both the image
+  //     content inside the disc and the mask edge, removing any
+  //     "this is a clone of the pixels" feel.
+  //
+  //   - THREE layered drop-shadows in progressively wider, warmer
+  //     amber tones (inner 30+px, middle 70+px, outer 130+px). The
+  //     halo extends far past the disc.
+  //
+  //   - SLOW breathing motion at 0.5-0.9 Hz instead of 5-8 Hz jitter.
+  //     Single-frequency, low amplitude. The sun gently shifts and
+  //     swells rather than vibrating.
+  //
+  //   - DRIFTING EMBERS: round warm dots (radial gradient + warm
+  //     box-shadow) instead of 4-point star sparkles. Longer
+  //     lifetimes, slow ease-out drift outward with a slight upward
+  //     bias as if warm air were carrying them.
   async function sunBloom(imgEl) {
     const cr = getContentRect(imgEl);
     const src = imgEl.src;
-    const totalMs = 1700;
+    const totalMs = 1900;
 
-    // Known location of the sun on the Rider-Waite Sun card: roughly
-    // centered horizontally, in the upper third vertically.
     const sunCxFrac = 0.50;
     const sunCyFrac = 0.25;
-    const sunRFrac  = 0.24;   // radius as fraction of card width
+    const sunRFrac  = 0.24;
     const sunCx = cr.left + cr.width  * sunCxFrac;
     const sunCy = cr.top  + cr.height * sunCyFrac;
     const sunR  = cr.width * sunRFrac;
 
-    // === Clone the card, clipped to the sun. ===
-    const sunClip = `circle(${sunR}px at ${(sunCxFrac * 100).toFixed(1)}% ${(sunCyFrac * 100).toFixed(1)}%)`;
+    // Soft-edged mask: opaque (visible) through 60% of the radius,
+    // feathering to transparent (hidden) at 100%. `white` works in
+    // both alpha and luminance mask modes — safer cross-browser.
+    const sunMask =
+      `radial-gradient(circle ${sunR}px at ` +
+      `${(sunCxFrac * 100).toFixed(1)}% ${(sunCyFrac * 100).toFixed(1)}%, ` +
+      `white 60%, transparent 100%)`;
+
     const sunClone = document.createElement('img');
     sunClone.src = src;
     sunClone.style.cssText =
@@ -1288,8 +1304,8 @@
       `left:${cr.left}px;top:${cr.top}px;` +
       `width:${cr.width}px;height:${cr.height}px;` +
       `object-fit:fill;` +
-      `clip-path:${sunClip};` +
-      `-webkit-clip-path:${sunClip};` +
+      `mask-image:${sunMask};` +
+      `-webkit-mask-image:${sunMask};` +
       `mix-blend-mode:screen;` +
       `pointer-events:none;` +
       `z-index:40;` +
@@ -1298,100 +1314,95 @@
     trackEl(sunClone);
     document.body.appendChild(sunClone);
 
-    // === Shake / brighten / glow the punched sun. ===
-    // Dense keyframes (80 over 1700ms ≈ every 21ms) so the 5-8 Hz
-    // shake is sampled finely enough to read as continuous jitter
-    // rather than steps. Two sin waves per axis at non-commensurate
-    // frequencies sum into chaotic-but-organic nervous motion.
-    const N = 80;
+    // Gentle breathing + slow warm-glow pulse. Only 48 keyframes
+    // because everything is sub-1 Hz; sparser sampling is fine.
+    const N = 48;
     const sunKeys = [];
     for (let i = 0; i <= N; i++) {
       const t   = i / N;
       const tau = t * totalMs / 1000;
-      const dx = 2.6 * Math.sin(2 * Math.PI * 5.0 * tau) +
-                 1.4 * Math.sin(2 * Math.PI * 7.5 * tau + 1.2);
-      const dy = 2.1 * Math.sin(2 * Math.PI * 6.0 * tau + 0.7) +
-                 1.1 * Math.sin(2 * Math.PI * 8.5 * tau + 2.1);
-      const sc = 1 + 0.025 * Math.sin(2 * Math.PI * 3.5 * tau);
-      const brightness = 1.35 + 0.22 *
-                                (0.5 + 0.5 * Math.sin(2 * Math.PI * 3.5 * tau + 0.5));
-      const saturate   = 1.30 + 0.18 *
-                                (0.5 + 0.5 * Math.sin(2 * Math.PI * 3.0 * tau + 1.0));
-      // Glow halos pulse on their own slower rhythms so the bloom
-      // breathes around the shaking shape.
-      const innerR = 18 + 8  * Math.sin(2 * Math.PI * 2.5 * tau);
-      const outerR = 44 + 18 * Math.sin(2 * Math.PI * 1.8 * tau + 0.9);
+      // Soft drift on x/y (single frequency each, low amplitude).
+      const dx = 1.6 * Math.sin(2 * Math.PI * 0.65 * tau);
+      const dy = 1.3 * Math.sin(2 * Math.PI * 0.50 * tau + 0.5);
+      // Gentle scale breathing.
+      const sc = 1 + 0.048 * Math.sin(2 * Math.PI * 0.45 * tau);
+      // Brightness / saturation pulse slowly.
+      const brightness = 1.28 + 0.16 *
+                                (0.5 + 0.5 * Math.sin(2 * Math.PI * 0.75 * tau + 0.5));
+      const saturate   = 1.22 + 0.14 *
+                                (0.5 + 0.5 * Math.sin(2 * Math.PI * 0.60 * tau + 1.0));
+      // Three layered halos, each on its own slow rhythm so they
+      // expand and contract independently — the warmth feels alive,
+      // not metronomic. Progressively warmer as the radius grows.
+      const innerR  = 30  + 12 * Math.sin(2 * Math.PI * 0.85 * tau);
+      const middleR = 72  + 22 * Math.sin(2 * Math.PI * 0.62 * tau + 0.9);
+      const outerR  = 132 + 38 * Math.sin(2 * Math.PI * 0.45 * tau + 1.6);
       let env = 1;
-      if      (t < 0.10) env = t / 0.10;
-      else if (t > 0.86) env = (1 - t) / 0.14;
+      if      (t < 0.14) env = t / 0.14;
+      else if (t > 0.82) env = (1 - t) / 0.18;
       sunKeys.push({
         transform: `translate(${(dx * env).toFixed(2)}px, ${(dy * env).toFixed(2)}px) scale(${sc.toFixed(4)})`,
-        filter:    `brightness(${(1 + (brightness - 1) * env).toFixed(3)}) ` +
+        filter:    `blur(3px) ` +
+                   `brightness(${(1 + (brightness - 1) * env).toFixed(3)}) ` +
                    `saturate(${(1 + (saturate - 1) * env).toFixed(3)}) ` +
-                   `drop-shadow(0 0 ${innerR.toFixed(1)}px rgba(255,225,140,${(0.88 * env).toFixed(3)})) ` +
-                   `drop-shadow(0 0 ${outerR.toFixed(1)}px rgba(255,190,80,${(0.55 * env).toFixed(3)}))`,
+                   `drop-shadow(0 0 ${innerR.toFixed(1)}px rgba(255,225,140,${(0.85 * env).toFixed(3)})) ` +
+                   `drop-shadow(0 0 ${middleR.toFixed(1)}px rgba(255,200,100,${(0.58 * env).toFixed(3)})) ` +
+                   `drop-shadow(0 0 ${outerR.toFixed(1)}px rgba(255,175,75,${(0.34 * env).toFixed(3)}))`,
         opacity:   env.toFixed(4),
         offset:    parseFloat(t.toFixed(6))
       });
     }
     trackAnim(sunClone.animate(sunKeys, { duration: totalMs, fill: 'forwards' }));
 
-    // Card itself: a smaller overall brightness/saturation lift so
-    // the rest of the card still feels touched by the sun's
-    // intensity without competing with the punched-out shape.
+    // Subtle overall warmth on the card so the whole image feels
+    // touched by the sun's intensity, without competing with the
+    // punched-out shape.
     trackAnim(imgEl.animate([
       { filter: 'brightness(1)    saturate(1)' },
-      { filter: 'brightness(1.10) saturate(1.14)', offset: 0.45 },
+      { filter: 'brightness(1.10) saturate(1.16)', offset: 0.5 },
       { filter: 'brightness(1)    saturate(1)' }
     ], { duration: totalMs, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'none' }));
 
-    // === Sparkles emanating from the sun's edge. ===
-    // Each starts just inside the sun's edge, drifts outward to a
-    // randomized end distance, twinkles in scale + rotates, and
-    // fades. Stagger launches throughout most of the duration so
-    // the sparkles read as continuous emission, not a single salvo.
-    const numSparkles = 18;
-    for (let i = 0; i < numSparkles; i++) {
-      const angle      = Math.random() * Math.PI * 2;
-      const startDist  = sunR * (0.86 + Math.random() * 0.12);
-      const endDist    = sunR * (1.35 + Math.random() * 0.7);
+    // === Drifting warm embers from the sun's edge. ===
+    // Round warm dots (no star points), each on a slow outward drift
+    // with a slight upward bias as if rising on warm air. Long
+    // lifetimes and ease-out so they linger rather than zip.
+    const numEmbers = 14;
+    for (let i = 0; i < numEmbers; i++) {
+      const angle     = Math.random() * Math.PI * 2;
+      const startDist = sunR * (0.86 + Math.random() * 0.16);
+      const endDist   = sunR * (1.20 + Math.random() * 0.55);
       const sx = sunCx + Math.cos(angle) * startDist;
       const sy = sunCy + Math.sin(angle) * startDist;
+      // Outward drift + upward bias (warm air rising).
       const dx = (endDist - startDist) * Math.cos(angle);
-      const dy = (endDist - startDist) * Math.sin(angle);
-      const size = 6 + Math.random() * 5;
-      const spinDir = Math.random() < 0.5 ? 1 : -1;
+      const dy = (endDist - startDist) * Math.sin(angle) - 10;
+      const size = 5 + Math.random() * 5;
 
-      // 4-point star sparkle, like the Star card but smaller and
-      // tinted gold/cream to match the Sun's palette.
-      const svg = svgEl('svg');
-      svg.style.cssText =
-        `position:fixed;left:${sx}px;top:${sy}px;` +
-        `width:1px;height:1px;overflow:visible;` +
-        `pointer-events:none;z-index:41;opacity:0;`;
-      const s = size;
-      const sparkle = svgEl('path', {
-        d: `M0 ${-s} L${s * 0.20} ${-s * 0.20} L${s} 0 L${s * 0.20} ${s * 0.20} ` +
-           `L0 ${s} L${-s * 0.20} ${s * 0.20} L${-s} 0 L${-s * 0.20} ${-s * 0.20} Z`,
-        fill: 'rgba(255,248,200,1)'
-      });
-      sparkle.style.filter =
-        'drop-shadow(0 0 9px rgba(255,225,130,0.92)) ' +
-        'drop-shadow(0 0 3px rgba(255,250,220,1))';
-      svg.appendChild(sparkle);
-      trackEl(svg); document.body.appendChild(svg);
+      const ember = newOverlayDiv(
+        `left:${sx}px;top:${sy}px;` +
+        `width:${size}px;height:${size}px;` +
+        `margin:${-size / 2}px 0 0 ${-size / 2}px;border-radius:50%;` +
+        `background:radial-gradient(circle,` +
+          `rgba(255,235,170,1) 0%,` +
+          `rgba(255,210,120,0.65) 40%,` +
+          `transparent 80%);` +
+        `box-shadow:0 0 14px 3px rgba(255,215,130,0.72),` +
+                  `0 0 28px 7px rgba(255,180,90,0.34);` +
+        `opacity:0;`
+      );
 
-      const lifeMs  = 580 + Math.random() * 380;
-      const startAt = 180 + Math.random() * (totalMs - 850);
+      const lifeMs  = 1000 + Math.random() * 450;
+      const startAt = 220 + Math.random() * (totalMs - 1250);
 
       setTimeout(() => {
-        if (!svg.parentNode) return;
-        trackAnim(svg.animate([
-          { opacity: 0,    transform: 'translate(0,0) scale(0.2) rotate(0deg)' },
-          { opacity: 1,    transform: `translate(${(dx * 0.30).toFixed(1)}px, ${(dy * 0.30).toFixed(1)}px) scale(1.45) rotate(${spinDir * 30}deg)`, offset: 0.30 },
-          { opacity: 0.72, transform: `translate(${(dx * 0.70).toFixed(1)}px, ${(dy * 0.70).toFixed(1)}px) scale(1.18) rotate(${spinDir * 60}deg)`, offset: 0.62 },
-          { opacity: 0,    transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(0.5) rotate(${spinDir * 95}deg)` }
-        ], { duration: lifeMs, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }));
+        if (!ember.parentNode) return;
+        trackAnim(ember.animate([
+          { opacity: 0,    transform: 'translate(0,0) scale(0.3)' },
+          { opacity: 1,    transform: `translate(${(dx * 0.26).toFixed(1)}px, ${(dy * 0.26).toFixed(1)}px) scale(1.10)`, offset: 0.28 },
+          { opacity: 0.85, transform: `translate(${(dx * 0.65).toFixed(1)}px, ${(dy * 0.65).toFixed(1)}px) scale(1.00)`, offset: 0.62 },
+          { opacity: 0,    transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(0.5)` }
+        ], { duration: lifeMs, easing: 'cubic-bezier(0.33, 1, 0.55, 1)', fill: 'forwards' }));
       }, startAt);
     }
 

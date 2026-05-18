@@ -36,11 +36,11 @@ const REVERSAL_DELAY_MS = 500;
 // reshuffle manually via long-press on the back.
 //
 // TESTING_MAJOR_ONLY: when true, the deck only contains the 22 Major
-// Arcana (indices 0-21 of allCards). Set false to restore the full 78-
-// card deck. Reversal rate (1/78) is unchanged either way — Majors can
-// still reverse and skip their signature effect.
-// TODO: REVERT this flag to false before going back to production.
-const TESTING_MAJOR_ONLY = true;
+// Arcana (indices 0-21 of allCards). Set true to restrict the deck
+// during signature-effect evaluation. Reversal rate (1/78) is
+// unchanged either way — Majors can still reverse and skip their
+// signature effect.
+const TESTING_MAJOR_ONLY = false;
 const DECK_SIZE = TESTING_MAJOR_ONLY ? 22 : 78;
 function freshDeck() {
   return Array.from({ length: DECK_SIZE }, (_, i) => i);
