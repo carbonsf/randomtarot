@@ -13,15 +13,15 @@ const BACK_SRC = "RoseLilyRed.jpg";
 
 // --- Reversal config --------------------------------------------------
 // Percentage chance that any given draw resolves to a reversed card.
-// TESTING: 100 = every card reverses, so the glitch sequence is exercised
-// on every draw. Back this off to e.g. 5 (a sober 1-in-20) or 10 (one in
-// ten) for real use. Float, accepts e.g. 0.1 for 1-in-1000.
+// Production setting: 100 / 78 ≈ 1.282% — roughly one card in a full
+// deck draw will resolve reversed. Float, accepts any value 0-100. Set
+// to 100 for testing every card, 0 to disable reversals entirely.
 //
 // The reversal roll is INDEPENDENT of the deck pick — it uses its own
 // fresh entropy call after the card has been chosen, so changing this
 // value cannot perturb which card is drawn. Setting it to 0 disables the
 // glitch path entirely (skipped before any roll happens).
-const REVERSAL_PERCENT = 100;
+const REVERSAL_PERCENT = 100 / 78;
 
 // Time between the card landing face-up and the glitch starting. A beat
 // of "...wait, something's wrong" before the visual breakdown.
@@ -834,12 +834,12 @@ const GLITCH_SCHEDULE = [
   // imagine that?". A short haptic tick fires alongside it to give
   // the viewer's body a quiet confirmation channel.
   //
-  // The first pause is extra-long (380 + 1400ms hesitation) and runs
+  // The first pause is extra-long (380 + 1800ms hesitation) and runs
   // a slow saturation/contrast crawl in the background, so the wait
   // isn't quite still — the universe is subtly draining color while
   // the viewer tries to convince themselves nothing happened.
   { t: "effect", ms: 240, firstHit: true },
-  { t: "pause",  ms: 1780, crawl: true },
+  { t: "pause",  ms: 2180, crawl: true },
   { t: "effect", ms: 280 },
   { t: "pause",  ms: 220 },
   { t: "effect", ms: 200 },
