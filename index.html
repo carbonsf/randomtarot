@@ -129,6 +129,22 @@
       transition: none !important;
     }
 
+    /* Subtle "the universe is shifting" drift applied to the long pause
+       right after the very first glitch hit. Saturation and contrast
+       crawl slowly toward an off-key state — just enough that the
+       viewer feels something is wrong but can't quite name it. Uses
+       `animation` (not transition) so .glitching's transition:none
+       can't kill it. Duration is overridden inline (--crawl-ms) to
+       match the schedule entry that triggered it. */
+    @keyframes reversalSatCrawl {
+      0%   { filter: saturate(1)    contrast(1)    brightness(1); }
+      100% { filter: saturate(0.45) contrast(1.12) brightness(0.94); }
+    }
+    img.crawling {
+      animation: reversalSatCrawl var(--crawl-ms, 1780ms) linear forwards;
+      will-change: filter;
+    }
+
     /* "Setting down": when a face-up card is tapped, the card drifts
        downward and fades out before being replaced by the back. Different
        axis (vertical, not depth), different easing (firmer ease-in-out),
@@ -475,6 +491,11 @@
   <!-- Bundled action data (78 cards, ~91 KB). Loaded before Randomizer.js
        so CARD_ACTIONS is available the moment the page is interactive. -->
   <script src="cardActions.js"></script>
+  <!-- Reversed-meaning data for the same 78 cards, used by the info
+       overlay when a draw resolves to a reversed state. Each card has
+       four stanzas (Weakened / Inverted / Negative / Delayed) — holistic
+       takes on the card's classic meaning from those four angles. -->
+  <script src="cardActionsReversed.js"></script>
   <script src="Randomizer.js"></script>
 </body>
 </html>

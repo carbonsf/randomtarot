@@ -550,10 +550,19 @@ function openInfoOverlay(imgEl) {
   // Mute the card behind the overlay so it recedes without disappearing.
   imgEl.classList.add("muted");
 
-  // Look up the card's actions. With cardActions.js loaded this is always
-  // an array; if missing we render a placeholder skeleton.
-  const actions = (typeof CARD_ACTIONS !== "undefined" && currentCardName)
-    ? CARD_ACTIONS[currentCardName]
+  // Look up the card's actions. If the card has resolved to a reversed
+  // state, prefer the reversed-meaning data (4 stanzas: Weakened /
+  // Inverted / Negative / Delayed, holistic takes from those angles on
+  // the card's classic meaning). Falls back to upright data if the
+  // reversed file failed to load. Skeleton placeholder if neither.
+  const isReversed = imgEl.classList.contains("reversed");
+  const reversedData = (typeof CARD_ACTIONS_REVERSED !== "undefined")
+    ? CARD_ACTIONS_REVERSED : null;
+  const uprightData  = (typeof CARD_ACTIONS !== "undefined")
+    ? CARD_ACTIONS : null;
+  const dataSource = (isReversed && reversedData) ? reversedData : uprightData;
+  const actions = (dataSource && currentCardName)
+    ? dataSource[currentCardName]
     : null;
 
   renderInfoOverlay(overlay, actions);
@@ -820,11 +829,17 @@ async function rollReversal(event) {
 //   P4         → forced-reversed in any case
 const GLITCH_SCHEDULE = [
   // Phase 1: slow sparse opening — single hits with long breaths.
-  // The first pause is intentionally extra-long (380 + 1000ms hesitation):
-  // after the first glitch lands the viewer should have time to wonder
-  // whether they imagined it before the next hit confirms it.
-  { t: "effect", ms: 240 },
-  { t: "pause",  ms: 1380 },
+  // First glitch is intentionally subtle — picked from FIRST_HIT_POOL
+  // (shutter/chroma/shake-cam) so the hit could plausibly be "did I
+  // imagine that?". A short haptic tick fires alongside it to give
+  // the viewer's body a quiet confirmation channel.
+  //
+  // The first pause is extra-long (380 + 1400ms hesitation) and runs
+  // a slow saturation/contrast crawl in the background, so the wait
+  // isn't quite still — the universe is subtly draining color while
+  // the viewer tries to convince themselves nothing happened.
+  { t: "effect", ms: 240, firstHit: true },
+  { t: "pause",  ms: 1780, crawl: true },
   { t: "effect", ms: 280 },
   { t: "pause",  ms: 220 },
   { t: "effect", ms: 200 },
@@ -969,14 +984,23 @@ const SIDE_EFFECTS = [
   "crtroll", "phantom", "shakecam", "strobe"
 ];
 
+// The first hit of the sequence is restricted to the genuinely subtle
+// effects — the ones that flicker the card rather than transform or
+// replace it. If the very first hit were HYPERWARP or DEAD-SIGNAL, the
+// viewer would know unambiguously that something happened, killing the
+// "did I imagine that?" ambiguity that the long pause is designed to
+// exploit. Shutter / chroma / shake-cam all read as plausible eye
+// twitches or screen artifacts.
+const FIRST_HIT_POOL = ["shutter", "chroma", "shakecam"];
+
 // Pick an effect for this frame, with rotflip center-loaded around
 // progress=0.5 so the rotational chaos clusters in the middle of the
 // sequence (where the upright→reversed transition is most ambiguous).
-// When the frame is forced-reversed, rotflip is excluded because its
-// own random rotation would fight the "this frame shows reversed"
-// invariant — we want forced-reversed frames to clearly show the
-// reversed orientation.
-function pickGlitchEffect(progress, forceReversed) {
+// firstHit overrides everything else with a narrow subtle pool.
+// forceReversed excludes rotflip (its own random rotation would fight
+// the "this frame shows reversed" invariant).
+function pickGlitchEffect(progress, forceReversed, firstHit) {
+  if (firstHit)     return gPick(FIRST_HIT_POOL);
   if (forceReversed) return gPick(SIDE_EFFECTS);
   const peak = 1 - Math.abs((progress - 0.5) * 2);
   const rotProb = 0.10 + 0.34 * Math.max(0, peak);
@@ -988,12 +1012,17 @@ function pickGlitchEffect(progress, forceReversed) {
 // `useReversed` (for non-rotflip effects) means the visible imagery
 // should be drawn in the 180° orientation — that's how the upright→
 // reversed transition unfolds, frame by frame, without a smooth tween.
-function applyGlitchFrame(imgEl, src, progress, useReversed) {
+function applyGlitchFrame(imgEl, src, progress, useReversed, firstHit) {
   clearGlitchOverlays();
   clearGlitchTimers();   // cancel pending sub-frame timeouts from prior frame
   clearHostInline(imgEl);
+  // Make sure the saturation-crawl class from the long pause doesn't
+  // still be running while an effect frame paints. Effects set their own
+  // filter inline so the class would be overridden anyway, but clearing
+  // it cleanly also stops the animation timer.
+  imgEl.classList.remove("crawling");
 
-  const effect = pickGlitchEffect(progress, useReversed);
+  const effect = pickGlitchEffect(progress, useReversed, firstHit);
   const rotSuffix = useReversed ? " rotate(180deg)" : "";
 
   if (effect === "shutter") {
@@ -1270,8 +1299,6 @@ async function playGlitchSequence(imgEl) {
   const src = imgEl.src;
   imgEl.classList.add("glitching"); // suppresses smooth transitions
 
-  haptic(6); // opening tick — the breakdown begins
-
   const totalMs = GLITCH_SCHEDULE.reduce((s, e) => s + e.ms, 0);
   let elapsed = 0;
   // Tracks orientation of the previous effect frame so pauses can hold
@@ -1292,7 +1319,13 @@ async function playGlitchSequence(imgEl) {
       // entries is what guarantees the rotated landing.
       const halfwayBias = Math.max(0, (progress - 0.5) * 1.8);
       const useReversed = step.forceReversed || (Math.random() < halfwayBias);
-      applyGlitchFrame(imgEl, src, progress, useReversed);
+      applyGlitchFrame(imgEl, src, progress, useReversed, !!step.firstHit);
+      // Quiet haptic tick exactly when the first visual hit lands — a
+      // body-level confirmation. No further haptic until the resolution
+      // at the very end of the sequence, so this tick (and the silence
+      // that follows it) is what amplifies the "did something happen?"
+      // sensation during the long pause.
+      if (step.firstHit) haptic(4);
       lastReversed = useReversed;
     } else if (step.t === "pause") {
       // Brief moment of relative calm — clean image, no distortion. The
@@ -1301,6 +1334,13 @@ async function playGlitchSequence(imgEl) {
       clearGlitchOverlays();
       clearHostInline(imgEl);
       if (lastReversed) imgEl.style.transform = "rotate(180deg)";
+      // Optionally start the saturation crawl over this pause's duration.
+      // CSS animation runs in parallel with the wait below; the next
+      // effect frame's clearHostInline + class removal stops it cleanly.
+      if (step.crawl) {
+        imgEl.style.setProperty("--crawl-ms", step.ms + "ms");
+        imgEl.classList.add("crawling");
+      }
     }
 
     await new Promise(r => setTimeout(r, step.ms));
@@ -1317,6 +1357,7 @@ async function playGlitchSequence(imgEl) {
   clearGlitchOverlays();
   clearGlitchTimers();
   clearHostInline(imgEl);
+  imgEl.classList.remove("crawling");
   imgEl.style.transform = "rotate(180deg)";
 
   haptic(8); // resolution tick — the card has landed
