@@ -820,11 +820,11 @@ async function rollReversal(event) {
 //   P4         → forced-reversed in any case
 const GLITCH_SCHEDULE = [
   // Phase 1: slow sparse opening — single hits with long breaths.
-  // The first pause is intentionally extra-long (380 + 600ms hesitation):
+  // The first pause is intentionally extra-long (380 + 1000ms hesitation):
   // after the first glitch lands the viewer should have time to wonder
   // whether they imagined it before the next hit confirms it.
   { t: "effect", ms: 240 },
-  { t: "pause",  ms: 980 },
+  { t: "pause",  ms: 1380 },
   { t: "effect", ms: 280 },
   { t: "pause",  ms: 220 },
   { t: "effect", ms: 200 },
