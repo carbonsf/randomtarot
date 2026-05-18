@@ -81,131 +81,113 @@
     if (imgEl) imgEl.style.removeProperty('transform-origin');
   }
 
-  // ---- 00 The Fool : the leap, then the burst -----------------------
-  // A single bright spark leaps from the lower-left up to a burst
-  // point near the card's middle — quadratic-bezier arc, not a
-  // straight line, so the trajectory has the right "thrown" feel.
-  // At the apex it bursts into nine colored mini-sparks that scatter
-  // radially with gravity-like downward drift and individual rotation.
-  // Each mini-spark has its own color (yellows, pinks, blues, greens,
-  // peaches, lavenders) for whimsical variety. The card itself does
-  // a small upward hop with overshoot bezier, timed so the peak of
-  // the hop coincides with the moment of burst.
+  // ---- 00 The Fool : skipping star with comet trail -----------------
+  // A 4-point star travels across the card on a bouncy curving path —
+  // diagonal lower-left to upper-right, with perpendicular sine wobble
+  // plus a vertical "skip" bounce so it reads as hopping rather than
+  // gliding. Four smaller echo-stars trail behind in time, each with
+  // its own staggered start, so the spark leaves a comet-tail of past
+  // positions. Every star spins as it moves. The card sways gently
+  // side-to-side. Whimsical without exploding.
   async function foolSpark(imgEl) {
     const cr = getContentRect(imgEl);
-    const totalMs = 1500;
-    const arcMs   = 500;
+    const totalMs = 1700;
 
-    // The card hops at the moment of burst, then settles.
+    // Card sways like it's bobbing along with the spark.
     trackAnim(imgEl.animate([
-      { transform: 'translateY(0)    scale(1)',     filter: 'brightness(1)'    },
-      { transform: 'translateY(-7px) scale(1.012)', filter: 'brightness(1.07)', offset: 0.5 },
-      { transform: 'translateY(0)    scale(1)',     filter: 'brightness(1)' }
-    ], { duration: 1000, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', fill: 'none' }));
+      { transform: 'rotate(0deg)    translateY(0)' },
+      { transform: 'rotate(0.7deg)  translateY(-2px)', offset: 0.30 },
+      { transform: 'rotate(-0.5deg) translateY(0)',    offset: 0.65 },
+      { transform: 'rotate(0deg)    translateY(0)' }
+    ], { duration: totalMs, easing: 'cubic-bezier(0.45, 0, 0.55, 1)', fill: 'none' }));
 
-    // Main spark — bright, warm, starts at lower-left interior.
-    const startX  = cr.left + cr.width  * 0.18;
-    const startY  = cr.top  + cr.height * 0.82;
-    const burstX  = cr.left + cr.width  * 0.50;
-    const burstY  = cr.top  + cr.height * 0.35;
-    const main = newOverlayDiv(
-      `left:${startX}px;top:${startY}px;` +
-      `width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;` +
-      `background:radial-gradient(circle,rgba(255,250,220,1) 0%,rgba(255,240,180,0.72) 30%,rgba(255,220,140,0) 70%);` +
-      `box-shadow:0 0 26px 5px rgba(255,240,180,0.65);opacity:0;`
-    );
+    // Path: lower-left to upper-right, with perpendicular sine wobble
+    // and a vertical skipping bounce. The path is shared across all
+    // five stars; echoes simply lag in time so they follow the same
+    // curve a beat behind.
+    const startX = cr.left + cr.width  * 0.15;
+    const startY = cr.top  + cr.height * 0.80;
+    const endX   = cr.left + cr.width  * 0.85;
+    const endY   = cr.top  + cr.height * 0.18;
+    const dx = endX - startX, dy = endY - startY;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const ux = dx / len, uy = dy / len;     // path direction unit vector
+    const perpX = -uy,  perpY = ux;         // perpendicular to it
 
-    // Quadratic-bezier arc from start to burst, control point pulled
-    // up-and-left to give the leap a "thrown" feel rather than a
-    // straight diagonal.
-    const cpX = (startX + burstX) / 2 - 40;
-    const cpY = (startY + burstY) / 2 - 70;
-    const arcN = 14;
-    const arcKeys = [];
-    for (let i = 0; i <= arcN; i++) {
-      const t = i / arcN;
-      const x = (1 - t) * (1 - t) * startX + 2 * (1 - t) * t * cpX + t * t * burstX;
-      const y = (1 - t) * (1 - t) * startY + 2 * (1 - t) * t * cpY + t * t * burstY;
-      let op = 1;
-      if      (t < 0.10) op = t / 0.10;
-      else if (t > 0.92) op = (1 - t) / 0.08;
-      const sc = 0.55 + 0.65 * Math.sin(Math.PI * t);
-      arcKeys.push({
-        transform: `translate(${(x - startX).toFixed(2)}px, ${(y - startY).toFixed(2)}px) scale(${sc.toFixed(3)})`,
-        opacity:   op.toFixed(3),
-        offset:    parseFloat(t.toFixed(5))
-      });
+    function position(t) {
+      // Linear progress along the path.
+      const linX = startX + dx * t;
+      const linY = startY + dy * t;
+      // Sine wobble perpendicular to direction (2 cycles, slight decay
+      // so the path tightens toward the destination).
+      const wobble = 38 * Math.sin(2 * Math.PI * 2 * t) * (1 - t * 0.3);
+      // Skipping bounce: |sin| gives consecutive hops (always upward,
+      // never below the path line). Decays toward arrival.
+      const bounce = -16 * Math.abs(Math.sin(3 * Math.PI * t)) * (1 - t * 0.3);
+      return {
+        x: linX + perpX * wobble,
+        y: linY + perpY * wobble + bounce
+      };
     }
-    trackAnim(main.animate(arcKeys, {
-      duration: arcMs,
-      easing: 'cubic-bezier(0.34, 1.4, 0.64, 1)',
-      fill: 'forwards'
-    }));
 
-    // At the apex: hide the main spark and spawn the burst.
-    setTimeout(() => {
-      if (!main.parentNode) return;
-      trackAnim(main.animate(
-        [{ opacity: 1 }, { opacity: 0 }],
-        { duration: 80, fill: 'forwards' }
-      ));
+    // Configs: main spark + four progressively-smaller-and-dimmer
+    // echoes trailing behind.
+    const sparkConfigs = [
+      { size: 22, delay:   0, opMul: 1.00 },   // main
+      { size: 18, delay:  55, opMul: 0.65 },
+      { size: 15, delay: 115, opMul: 0.45 },
+      { size: 12, delay: 185, opMul: 0.28 },
+      { size:  9, delay: 265, opMul: 0.16 }
+    ];
 
-      const numMini = 9;
-      const miniColors = [
-        ['rgba(255,235,150,1)',  'rgba(255,210,110,0.5)'],   // golden
-        ['rgba(255,180,200,1)',  'rgba(255,140,170,0.5)'],   // pink
-        ['rgba(180,220,255,1)',  'rgba(140,190,255,0.5)'],   // sky
-        ['rgba(200,255,180,1)',  'rgba(160,235,140,0.5)'],   // mint
-        ['rgba(255,210,170,1)',  'rgba(255,180,130,0.5)'],   // peach
-        ['rgba(230,180,255,1)',  'rgba(200,140,255,0.5)'],   // lavender
-        ['rgba(255,250,200,1)',  'rgba(255,235,160,0.5)'],   // cream
-        ['rgba(220,240,255,1)',  'rgba(180,210,250,0.5)'],   // ice
-        ['rgba(255,220,230,1)',  'rgba(255,180,200,0.5)']    // blush
-      ];
-      const gravity = 90; // px of downward drift over full mini lifetime
-      const miniMs  = 950;
-      const miniN   = 20;
+    const N = 48;
 
-      for (let i = 0; i < numMini; i++) {
-        const baseAngle = (i / numMini) * Math.PI * 2;
-        const jitter    = (Math.random() - 0.5) * 0.45;
-        const angle     = baseAngle + jitter;
-        const speed     = 65 + Math.random() * 55;
-        const [bright, soft] = miniColors[i % miniColors.length];
-        const size = 11 + Math.random() * 5;
-        const spinDir = Math.random() < 0.5 ? 1 : -1;
+    for (const cfg of sparkConfigs) {
+      // Build SVG containing one 4-point star.
+      const svg = svgEl('svg');
+      svg.style.cssText =
+        `position:fixed;left:0;top:0;` +
+        `width:1px;height:1px;overflow:visible;` +
+        `pointer-events:none;z-index:40;opacity:0;`;
+      const s = cfg.size;
+      const star = svgEl('path', {
+        d: `M0 ${-s} L${s * 0.20} ${-s * 0.20} L${s} 0 ` +
+           `L${s * 0.20} ${s * 0.20} L0 ${s} L${-s * 0.20} ${s * 0.20} ` +
+           `L${-s} 0 L${-s * 0.20} ${-s * 0.20} Z`,
+        fill: 'rgba(255,250,220,1)'
+      });
+      star.style.filter =
+        `drop-shadow(0 0 ${10 + s * 0.3}px rgba(255,235,180,${(cfg.opMul * 0.8).toFixed(3)})) ` +
+        `drop-shadow(0 0 4px rgba(255,250,220,${(cfg.opMul * 0.5).toFixed(3)}))`;
+      svg.appendChild(star);
+      trackEl(svg); document.body.appendChild(svg);
 
-        const mini = newOverlayDiv(
-          `left:${burstX}px;top:${burstY}px;` +
-          `width:${size}px;height:${size}px;margin:${-size / 2}px 0 0 ${-size / 2}px;border-radius:50%;` +
-          `background:radial-gradient(circle,${bright} 0%,${soft} 35%,transparent 70%);` +
-          `box-shadow:0 0 14px 3px ${soft};opacity:0;`
-        );
-
-        const keys = [];
-        for (let j = 0; j <= miniN; j++) {
-          const t   = j / miniN;
-          // Outward distance with mild ease-out so sparks decelerate
-          // as they spread (drag).
-          const r   = speed * t * (1 - 0.32 * t);
-          const x   = Math.cos(angle) * r;
-          const y   = Math.sin(angle) * r + gravity * t * t;  // gravity adds quadratically
-          const rot = spinDir * 540 * t;
-          let op = 1;
-          if      (t < 0.08) op = t / 0.08;
-          else if (t > 0.6)  op = Math.max(0, (1 - t) / 0.4);
-          const sc = 0.45 + 0.75 * Math.sin(Math.PI * Math.min(1, t * 1.25));
-          keys.push({
-            transform: `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(1)}deg)`,
-            opacity:   op.toFixed(3),
-            offset:    parseFloat(t.toFixed(5))
-          });
-        }
-        trackAnim(mini.animate(keys, { duration: miniMs, fill: 'forwards' }));
+      // Pre-compute keyframes for the bouncy path. Echoes follow the
+      // same curve and are simply started later via setTimeout below.
+      const keys = [];
+      for (let j = 0; j <= N; j++) {
+        const t = j / N;
+        const p = position(t);
+        const rot = 360 * t;  // one full rotation over the journey
+        let env = 1;
+        if      (t < 0.08) env = t / 0.08;
+        else if (t > 0.85) env = (1 - t) / 0.15;
+        keys.push({
+          transform: `translate(${p.x.toFixed(2)}px, ${p.y.toFixed(2)}px) rotate(${rot.toFixed(1)}deg)`,
+          opacity:   (cfg.opMul * env).toFixed(4),
+          offset:    parseFloat(t.toFixed(6))
+        });
       }
-    }, arcMs);
+      // Each echo starts later than the main, so at any given moment
+      // they sit at past positions on the path — visual trail.
+      setTimeout(() => {
+        if (!svg.parentNode) return;
+        trackAnim(svg.animate(keys, { duration: totalMs, fill: 'forwards' }));
+      }, cfg.delay);
+    }
 
-    await sleep(totalMs);
+    // Wait for the last echo to finish.
+    await sleep(totalMs + 265);
   }
 
   // ---- 01 The Magician : lemniscate traces over the card ------------
@@ -1275,19 +1257,17 @@
     // they appear to emanate FROM the bloom rather than alongside it.
     await sleep(280);
 
-    // Twenty radial rays around the card center. Each ray gets its
-    // own pre-computed animation driven by two independent sine
-    // waves: one controls length-scale (the ray pulses longer and
-    // shorter), the other controls opacity (the ray flares and
-    // dims). Different frequency multipliers and phase offsets per
-    // ray mean no two rays are doing the same thing at the same
-    // moment — the field shimmers chaotically rather than rotating
-    // as a rigid wheel.
+    // Effervescent ray-bursts. Instead of a static field of rays
+    // oscillating in place, we LAUNCH individual rays one after
+    // another over the duration of the effect — each one grows out
+    // from the center, holds briefly, and fades. Different lengths,
+    // durations, stroke widths, and angles per ray. The result is
+    // a continuous bubbling-up of light spikes rather than a wheel
+    // pulsing in place — champagne for the sun.
     //
-    // Length scale is achieved with scaleY on the line element,
-    // anchored at the inner endpoint via transform-origin so the
-    // ray grows outward (toward the viewport edge) rather than
-    // stretching from its center.
+    // Angles are stratified across 24 sectors so coverage is even
+    // around the full 360, but each ray's actual angle is jittered
+    // within its sector so the pattern never looks regular.
     const raySvg = svgEl('svg');
     raySvg.style.cssText =
       `position:fixed;left:${cx}px;top:${cy}px;` +
@@ -1296,63 +1276,71 @@
     document.body.appendChild(raySvg);
     trackEl(raySvg);
 
-    const numRays  = 20;
-    const rayMax   = maxDim * 1.05;  // length when scaleY = 1
-    const rayInner = maxDim * 0.13;
-    const rayMs    = 1300;
-    const N        = 36;
+    const rayInner   = maxDim * 0.13;
+    const rayMaxBase = maxDim * 1.05;
+    const numRays    = 64;          // total bursts over the duration
+    const launchSpan = 1300;        // ms over which to spread launches
+    const sectorN    = 24;          // angle sectors for stratification
 
     for (let i = 0; i < numRays; i++) {
-      const angle = (i / numRays) * 360;
-      const ray = svgEl('line', {
-        x1: 0, y1: -rayInner,
-        x2: 0, y2: -(rayInner + rayMax),
-        stroke: 'rgba(255,238,175,0.95)',
-        'stroke-width': 2.4 + Math.random() * 1.2,  // slight thickness variance
-        'stroke-linecap': 'round'
-      });
-      ray.style.filter = 'drop-shadow(0 0 8px rgba(255,220,120,0.95))';
-      ray.style.transformOrigin = `0px ${-rayInner}px`;
-      ray.style.transformBox = 'fill-box'; // SVG transforms apply in user-space
-      raySvg.appendChild(ray);
+      // Stagger the launch times. Slight jitter so the bursts aren't
+      // metronomic.
+      const launchAt = 60 + (i / numRays) * launchSpan + Math.random() * 50;
 
-      // Per-ray sin parameters.
-      const phaseA  = (i / numRays) * Math.PI * 4 + (i % 5) * 0.7;
-      const phaseB  =  phaseA + 1.1;
-      const freqA   = 1.6 + (i % 4) * 0.55;  // length pulse frequency
-      const freqB   = 1.2 + (i % 3) * 0.45;  // opacity pulse frequency
+      // Stratified angle: cycle through sectors so coverage is even
+      // even with fewer rays per sector, then jitter within sector.
+      const sectorIdx    = i % sectorN;
+      const sectorBase   = (sectorIdx / sectorN) * 360;
+      const sectorWidth  = 360 / sectorN;
+      const angle        = sectorBase + (Math.random() - 0.5) * sectorWidth * 0.85;
 
-      const keys = [];
-      for (let j = 0; j <= N; j++) {
-        const t   = j / N;
-        const tau = t * rayMs / 1000;
-        // Length scale: oscillates between ~0.45 and ~1.05.
-        const lenScale = 0.50 + 0.55 *
-                                (0.5 + 0.5 * Math.sin(2 * Math.PI * freqA * tau + phaseA));
-        // Opacity: oscillates between ~0.30 and ~1.00.
-        const opSin = 0.5 + 0.5 * Math.sin(2 * Math.PI * freqB * tau + phaseB);
-        const op = 0.30 + 0.70 * opSin;
-        // Outer envelope: fade in over 12%, fade out over 18%.
-        let env = 1;
-        if      (t < 0.12) env = t / 0.12;
-        else if (t > 0.82) env = (1 - t) / 0.18;
-        keys.push({
-          transform: `rotate(${angle}deg) scaleY(${lenScale.toFixed(4)})`,
-          opacity:   Math.max(0, op * env).toFixed(4),
-          offset:    parseFloat(t.toFixed(6))
+      // Per-ray geometry / timing.
+      const lifeMs   = 520 + Math.random() * 360;
+      const maxLen   = rayMaxBase * (0.45 + Math.random() * 0.65);
+      const strokeW  = 1.6 + Math.random() * 1.8;
+      const opPeak   = 0.75 + Math.random() * 0.25;
+      // Tone shift toward gold or pale-white per ray for variety.
+      const warmHue  = 'rgba(255,' + (220 + ((Math.random() * 30) | 0)) +
+                       ',' + (140 + ((Math.random() * 60) | 0)) + ',0.95)';
+
+      setTimeout(() => {
+        if (!raySvg.parentNode) return;
+
+        const ray = svgEl('line', {
+          x1: 0, y1: -rayInner,
+          x2: 0, y2: -(rayInner + maxLen),
+          stroke: warmHue,
+          'stroke-width': strokeW,
+          'stroke-linecap': 'round'
         });
-      }
-      trackAnim(ray.animate(keys, { duration: rayMs, fill: 'forwards' }));
+        ray.style.filter = 'drop-shadow(0 0 8px rgba(255,220,120,0.95))';
+        ray.style.transformOrigin = `0px ${-rayInner}px`;
+        ray.style.transformBox = 'fill-box';
+        raySvg.appendChild(ray);
+
+        // Life cycle: rapid emergence (scaleY 0 -> 1, opacity 0 -> peak),
+        // brief sustain at full length, dissolution (opacity to 0,
+        // scaleY trimming back slightly as the ray "pinches off").
+        const a = ray.animate([
+          { transform: `rotate(${angle}deg) scaleY(0.04)`, opacity: 0      },
+          { transform: `rotate(${angle}deg) scaleY(1.00)`, opacity: opPeak, offset: 0.22 },
+          { transform: `rotate(${angle}deg) scaleY(1.00)`, opacity: opPeak, offset: 0.55 },
+          { transform: `rotate(${angle}deg) scaleY(0.72)`, opacity: 0      }
+        ], { duration: lifeMs, easing: 'cubic-bezier(0.30, 1.05, 0.50, 1)', fill: 'forwards' });
+        trackAnim(a);
+
+        // Remove the line when its life ends so the SVG doesn't
+        // accumulate 64 finished children. Guarded against the case
+        // where the parent SVG was removed by cancelMajorEffect.
+        a.addEventListener('finish', () => {
+          if (ray.parentNode) ray.parentNode.removeChild(ray);
+        });
+      }, launchAt);
     }
 
-    // The whole assembly also drifts a small angle so the shimmer
-    // isn't perfectly stationary — atmosphere, not motion.
-    trackAnim(raySvg.animate([
-      { transform: 'rotate(0deg)' },
-      { transform: 'rotate(10deg)' }
-    ], { duration: rayMs, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'forwards' }));
-
-    await sleep(rayMs);
+    // Wait long enough for the last ray-burst to finish (latest
+    // launchAt + max lifeMs).
+    await sleep(60 + launchSpan + 50 + 880 + 60);
   }
 
   // ---- 20 Judgement : bell-tone hum (vertical scale ringing) --------
