@@ -81,29 +81,131 @@
     if (imgEl) imgEl.style.removeProperty('transform-origin');
   }
 
-  // ---- 00 The Fool : spark drift toward the cliff edge --------------
+  // ---- 00 The Fool : the leap, then the burst -----------------------
+  // A single bright spark leaps from the lower-left up to a burst
+  // point near the card's middle — quadratic-bezier arc, not a
+  // straight line, so the trajectory has the right "thrown" feel.
+  // At the apex it bursts into nine colored mini-sparks that scatter
+  // radially with gravity-like downward drift and individual rotation.
+  // Each mini-spark has its own color (yellows, pinks, blues, greens,
+  // peaches, lavenders) for whimsical variety. The card itself does
+  // a small upward hop with overshoot bezier, timed so the peak of
+  // the hop coincides with the moment of burst.
   async function foolSpark(imgEl) {
     const cr = getContentRect(imgEl);
-    // Starts in the lower-left interior, drifts diagonally up to the
-    // upper-right (the direction the Fool's gaze suggests) before
-    // dissolving. Ease-out so the spark releases like a sigh.
-    const sx = cr.left + cr.width * 0.18;
-    const sy = cr.top  + cr.height * 0.82;
-    const dx =  cr.width  * 0.64;
-    const dy = -cr.height * 0.64;
-    const spark = newOverlayDiv(
-      `left:${sx}px;top:${sy}px;width:18px;height:18px;margin:-9px 0 0 -9px;` +
-      `border-radius:50%;` +
-      `background:radial-gradient(circle,rgba(255,250,220,0.95) 0%,rgba(255,240,180,0.6) 30%,rgba(255,220,140,0) 70%);` +
-      `box-shadow:0 0 24px 4px rgba(255,240,180,0.45);`
+    const totalMs = 1500;
+    const arcMs   = 500;
+
+    // The card hops at the moment of burst, then settles.
+    trackAnim(imgEl.animate([
+      { transform: 'translateY(0)    scale(1)',     filter: 'brightness(1)'    },
+      { transform: 'translateY(-7px) scale(1.012)', filter: 'brightness(1.07)', offset: 0.5 },
+      { transform: 'translateY(0)    scale(1)',     filter: 'brightness(1)' }
+    ], { duration: 1000, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', fill: 'none' }));
+
+    // Main spark — bright, warm, starts at lower-left interior.
+    const startX  = cr.left + cr.width  * 0.18;
+    const startY  = cr.top  + cr.height * 0.82;
+    const burstX  = cr.left + cr.width  * 0.50;
+    const burstY  = cr.top  + cr.height * 0.35;
+    const main = newOverlayDiv(
+      `left:${startX}px;top:${startY}px;` +
+      `width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;` +
+      `background:radial-gradient(circle,rgba(255,250,220,1) 0%,rgba(255,240,180,0.72) 30%,rgba(255,220,140,0) 70%);` +
+      `box-shadow:0 0 26px 5px rgba(255,240,180,0.65);opacity:0;`
     );
-    trackAnim(spark.animate([
-      { transform: 'translate(0,0) scale(0.4)',                            opacity: 0    },
-      { transform: 'translate(0,0) scale(1.05)',                           opacity: 0.95, offset: 0.14 },
-      { transform: `translate(${dx * 0.86}px, ${dy * 0.86}px) scale(0.9)`, opacity: 0.7,  offset: 0.78 },
-      { transform: `translate(${dx}px, ${dy}px) scale(0.3)`,               opacity: 0    }
-    ], { duration: 950, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }));
-    await sleep(950);
+
+    // Quadratic-bezier arc from start to burst, control point pulled
+    // up-and-left to give the leap a "thrown" feel rather than a
+    // straight diagonal.
+    const cpX = (startX + burstX) / 2 - 40;
+    const cpY = (startY + burstY) / 2 - 70;
+    const arcN = 14;
+    const arcKeys = [];
+    for (let i = 0; i <= arcN; i++) {
+      const t = i / arcN;
+      const x = (1 - t) * (1 - t) * startX + 2 * (1 - t) * t * cpX + t * t * burstX;
+      const y = (1 - t) * (1 - t) * startY + 2 * (1 - t) * t * cpY + t * t * burstY;
+      let op = 1;
+      if      (t < 0.10) op = t / 0.10;
+      else if (t > 0.92) op = (1 - t) / 0.08;
+      const sc = 0.55 + 0.65 * Math.sin(Math.PI * t);
+      arcKeys.push({
+        transform: `translate(${(x - startX).toFixed(2)}px, ${(y - startY).toFixed(2)}px) scale(${sc.toFixed(3)})`,
+        opacity:   op.toFixed(3),
+        offset:    parseFloat(t.toFixed(5))
+      });
+    }
+    trackAnim(main.animate(arcKeys, {
+      duration: arcMs,
+      easing: 'cubic-bezier(0.34, 1.4, 0.64, 1)',
+      fill: 'forwards'
+    }));
+
+    // At the apex: hide the main spark and spawn the burst.
+    setTimeout(() => {
+      if (!main.parentNode) return;
+      trackAnim(main.animate(
+        [{ opacity: 1 }, { opacity: 0 }],
+        { duration: 80, fill: 'forwards' }
+      ));
+
+      const numMini = 9;
+      const miniColors = [
+        ['rgba(255,235,150,1)',  'rgba(255,210,110,0.5)'],   // golden
+        ['rgba(255,180,200,1)',  'rgba(255,140,170,0.5)'],   // pink
+        ['rgba(180,220,255,1)',  'rgba(140,190,255,0.5)'],   // sky
+        ['rgba(200,255,180,1)',  'rgba(160,235,140,0.5)'],   // mint
+        ['rgba(255,210,170,1)',  'rgba(255,180,130,0.5)'],   // peach
+        ['rgba(230,180,255,1)',  'rgba(200,140,255,0.5)'],   // lavender
+        ['rgba(255,250,200,1)',  'rgba(255,235,160,0.5)'],   // cream
+        ['rgba(220,240,255,1)',  'rgba(180,210,250,0.5)'],   // ice
+        ['rgba(255,220,230,1)',  'rgba(255,180,200,0.5)']    // blush
+      ];
+      const gravity = 90; // px of downward drift over full mini lifetime
+      const miniMs  = 950;
+      const miniN   = 20;
+
+      for (let i = 0; i < numMini; i++) {
+        const baseAngle = (i / numMini) * Math.PI * 2;
+        const jitter    = (Math.random() - 0.5) * 0.45;
+        const angle     = baseAngle + jitter;
+        const speed     = 65 + Math.random() * 55;
+        const [bright, soft] = miniColors[i % miniColors.length];
+        const size = 11 + Math.random() * 5;
+        const spinDir = Math.random() < 0.5 ? 1 : -1;
+
+        const mini = newOverlayDiv(
+          `left:${burstX}px;top:${burstY}px;` +
+          `width:${size}px;height:${size}px;margin:${-size / 2}px 0 0 ${-size / 2}px;border-radius:50%;` +
+          `background:radial-gradient(circle,${bright} 0%,${soft} 35%,transparent 70%);` +
+          `box-shadow:0 0 14px 3px ${soft};opacity:0;`
+        );
+
+        const keys = [];
+        for (let j = 0; j <= miniN; j++) {
+          const t   = j / miniN;
+          // Outward distance with mild ease-out so sparks decelerate
+          // as they spread (drag).
+          const r   = speed * t * (1 - 0.32 * t);
+          const x   = Math.cos(angle) * r;
+          const y   = Math.sin(angle) * r + gravity * t * t;  // gravity adds quadratically
+          const rot = spinDir * 540 * t;
+          let op = 1;
+          if      (t < 0.08) op = t / 0.08;
+          else if (t > 0.6)  op = Math.max(0, (1 - t) / 0.4);
+          const sc = 0.45 + 0.75 * Math.sin(Math.PI * Math.min(1, t * 1.25));
+          keys.push({
+            transform: `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(1)}deg)`,
+            opacity:   op.toFixed(3),
+            offset:    parseFloat(t.toFixed(5))
+          });
+        }
+        trackAnim(mini.animate(keys, { duration: miniMs, fill: 'forwards' }));
+      }
+    }, arcMs);
+
+    await sleep(totalMs);
   }
 
   // ---- 01 The Magician : lemniscate traces over the card ------------
@@ -241,23 +343,92 @@
     await sleep(totalMs);
   }
 
-  // ---- 03 The Empress : warm bloom outward --------------------------
+  // ---- 03 The Empress : abundance — wildflowers across the field ----
+  // A large central warm bloom plus eight smaller blooms scattered
+  // across the card in varied warm colors (peaches, roses, golds,
+  // corals), opening in staggered sequence — wildflowers blooming
+  // in a meadow rather than a single light source. The card itself
+  // gets a significant brightness + saturation + warm hue-shift so
+  // the abundance is felt as a temperature change, not just an
+  // overlay on top.
   async function empressBloom(imgEl) {
     const cr = getContentRect(imgEl);
-    const size = Math.max(cr.width, cr.height) * 1.2;
-    const bloom = newOverlayDiv(
-      `left:${cr.left + cr.width / 2}px;top:${cr.top + cr.height / 2}px;` +
-      `width:${size}px;height:${size}px;` +
-      `margin:${-size / 2}px 0 0 ${-size / 2}px;border-radius:50%;` +
-      `background:radial-gradient(circle,rgba(255,200,130,0.55) 0%,rgba(255,170,90,0.3) 25%,rgba(255,140,50,0) 60%);` +
+    const totalMs = 1600;
+    const cx = cr.left + cr.width  / 2;
+    const cy = cr.top  + cr.height / 2;
+
+    // The card warms up — brightness up, saturation up, hue shifted
+    // toward gold/peach. This is the largest single change in the
+    // effect; the blooms are accents on this temperature lift.
+    trackAnim(imgEl.animate([
+      { filter: 'brightness(1)    saturate(1)    hue-rotate(0deg)' },
+      { filter: 'brightness(1.18) saturate(1.32) hue-rotate(10deg)', offset: 0.45 },
+      { filter: 'brightness(1.10) saturate(1.18) hue-rotate(6deg)',  offset: 0.7  },
+      { filter: 'brightness(1)    saturate(1)    hue-rotate(0deg)' }
+    ], { duration: totalMs, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'none' }));
+
+    // Central warm bloom — bigger than the prior version, with a
+    // richer multi-stop gradient (highlight core, warm mid, soft fall-off).
+    const mainSize = Math.max(cr.width, cr.height) * 1.45;
+    const mainBloom = newOverlayDiv(
+      `left:${cx}px;top:${cy}px;` +
+      `width:${mainSize}px;height:${mainSize}px;` +
+      `margin:${-mainSize / 2}px 0 0 ${-mainSize / 2}px;border-radius:50%;` +
+      `background:radial-gradient(circle,` +
+        `rgba(255,225,170,0.9) 0%,` +
+        `rgba(255,180,110,0.55) 14%,` +
+        `rgba(255,150,90,0.32) 32%,` +
+        `rgba(255,120,80,0.14) 50%,transparent 70%);` +
       `mix-blend-mode:screen;`
     );
-    trackAnim(bloom.animate([
-      { transform: 'scale(0.2)',  opacity: 0   },
-      { transform: 'scale(0.9)',  opacity: 0.95, offset: 0.45 },
-      { transform: 'scale(1.18)', opacity: 0   }
-    ], { duration: 1000, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }));
-    await sleep(1000);
+    trackAnim(mainBloom.animate([
+      { transform: 'scale(0.12)', opacity: 0   },
+      { transform: 'scale(0.75)', opacity: 1,   offset: 0.40 },
+      { transform: 'scale(1.05)', opacity: 0.7, offset: 0.65 },
+      { transform: 'scale(1.40)', opacity: 0 }
+    ], { duration: totalMs, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }));
+
+    // Eight smaller blooms scattered across the card — wildflowers.
+    // Each has its own position, color, size, and timing so the field
+    // reads as varied rather than rhythmic.
+    const wildflowers = [
+      { x: 0.22, y: 0.28, color: '255,180,180', size: 75 },  // rose
+      { x: 0.78, y: 0.36, color: '255,200,140', size: 65 },  // peach
+      { x: 0.32, y: 0.72, color: '255,220,180', size: 85 },  // cream
+      { x: 0.70, y: 0.70, color: '255,170,140', size: 70 },  // coral
+      { x: 0.45, y: 0.18, color: '255,190,160', size: 60 },  // dusty rose
+      { x: 0.18, y: 0.55, color: '255,210,170', size: 80 },  // apricot
+      { x: 0.82, y: 0.62, color: '255,180,150', size: 65 },  // salmon
+      { x: 0.55, y: 0.85, color: '255,200,160', size: 75 }   // honey
+    ];
+
+    for (let i = 0; i < wildflowers.length; i++) {
+      const wf = wildflowers[i];
+      const wx = cr.left + cr.width  * wf.x;
+      const wy = cr.top  + cr.height * wf.y;
+      const petal = newOverlayDiv(
+        `left:${wx}px;top:${wy}px;` +
+        `width:${wf.size}px;height:${wf.size}px;` +
+        `margin:${-wf.size / 2}px 0 0 ${-wf.size / 2}px;border-radius:50%;` +
+        `background:radial-gradient(circle,` +
+          `rgba(${wf.color},0.72) 0%,` +
+          `rgba(${wf.color},0.36) 38%,` +
+          `transparent 72%);` +
+        `mix-blend-mode:screen;opacity:0;`
+      );
+      const startAt = 80 + i * 110;
+      setTimeout(() => {
+        if (!petal.parentNode) return;
+        trackAnim(petal.animate([
+          { transform: 'scale(0.1)', opacity: 0   },
+          { transform: 'scale(0.95)', opacity: 1,  offset: 0.40 },
+          { transform: 'scale(1.25)', opacity: 0.5, offset: 0.70 },
+          { transform: 'scale(1.55)', opacity: 0 }
+        ], { duration: 950, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }));
+      }, startAt);
+    }
+
+    await sleep(totalMs);
   }
 
   // ---- 04 The Emperor : the seal stamps, four corners snap in -------
