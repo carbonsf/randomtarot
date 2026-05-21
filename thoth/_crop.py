@@ -150,6 +150,95 @@ def center_crop_to_ratio(im, ratio):
         return im.crop((0, y0, w, y0 + new_h))
 
 
+# Reference art window, taken from the cards that detected cleanly
+# (Three of Disks pents03 / Death maj13): box ~ (77, 94, 600, 901) on a
+# 684x1024 source. The Thoth deck is uniformly framed, so this is very
+# close on every card — but it can be a few px off in any direction. So
+# we use it only as an ANCHOR and refine each edge per-card.
+REF_L = 77 / 684
+REF_T = 94 / 1024
+REF_R = 600 / 684
+REF_B = 901 / 1024
+
+# How far (fraction of the dimension) to search outward from just-inside
+# the art for the true frame edge, and the minimum color-gradient that
+# counts as the boundary. Scanning OUTWARD FROM INSIDE the art means we
+# stop at the art's own edge before we could ever reach the title band
+# (which sits ~35px below the bottom edge / ~4px above the top edge).
+EDGE_WIN_FRAC = 0.022
+GRAD_MIN = 13
+INSET = 5   # start the scan this many px inside the reference edge
+
+
+def _row_mean(px, w, y):
+    n = r = g = b = 0
+    for x in range(0, w, 4):
+        p = px[x, y]; r += p[0]; g += p[1]; b += p[2]; n += 1
+    return (r / n, g / n, b / n)
+
+
+def _col_mean(px, h, x):
+    n = r = g = b = 0
+    for y in range(0, h, 4):
+        p = px[x, y]; r += p[0]; g += p[1]; b += p[2]; n += 1
+    return (r / n, g / n, b / n)
+
+
+def _grad(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[2] - b[2])
+
+
+def refined_art_box(im):
+    """Anchor on the reference window, then refine each edge to the first
+    strong color-gradient found scanning outward from just inside the art.
+    Falls back to the reference edge if no clear boundary is nearby."""
+    im_rgb = im.convert("RGB")
+    w, h = im_rgb.size
+    px = im_rgb.load()
+    ref_l = round(w * REF_L); ref_t = round(h * REF_T)
+    ref_r = round(w * REF_R); ref_b = round(h * REF_B)
+    wx = max(8, round(w * EDGE_WIN_FRAC))
+    wy = max(8, round(h * EDGE_WIN_FRAC))
+
+    # Scan rows outward from `start` in `direction` (+1 down, -1 up) for up
+    # to `reach` steps; return the first row whose local gradient >= GRAD_MIN.
+    def scan_row(start, direction, reach):
+        for step in range(reach):
+            y = start + step * direction
+            if y < 3 or y > h - 3:
+                break
+            if _grad(_row_mean(px, w, y - 2), _row_mean(px, w, y + 2)) >= GRAD_MIN:
+                return y
+        return None
+
+    def scan_col(start, direction, reach):
+        for step in range(reach):
+            x = start + step * direction
+            if x < 3 or x > w - 3:
+                break
+            if _grad(_col_mean(px, h, x - 2), _col_mean(px, h, x + 2)) >= GRAD_MIN:
+                return x
+        return None
+
+    reach_y = wy + INSET + 4
+    reach_x = wx + INSET + 4
+    top    = scan_row(ref_t + INSET, -1, reach_y)
+    bottom = scan_row(ref_b - INSET, +1, reach_y)
+    left   = scan_col(ref_l + INSET, -1, reach_x)
+    right  = scan_col(ref_r - INSET, +1, reach_x)
+
+    # Fall back to the reference for any edge that didn't find a boundary.
+    top    = ref_t if top    is None else top
+    bottom = (ref_b if bottom is None else bottom) + 1
+    left   = ref_l if left   is None else left
+    right  = (ref_r if right  is None else right) + 1
+
+    # Sanity: a degenerate box means detection went wrong — use reference.
+    if right - left < w * 0.4 or bottom - top < h * 0.4:
+        return (ref_l, ref_t, ref_r, ref_b)
+    return (left, top, right, bottom)
+
+
 def process(src_path, key, out_dir):
     """Generate the three crops for one card."""
     im = Image.open(src_path).convert("RGB")
@@ -158,8 +247,8 @@ def process(src_path, key, out_dir):
     big = center_crop_to_ratio(im, TARGET_RATIO)
     big.save(os.path.join(out_dir, "big", f"{key}.jpg"), "JPEG", quality=86, optimize=True)
 
-    # FULLART: detect the inner art region by border scan.
-    box = detect_inner_bbox(im)
+    # FULLART: per-card refined art window, border + both title bands removed.
+    box = refined_art_box(im)
     fullart = im.crop(box)
     fullart.save(os.path.join(out_dir, "fullart", f"{key}.jpg"), "JPEG", quality=86, optimize=True)
 

@@ -684,44 +684,61 @@ function commitZoom(dir) {
 }
 
 // Crossfade the visible card from its current crop to the target crop.
-// A temporary overlay <img> holds the new crop; we fade it in (and fade
-// the live-scaled current image out) over a short eased window, then
-// promote it to the main image.
-function crossfadeToZoom(mode) {
+// Flash-free recipe:
+//   1. Fully DECODE the target crop before anything moves, so it's ready
+//      to paint the instant it's shown.
+//   2. A ghost <img> holding the (decoded) target fades in over the
+//      live-scaled current image, both easing to scale 1.
+//   3. Once the ghost is fully opaque, swap the REAL img's src to the
+//      target and wait for ITS decode before removing the ghost — so the
+//      handoff happens between two identical, fully-painted images. There
+//      is never a frame showing an undecoded/empty image.
+async function crossfadeToZoom(mode) {
   const imgEl = document.querySelector("img");
-  if (!imgEl || !currentCardName) return;
+  if (!imgEl || !currentCardName) { cancelLiveZoom(); return; }
   const targetUrl = deckModel().cardSrc(currentCardName, mode);
+  const startScale = liveZoomRatio || 1;
 
+  // 1. Decode the target up front (it's local + likely cached, so fast).
+  const pre = new Image();
+  pre.src = targetUrl;
+  try { await pre.decode(); } catch (_e) { /* cached/again below */ }
+
+  // 2. Ghost starts at the live pinch scale and eases to neutral.
   const ghost = document.createElement("img");
   ghost.src = targetUrl;
   ghost.className = "zoom-ghost";
-  // Match the host img's box exactly.
   ghost.style.cssText =
     "position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;" +
     "object-fit:contain;pointer-events:none;z-index:30;opacity:0;" +
-    "transform:scale(" + (liveZoomRatio || 1).toFixed(3) + ");" +
-    "transition:opacity 240ms ease, transform 260ms cubic-bezier(0.2,0,0,1);";
+    "transform:scale(" + startScale.toFixed(3) + ");" +
+    "transition:opacity 260ms ease, transform 280ms cubic-bezier(0.2,0,0,1);";
   document.body.appendChild(ghost);
 
-  // Fade the (live-scaled) current image out and ease it slightly past
-  // the pinch direction; fade the target in and settle it to scale 1.
-  imgEl.style.transition = "opacity 220ms ease, transform 260ms cubic-bezier(0.2,0,0,1)";
+  imgEl.style.transition = "opacity 240ms ease, transform 280ms cubic-bezier(0.2,0,0,1)";
   void ghost.offsetHeight;
   requestAnimationFrame(() => {
     ghost.style.opacity = "1";
     ghost.style.transform = "scale(1)";
     imgEl.style.opacity = "0";
+    imgEl.style.transform = "scale(1)";
   });
 
-  setTimeout(() => {
-    // Promote: swap the real img to the target crop, drop the ghost.
-    imgEl.src = targetUrl;
-    clearZoomTransform(imgEl);
-    imgEl.style.transition = "";
-    imgEl.style.opacity = "";
-    if (ghost.parentNode) ghost.parentNode.removeChild(ghost);
-    haptic(4);
-  }, 270);
+  // 3. After the fade, the ghost (target at scale 1) fully covers the
+  // card. Swap the real img underneath and only drop the ghost once the
+  // real img has decoded the same crop — invisible handoff.
+  await new Promise((r) => setTimeout(r, 300));
+  imgEl.src = targetUrl;
+  try { await imgEl.decode(); } catch (_e) { /* ignore */ }
+  clearZoomTransform(imgEl);
+  imgEl.style.opacity = "";
+  // One painted frame with the real img up before removing the ghost.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (ghost.parentNode) ghost.parentNode.removeChild(ghost);
+    });
+  });
+  haptic(4);
 }
 
 // --- Deck toggle + Scooby-Doo alternate-reality transition ------------
