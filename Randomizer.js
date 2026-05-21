@@ -274,6 +274,12 @@ async function drawCard(imgEl, event) {
   zoomMode = "artfill";
   const chosenUrl = cardSrcFor(chosenKey);
 
+  // For Thoth, warm the zoom assets (FULLART = the continuous-zoom medium,
+  // BIG = the crossfade target) and capture the FULLART file's aspect so
+  // the artfill-fill scale is exact for this card the moment a pinch
+  // starts. Default aspect (0.644) holds until the file reports its size.
+  if (currentDeck === "thoth") preloadThothZoomAssets(chosenKey);
+
   // INDEPENDENT reversal roll — fresh entropy fetch, own hashing stream,
   // can't perturb the deck pick (which already happened). See rollReversal.
   const reversal = await rollReversal(event);
@@ -560,18 +566,17 @@ function twoFingerMove(e) {
   const [t0, t1] = e.touches;
   tfMidPath.push(tfMid(t0, t1));
 
-  // Live zoom preview: only on a face-up Thoth card, and only once the
-  // pinch has clearly diverged from a zigzag (distance is changing more
-  // than the midpoint is wandering laterally). Gives finger-tracked
-  // responsiveness during the gesture; the discrete commit lands on
-  // release.
+  // Live zoom: only on a face-up Thoth card, and only once the pinch has
+  // clearly diverged from a zigzag (distance changing more than the
+  // midpoint wanders laterally). The first qualifying frame opens a zoom
+  // session; subsequent frames drive it continuously with the fingers.
   if (currentDeck === "thoth" && !showingBack && !drawing) {
-    const d = tfDist(t0, t1);
-    const ratio = d / tfStart.dist;
+    const ratio = tfDist(t0, t1) / tfStart.dist;
     const lateral = Math.abs(tfMid(t0, t1).x - tfStart.midX);
     if (Math.abs(ratio - 1) > 0.06 && Math.abs(ratio - 1) * 240 > lateral) {
       tfZoomLive = true;
-      applyLiveZoom(ratio);
+      if (!zoom) beginZoom(ratio);
+      updateZoom(ratio);
     }
   }
 }
@@ -586,25 +591,22 @@ function twoFingerEnd(e) {
   // gesture is never chased by an unwanted draw / set-down.
   suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
 
-  const result = classifyTwoFinger();
-  if (result === "zigzag") {
-    if (tfZoomLive) cancelLiveZoom();   // a zigzag wins over any stray zoom
+  if (isZigzag()) {
+    cancelZoom();          // a zigzag wins over any stray zoom preview
     toggleDeck();
-  } else if (result === "pinch" || result === "spread") {
-    commitZoom(result);
+  } else if (zoom) {
+    endZoom();             // a zoom session is open — land it
   } else {
-    if (tfZoomLive) cancelLiveZoom();    // ambiguous — revert preview
+    cancelZoom();
   }
   tfStart = null;
   tfMidPath = [];
   tfZoomLive = false;
 }
 
-// Decide what the just-finished two-finger gesture was.
-function classifyTwoFinger() {
-  if (!tfStart || tfMidPath.length < 6) return null;
-
-  // Zigzag test first (it's the gated, deliberate one).
+// Is the just-finished two-finger gesture the (gated, deliberate) zigzag?
+function isZigzag() {
+  if (!tfStart || tfMidPath.length < 6) return false;
   const first = tfMidPath[0];
   const last = tfMidPath[tfMidPath.length - 1];
   const netDown = last.y - first.y;
@@ -619,126 +621,190 @@ function classifyTwoFinger() {
     lastSign = sign;
   }
   const amp = maxX - minX;
-
-  // Finger geometry over the gesture: we only have start; approximate
-  // drift from the final distance/angle if a fresh pair were available.
-  // (We captured only midpoints during move; distance constancy is
-  // enforced implicitly because a pinch produces few reversals.)
-  if (reversals >= ZIGZAG_MIN_REVERSALS &&
-      netDown >= ZIGZAG_MIN_DOWN &&
-      amp >= ZIGZAG_MIN_AMP) {
-    return "zigzag";
-  }
-
-  // Otherwise treat it as a zoom if the live preview engaged (which only
-  // happens when distance changed meaningfully and reversals were few).
-  if (tfZoomLive) {
-    return liveZoomRatio < 1 ? "pinch" : "spread";
-  }
-  return null;
+  return reversals >= ZIGZAG_MIN_REVERSALS &&
+         netDown >= ZIGZAG_MIN_DOWN &&
+         amp >= ZIGZAG_MIN_AMP;
 }
 
-// --- Live zoom preview + commit ---------------------------------------
-// During a pinch/spread we scale the current card image with the fingers
-// for tactile feedback. On release we snap to the next discrete zoom
-// mode with a brief crossfade between the two crops (same artwork,
-// different framing — the crossfade reads as a continuous zoom).
+// --- Zoom system ------------------------------------------------------
+// Three Thoth zoom states share the same art, so most of the zoom is a
+// TRUE continuous scale rather than a crossfade:
+//
+//   ARTFILL  — the FULLART file scaled up (scale = aspect / 0.578) so the
+//              art fills the frame; the cropped sides sit just off-screen.
+//   FULLART  — the FULLART file at scale 1, object-fit:contain → the whole
+//              art with black letterbox (free, because the file has no
+//              border around the art).
+//   BIG      — the BIG file (whole card incl. border) at scale 1.
+//
+// ARTFILL <-> FULLART is therefore one image at two scales: interpolating
+// the scale with the fingers is a real zoom, no crossfade, no flash.
+// FULLART <-> BIG is a genuine content reveal (the border appears), so it
+// uses an opaque-base crossfade with a brief blur. Everything runs on an
+// overlay ghost so the underlying <img> (and the Major effects, the draw
+// path, and the untouched RW deck) never sees a transform.
 
-let liveZoomRatio = 1;
+const TARGET_ASPECT = 825 / 1427;        // 0.5781 — the artfill/display aspect
+let currentFullAspect = 0.644;           // FULLART file aspect for the current card
+let zoom = null;                         // active zoom session, or null
 
-function applyLiveZoom(ratio) {
-  const imgEl = document.querySelector("img");
-  if (!imgEl) return;
-  // Clamp so the preview never gets absurd; ease past the clamp softly.
-  liveZoomRatio = Math.max(0.55, Math.min(1.8, ratio));
-  imgEl.style.transition = "none";
-  imgEl.style.transform = "scale(" + liveZoomRatio.toFixed(4) + ")";
+// Scale that makes the FULLART-file ghost fill the frame like ARTFILL.
+function artfillScale() {
+  return Math.max(1, currentFullAspect / TARGET_ASPECT);
 }
 
-function cancelLiveZoom() {
-  const imgEl = document.querySelector("img");
-  if (!imgEl) return;
-  imgEl.style.transition = "transform 220ms cubic-bezier(0.2,0,0,1)";
-  imgEl.style.transform = "scale(1)";
-  setTimeout(() => clearZoomTransform(imgEl), 240);
+// Preload the Thoth zoom assets for a card and capture the FULLART file's
+// true aspect (so artfillScale() is exact). Called when a Thoth card is
+// drawn; the BIG file is warmed too for the FULLART->BIG crossfade.
+function preloadThothZoomAssets(key) {
+  const fullUrl = DECKS.thoth.cardSrc(key, "fullart");
+  const fa = new Image();
+  fa.onload = function () {
+    if (fa.naturalWidth && fa.naturalHeight) {
+      currentFullAspect = fa.naturalWidth / fa.naturalHeight;
+    }
+  };
+  fa.src = fullUrl;
+  new Image().src = DECKS.thoth.cardSrc(key, "big");
+}
+
+function makeZoomGhost(url, scale, z) {
+  const g = document.createElement("img");
+  g.src = url;
+  g.className = "zoom-ghost";
+  g.style.cssText =
+    "position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;" +
+    "object-fit:contain;pointer-events:none;z-index:" + (z || 30) + ";" +
+    "transform:scale(" + scale.toFixed(4) + ");will-change:transform,opacity,filter;";
+  document.body.appendChild(g);
+  return g;
+}
+
+// Remove any zoom ghost immediately and clear the session (used by state
+// changes — set-down, deck toggle, new draw).
+function teardownZoom() {
+  if (zoom && zoom.ghost && zoom.ghost.parentNode) zoom.ghost.remove();
+  zoom = null;
 }
 
 function clearZoomTransform(imgEl) {
-  if (!imgEl) return;
-  imgEl.style.transition = "";
-  imgEl.style.transform = "";
+  teardownZoom();
+  if (imgEl) { imgEl.style.transition = ""; imgEl.style.transform = ""; imgEl.style.opacity = ""; }
 }
 
-// Step the zoom mode and crossfade to the new crop.
-function commitZoom(dir) {
-  if (currentDeck !== "thoth" || showingBack || drawing) { cancelLiveZoom(); return; }
-  const idx = ZOOM_ORDER.indexOf(zoomMode);
-  // pinch = zoom OUT = move toward BIG (higher index); spread = zoom IN.
-  const nextIdx = dir === "pinch"
-    ? Math.min(ZOOM_ORDER.length - 1, idx + 1)
-    : Math.max(0, idx - 1);
-  if (nextIdx === idx) { cancelLiveZoom(); return; }   // already at an end
-  const nextMode = ZOOM_ORDER[nextIdx];
-  zoomMode = nextMode;
-  crossfadeToZoom(nextMode);
-}
-
-// Crossfade the visible card from its current crop to the target crop.
-// Flash-free recipe:
-//   1. Fully DECODE the target crop before anything moves, so it's ready
-//      to paint the instant it's shown.
-//   2. A ghost <img> holding the (decoded) target fades in over the
-//      live-scaled current image, both easing to scale 1.
-//   3. Once the ghost is fully opaque, swap the REAL img's src to the
-//      target and wait for ITS decode before removing the ghost — so the
-//      handoff happens between two identical, fully-painted images. There
-//      is never a frame showing an undecoded/empty image.
-async function crossfadeToZoom(mode) {
+// Open a zoom session when a pinch/spread is recognized mid-gesture.
+function beginZoom(ratio) {
   const imgEl = document.querySelector("img");
-  if (!imgEl || !currentCardName) { cancelLiveZoom(); return; }
-  const targetUrl = deckModel().cardSrc(currentCardName, mode);
-  const startScale = liveZoomRatio || 1;
+  if (!imgEl || !currentCardName) return;
+  const idx = ZOOM_ORDER.indexOf(zoomMode);
+  const out = ratio < 1;                              // pinch (together) = zoom OUT
+  const nextIdx = out ? Math.min(ZOOM_ORDER.length - 1, idx + 1)
+                      : Math.max(0, idx - 1);
+  if (nextIdx === idx) return;                        // already at an end
+  const fromMode = zoomMode, toMode = ZOOM_ORDER[nextIdx];
+  const za = artfillScale();
+  const continuous = (fromMode !== "big" && toMode !== "big");
 
-  // 1. Decode the target up front (it's local + likely cached, so fast).
-  const pre = new Image();
-  pre.src = targetUrl;
-  try { await pre.decode(); } catch (_e) { /* cached/again below */ }
-
-  // 2. Ghost starts at the live pinch scale and eases to neutral.
-  const ghost = document.createElement("img");
-  ghost.src = targetUrl;
-  ghost.className = "zoom-ghost";
-  ghost.style.cssText =
-    "position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;" +
-    "object-fit:contain;pointer-events:none;z-index:30;opacity:0;" +
-    "transform:scale(" + startScale.toFixed(3) + ");" +
-    "transition:opacity 260ms ease, transform 280ms cubic-bezier(0.2,0,0,1);";
-  document.body.appendChild(ghost);
-
-  imgEl.style.transition = "opacity 240ms ease, transform 280ms cubic-bezier(0.2,0,0,1)";
-  void ghost.offsetHeight;
-  requestAnimationFrame(() => {
-    ghost.style.opacity = "1";
-    ghost.style.transform = "scale(1)";
+  if (continuous) {
+    // ARTFILL <-> FULLART on the single FULLART file. Ghost starts
+    // matching the current static view; the static <img> hides behind it.
+    const fullUrl = deckModel().cardSrc(currentCardName, "fullart");
+    const fromScale = (fromMode === "artfill") ? za : 1;
+    const toScale   = (toMode   === "artfill") ? za : 1;
+    const ghost = makeZoomGhost(fullUrl, fromScale, 30);
     imgEl.style.opacity = "0";
-    imgEl.style.transform = "scale(1)";
-  });
+    zoom = { kind: "continuous", fromMode, toMode, fromScale, toScale, ghost, imgEl, progress: 0 };
+  } else {
+    // FULLART <-> BIG content reveal: ghost = target file, fades in over
+    // the opaque current image, with a blur that resolves as it commits.
+    const targetUrl = deckModel().cardSrc(currentCardName, toMode);
+    const ghost = makeZoomGhost(targetUrl, 1, 30);
+    ghost.style.opacity = "0";
+    ghost.style.filter = "blur(7px)";
+    zoom = { kind: "crossfade", fromMode, toMode, ghost, imgEl, progress: 0 };
+  }
+}
 
-  // 3. After the fade, the ghost (target at scale 1) fully covers the
-  // card. Swap the real img underneath and only drop the ghost once the
-  // real img has decoded the same crop — invisible handoff.
-  await new Promise((r) => setTimeout(r, 300));
-  imgEl.src = targetUrl;
-  try { await imgEl.decode(); } catch (_e) { /* ignore */ }
-  clearZoomTransform(imgEl);
-  imgEl.style.opacity = "";
-  // One painted frame with the real img up before removing the ghost.
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      if (ghost.parentNode) ghost.parentNode.removeChild(ghost);
-    });
-  });
+// Drive the open session with the live finger ratio.
+function updateZoom(ratio) {
+  if (!zoom) return;
+  const out = ratio < 1;
+  const mag = out ? (1 - ratio) : (ratio - 1);
+  const p = Math.max(0, Math.min(1, mag / 0.45));     // ~0.45 ratio change = full step
+  zoom.progress = p;
+  if (zoom.kind === "continuous") {
+    const s = zoom.fromScale + (zoom.toScale - zoom.fromScale) * p;
+    zoom.ghost.style.transform = "scale(" + s.toFixed(4) + ")";
+  } else {
+    zoom.ghost.style.opacity = p.toFixed(3);
+    zoom.ghost.style.filter = "blur(" + (7 * (1 - p)).toFixed(1) + "px)";
+  }
+}
+
+// Land the session: commit to the target mode if the user moved far
+// enough, else settle back to the start mode. Always resolves to the
+// landed mode's own file at scale 1 on the underlying <img>, seamlessly.
+async function endZoom() {
+  if (!zoom) return;
+  const z = zoom; zoom = null;
+  const commit = z.progress >= 0.45;
+  const land = commit ? z.toMode : z.fromMode;
+  const imgEl = z.imgEl;
+  const za = artfillScale();
+
+  if (z.kind === "continuous") {
+    const landScale = (land === "artfill") ? za : 1;
+    z.ghost.style.transition = "transform 200ms cubic-bezier(0.2,0,0,1)";
+    z.ghost.style.transform = "scale(" + landScale.toFixed(4) + ")";
+    await sleep(210);
+    zoomMode = land;
+    imgEl.src = deckModel().cardSrc(currentCardName, land);
+    try { await imgEl.decode(); } catch (_e) { /* cached */ }
+    imgEl.style.transform = ""; imgEl.style.transition = ""; imgEl.style.opacity = "";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (z.ghost.parentNode) z.ghost.remove();
+    }));
+  } else {
+    z.ghost.style.transition = "opacity 220ms ease, filter 220ms ease";
+    if (commit) {
+      z.ghost.style.opacity = "1";
+      z.ghost.style.filter = "blur(0px)";
+      await sleep(230);
+      zoomMode = z.toMode;
+      imgEl.src = deckModel().cardSrc(currentCardName, z.toMode);
+      try { await imgEl.decode(); } catch (_e) { /* cached */ }
+      imgEl.style.opacity = ""; imgEl.style.transform = "";
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (z.ghost.parentNode) z.ghost.remove();
+      }));
+    } else {
+      z.ghost.style.opacity = "0";
+      z.ghost.style.filter = "blur(7px)";
+      await sleep(230);
+      if (z.ghost.parentNode) z.ghost.remove();
+      imgEl.style.opacity = "";
+    }
+  }
   haptic(4);
+}
+
+// Abort an open session (e.g. the gesture turned out to be a zigzag),
+// reverting to the start mode with a quick ease.
+function cancelZoom() {
+  if (!zoom) return;
+  const z = zoom; zoom = null;
+  const imgEl = z.imgEl;
+  if (z.kind === "continuous") {
+    z.ghost.style.transition = "transform 180ms ease, opacity 180ms ease";
+    z.ghost.style.transform = "scale(" + z.fromScale.toFixed(4) + ")";
+  } else {
+    z.ghost.style.transition = "opacity 180ms ease";
+    z.ghost.style.opacity = "0";
+  }
+  setTimeout(() => {
+    imgEl.style.opacity = ""; imgEl.style.transform = "";
+    if (z.ghost.parentNode) z.ghost.remove();
+  }, 190);
 }
 
 // --- Deck toggle + Scooby-Doo alternate-reality transition ------------
@@ -815,85 +881,96 @@ function playRealityWarp(imgEl, fromUrl, toUrl) {
       return;
     }
 
-    // Build N ghost copies of the CURRENT image, stacked over the card.
-    const N = 5;
-    const ghosts = [];
-    for (let i = 0; i < N; i++) {
+    // Two stacked ghost sets: the reality we're LEAVING (copies of the
+    // current card) and the reality we're ENTERING (copies of the target).
+    // Both ride the same wobble so they overlay coherently. Near the apex
+    // the "from" set dissolves out (chromatically tinted) while the "to"
+    // set dissolves IN with a screen blend + blur — so the two realities
+    // melt into one another, ethereal and hazy, instead of hard-cutting.
+    const N = 4;
+    const fromGhosts = [];
+    const toGhosts = [];
+    function buildGhost(src, z, blend) {
       const g = document.createElement("img");
-      g.src = fromUrl;
+      g.src = src;
       g.className = "warp-ghost";
       g.style.cssText =
         "position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;" +
-        "object-fit:contain;pointer-events:none;z-index:" + (45 + i) + ";" +
-        "will-change:transform,opacity,filter;opacity:0;";
-      // Chromatic personality: outer ghosts tinted warm / cool via filter.
-      if (i === 0) g.style.filter = "hue-rotate(-22deg) saturate(1.7)";
-      if (i === N - 1) g.style.filter = "hue-rotate(22deg) saturate(1.7)";
+        "object-fit:contain;pointer-events:none;z-index:" + z + ";" +
+        "will-change:transform,opacity,filter;opacity:0;" +
+        (blend ? "mix-blend-mode:screen;" : "");
       document.body.appendChild(g);
-      ghosts.push(g);
+      return g;
     }
+    for (let i = 0; i < N; i++) {
+      fromGhosts.push(buildGhost(fromUrl, 45 + i, false));
+      toGhosts.push(buildGhost(toUrl, 45 + N + i, true)); // 'to' set on top
+    }
+
     // Hide the real image while the ghosts perform.
     imgEl.style.transition = "none";
     imgEl.style.opacity = "0";
 
-    const DUR = 900;
-    const SWAP_AT = 0.5;          // swap the real img to target at midpoint
+    const DUR = 950;
     const start = performance.now();
     let swapped = false;
 
+    function smoothstep(a, b, x) {
+      const u = Math.max(0, Math.min(1, (x - a) / (b - a)));
+      return u * u * (3 - 2 * u);
+    }
+
     function frame(now) {
       const t = Math.min(1, (now - start) / DUR);
-      // Envelope: distortion swells to a peak at the middle, eases out.
-      const env = Math.sin(Math.PI * t);            // 0→1→0
-      for (let i = 0; i < ghosts.length; i++) {
-        const g = ghosts[i];
-        const phase = (i / ghosts.length) * Math.PI * 2;
-        // Vertical sine "scooby" wobble + horizontal jitter, scaled by env.
+      const env = Math.sin(Math.PI * t);              // distortion amplitude 0→1→0
+      const xfade = smoothstep(0.30, 0.70, t);        // from→to crossover
+      const realRamp = smoothstep(0.52, 0.90, t);     // clean image rising, back half
+
+      for (let i = 0; i < N; i++) {
+        const phase = (i / N) * Math.PI * 2;
         const wobble = Math.sin(t * Math.PI * 6 + phase);
-        const tx = wobble * 26 * env * (i - (ghosts.length - 1) / 2) * 0.6;
-        const sy = 1 + 0.04 * Math.sin(t * Math.PI * 8 + phase) * env;
-        const skew = wobble * 6 * env;               // deg
-        g.style.transform =
-          "translateX(" + tx.toFixed(1) + "px) scaleY(" + sy.toFixed(3) +
-          ") skewX(" + skew.toFixed(2) + "deg)";
-        // Ghosts fade in on the rise, out on the fall; the middle ghost
-        // is the most solid so the image stays legible through the warp.
-        const central = 1 - Math.abs(i - (ghosts.length - 1) / 2) / ((ghosts.length - 1) / 2 || 1);
-        g.style.opacity = (env * (0.35 + 0.55 * central)).toFixed(3);
-      }
-      // At the apex, swap every ghost's source to the target image — the
-      // reality has flipped underneath the distortion.
-      if (!swapped && t >= SWAP_AT) {
-        swapped = true;
-        imgEl.src = toUrl;
-        for (const g of ghosts) g.src = toUrl;
+        const tx = wobble * 26 * env * (i - (N - 1) / 2) * 0.7;
+        const sy = 1 + 0.045 * Math.sin(t * Math.PI * 8 + phase) * env;
+        const skew = wobble * 6 * env;
+        const xform = "translateX(" + tx.toFixed(1) + "px) scaleY(" + sy.toFixed(3) +
+                      ") skewX(" + skew.toFixed(2) + "deg)";
+        const central = 1 - Math.abs(i - (N - 1) / 2) / ((N - 1) / 2 || 1);
+
+        // Leaving reality: solid early, dissolving through the apex; a
+        // gentle per-ghost hue split gives the de-tuning shimmer.
+        const fg = fromGhosts[i];
+        fg.style.transform = xform;
+        fg.style.opacity = (env * (0.4 + 0.6 * central) * (1 - xfade)).toFixed(3);
+        fg.style.filter = "hue-rotate(" + ((i - (N - 1) / 2) * 14).toFixed(0) + "deg) saturate(1.5)";
+
+        // Arriving reality: blooms in around the apex (screen blend), most
+        // blurred at the crossover and sharpening as it settles, then
+        // yields to the real clean image as that rises underneath.
+        const tg = toGhosts[i];
+        tg.style.transform = xform;
+        tg.style.opacity = (env * (0.4 + 0.6 * central) * xfade * (1 - realRamp)).toFixed(3);
+        const blur = 9 * (1 - Math.abs(2 * xfade - 1)) + 3 * (1 - realRamp);
+        tg.style.filter = "blur(" + blur.toFixed(1) + "px) saturate(1.4)";
       }
 
-      // Back half: bring the CLEAN real image up underneath the ghosts so
-      // that as the distortion fades out, the resolved card is already
-      // there — no moment where everything is invisible (that was the
-      // tacky end-flash). The real image also eases from a slight scale
-      // (1.035 → 1.0) so it "resolves into focus": a deliberate, smooth
-      // punctuation rather than a pop. Opacity uses a smoothstep over
-      // t∈[0.5, 0.88] so it's fully solid before the ghosts vanish.
+      // Swap the real img to the target at the apex (hidden under ghosts).
+      if (!swapped && t >= 0.5) { swapped = true; imgEl.src = toUrl; }
+
+      // Back half: the clean target rises underneath, easing from a slight
+      // scale so it "resolves into focus" — a smooth punctuation, not a pop.
       if (swapped) {
-        const u = Math.max(0, Math.min(1, (t - SWAP_AT) / 0.38));
-        const ease = u * u * (3 - 2 * u);            // smoothstep
-        const rs = 1.035 - 0.035 * ease;             // 1.035 → 1.0
-        imgEl.style.opacity = ease.toFixed(3);
-        imgEl.style.transform = "scale(" + rs.toFixed(4) + ")";
+        imgEl.style.opacity = realRamp.toFixed(3);
+        imgEl.style.transform = "scale(" + (1.035 - 0.035 * realRamp).toFixed(4) + ")";
       }
 
       if (t < 1) {
         requestAnimationFrame(frame);
       } else {
-        // The real image is already fully up (opacity 1, scale 1) from the
-        // back-half ramp; the ghosts are at ~0 opacity. Just finalize and
-        // remove them — no visible change, so no flash.
         imgEl.style.opacity = "1";
         imgEl.style.transform = "";
         imgEl.style.transition = "";
-        for (const g of ghosts) { if (g.parentNode) g.parentNode.removeChild(g); }
+        for (const g of fromGhosts) if (g.parentNode) g.remove();
+        for (const g of toGhosts) if (g.parentNode) g.remove();
         resolve();
       }
     }
