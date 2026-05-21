@@ -1,0 +1,136 @@
+# Reversed Thoth meanings — Major Arcana. 4 stanzas: Weakened / Inverted /
+# Negative / Delayed. Key names what's affected in this card.
+REV_MAJOR = {
+  "maj00": [
+    ("Weakened", "innocence", ["the leap that won't quite launch", "wonder dimmed by caution", "spirit afraid to incarnate", "the green man standing still"]),
+    ("Inverted", "spontaneity", ["calculation where there was abandon", "the careful step over the leap", "weight where there was lightness", "planning the journey away"]),
+    ("Negative", "folly", ["recklessness in courage's mask", "leaping for the rush alone", "mistaking chaos for freedom", "the cliff edge ignored"]),
+    ("Delayed", "beginning", ["still poised at the edge", "spirit gathering to descend", "the yes not yet spoken", "potential held a moment longer"]),
+  ],
+  "maj01": [
+    ("Weakened", "will", ["skill that won't quite catch", "the word without the spark", "tools that won't align", "power with no traction"]),
+    ("Inverted", "the word", ["speech to deceive, not reveal", "the trickster turned con", "sleight where there was craft", "all sleeve, no card"]),
+    ("Negative", "skill", ["manipulating with the gift", "tricking yourself it's done", "performance over practice", "mercury gone slippery"]),
+    ("Delayed", "manifestation", ["the act before the doing", "skill not yet summoned", "the word still forming", "magic waking slowly"]),
+  ],
+  "maj02": [
+    ("Weakened", "intuition", ["the inner voice gone faint", "knowing dulled by proof-seeking", "the lunar tide at ebb", "stillness disturbed too soon"]),
+    ("Inverted", "mystery", ["secrets that leak too early", "depth flattened to surface", "intuition mistrusted to noise", "the veil torn carelessly"]),
+    ("Negative", "knowing", ["performing a wisdom you lack", "hiding from what you sense", "mystery used to manipulate", "silence as a weapon"]),
+    ("Delayed", "revelation", ["the answer still forming", "the voice not yet returned", "patience the only door", "truth on slow approach"]),
+  ],
+  "maj03": [
+    ("Weakened", "abundance", ["fullness that won't spill", "the giver run dry", "earth tired this season", "creativity blocked at the root"]),
+    ("Inverted", "nurture", ["smothering dressed as care", "love that wants itself back", "fertility gone to overgrowth", "beauty turned to vanity"]),
+    ("Negative", "comfort", ["hiding in luxury", "over-mothering the work", "abundance as anesthetic", "appetite mistaken for love"]),
+    ("Delayed", "bloom", ["the gestation still gestating", "soil still warming", "fullness on its way", "nature taking its time"]),
+  ],
+  "maj04": [
+    ("Weakened", "authority", ["command with no room behind it", "structure losing its corners", "stability you can't stand on", "rule grown brittle"]),
+    ("Inverted", "structure", ["control hardened to rigidity", "law without mercy", "order calcified to stuckness", "the father as tyrant"]),
+    ("Negative", "control", ["tyranny dressed as protection", "authority unearned", "squeezing what should breathe", "force where guidance was due"]),
+    ("Delayed", "sovereignty", ["the throne still being built", "authority still arriving", "structure mid-construction", "a realm not yet recognized"]),
+  ],
+  "maj05": [
+    ("Weakened", "teaching", ["rites that no longer reach", "wisdom mouthed without meaning", "the lineage frayed", "form without the spirit"]),
+    ("Inverted", "tradition", ["dogma where there was insight", "instruction that won't listen", "convention strangling meaning", "the bridge gone one-way"]),
+    ("Negative", "orthodoxy", ["hiding inside the rules", "tradition used to shame", "belonging only by belief", "the wise old man as gatekeeper"]),
+    ("Delayed", "initiation", ["the rite still ahead", "the teacher not yet here", "the door before the door", "belonging still unfolding"]),
+  ],
+  "maj06": [
+    ("Weakened", "union", ["the bond losing its current", "one yes still missing", "alignment off a degree", "the marriage half-made"]),
+    ("Inverted", "choice", ["deciding without conviction", "union as avoidance", "values negotiated to nothing", "opposites that won't meet"]),
+    ("Negative", "attraction", ["drawn to what undoes you", "love as escape from self", "commitment by compulsion", "the easier wrong chosen"]),
+    ("Delayed", "union", ["the meeting deferred", "hearts on slow approach", "the vow still ripening", "the child not yet conceived"]),
+  ],
+  "maj07": [
+    ("Weakened", "triumph", ["drive without traction", "the reins gone slack", "momentum stalling at the gate", "the team pulling apart"]),
+    ("Inverted", "control", ["motion in circles", "victory aimed wrong", "steering given to the loudest", "the grail set down mid-race"]),
+    ("Negative", "drive", ["force mistaken for progress", "steamrolling your own team", "pushing past every stop sign", "momentum as identity"]),
+    ("Delayed", "arrival", ["the journey longer than the map", "the finish line receding", "victory not yet at hand", "the road still ahead"]),
+  ],
+  "maj08": [
+    ("Weakened", "balance", ["the scales trembling", "equilibrium hard to find", "truth blurred by wish", "the dancer losing her poise"]),
+    ("Inverted", "justice", ["fairness bent to favor", "the verdict before the weighing", "bias dressed as law", "the feather thumbed"]),
+    ("Negative", "truth", ["weighing with a crooked scale", "excusing your own debt", "blame outrunning fact", "maat's gaze averted"]),
+    ("Delayed", "equilibrium", ["the correction still pending", "the account not yet settled", "balance on slow approach", "the verdict withheld"]),
+  ],
+  "maj09": [
+    ("Weakened", "wisdom", ["insight you can't quite reach", "the lantern dim in the cave", "solitude curdling to isolation", "guidance audible but vague"]),
+    ("Inverted", "introspection", ["hiding instead of seeking", "withdrawal that calcifies", "examining without conclusion", "the inward gaze gone obsessive"]),
+    ("Negative", "isolation", ["cutting off, calling it depth", "solitude as avoidance", "hoarding insight you won't share", "loneliness misnamed wisdom"]),
+    ("Delayed", "insight", ["the lesson still gathering", "the chamber not yet entered", "wisdom on long approach", "the mountain still being climbed"]),
+  ],
+  "maj10": [
+    ("Weakened", "fortune", ["the turn that won't quite turn", "luck on a delay", "change muffled at the apex", "momentum stalled"]),
+    ("Inverted", "cycle", ["the same season again", "progress that loops", "fate misread as choice", "change cosmetic only"]),
+    ("Negative", "fate", ["blaming the wheel you steer", "waiting instead of acting", "surrender that's resignation", "superstition over agency"]),
+    ("Delayed", "turn", ["the wheel paused at the worst notch", "the shift still ahead", "fortune slow this round", "the turning point not here"]),
+  ],
+  "maj11": [
+    ("Weakened", "vitality", ["the fire turned to embers", "appetite gone listless", "the beast barely ridden", "joy drained from strength"]),
+    ("Inverted", "passion", ["lust gone compulsive", "desire that consumes the self", "ecstasy turned to craving", "the rider thrown"]),
+    ("Negative", "appetite", ["indulgence without joy", "using the beast on the weak", "passion as domination", "strength flaunted, not felt"]),
+    ("Delayed", "ecstasy", ["the fire still kindling", "union not yet dared", "passion held in reserve", "the lion still being learned"]),
+  ],
+  "maj12": [
+    ("Weakened", "surrender", ["letting go that won't release", "the sacrifice half-offered", "suspension that just aches", "release stalled mid-air"]),
+    ("Inverted", "perspective", ["clinging to the old view", "martyrdom for show", "losing with no gain", "the pause turned to paralysis"]),
+    ("Negative", "sacrifice", ["suffering for its own sake", "playing the victim role", "stalling, calling it surrender", "the cross taken on for pity"]),
+    ("Delayed", "rebirth", ["stillness before the turn", "suspended, not yet freed", "the long pause still holding", "the new sight not yet arrived"]),
+  ],
+  "maj13": [
+    ("Weakened", "transformation", ["the old form clinging on", "change stalled in decay", "the scythe gone dull", "endings that won't end"]),
+    ("Inverted", "change", ["fearing the necessary death", "resisting the dissolution", "stasis dressed as survival", "holding the husk shut"]),
+    ("Negative", "decay", ["rot with no rebirth", "wallowing in the ending", "clinging to what's finished", "the nigredo refused"]),
+    ("Delayed", "rebirth", ["the passage still underway", "the new form gestating", "change you can't yet see", "release on slow approach"]),
+  ],
+  "maj14": [
+    ("Weakened", "synthesis", ["the blend that won't combine", "fire and water still apart", "the brew gone tepid", "balance hard to hold"]),
+    ("Inverted", "temperance", ["extremes pulling back apart", "the middle way abandoned", "mixing without transmuting", "contraries left at war"]),
+    ("Negative", "excess", ["overdoing one element", "forcing the fusion", "impatience spoiling the work", "the cauldron rushed"]),
+    ("Delayed", "the great work", ["the cooking still slow", "gold not yet from lead", "the rainbow not yet arched", "integration still forming"]),
+  ],
+  "maj15": [
+    ("Weakened", "bondage", ["the chains felt but unbroken", "appetite losing its joy", "matter's grip loosening slowly", "the goat gone quiet"]),
+    ("Inverted", "matter", ["shame where there was mirth", "instinct denied, not owned", "the body distrusted", "ecstasy turned to compulsion"]),
+    ("Negative", "attachment", ["feeding the addiction", "mistaking the chain for the self", "the shadow projected outward", "desire running the house"]),
+    ("Delayed", "liberation", ["the chain ready to drop", "the shadow nearly faced", "release still pending", "the mask not yet removed"]),
+  ],
+  "maj16": [
+    ("Weakened", "upheaval", ["the crack not yet collapse", "the shock absorbed too well", "the false propped up again", "lightning that didn't strike clean"]),
+    ("Inverted", "revelation", ["clinging to the falling tower", "denial of the obvious", "rebuilding the same prison", "truth refused at the door"]),
+    ("Negative", "collapse", ["self-sabotage as catastrophe", "tearing down out of spite", "disaster courted", "the fall made worse by grasping"]),
+    ("Delayed", "breakthrough", ["the lightning still gathering", "the false safety still standing", "the necessary fall delayed", "release postponed"]),
+  ],
+  "maj17": [
+    ("Weakened", "hope", ["the light gone faint", "faith hard to summon", "the pour run thin", "calm just out of reach"]),
+    ("Inverted", "guidance", ["the star mistrusted", "hope curdled to wishful thinking", "the source doubted", "despair where faith was"]),
+    ("Negative", "despair", ["giving up the calm", "cynicism as armor", "the water withheld from earth", "the anima abandoned"]),
+    ("Delayed", "renewal", ["healing on slow approach", "the water not yet poured", "trust still rebuilding", "the star behind cloud"]),
+  ],
+  "maj18": [
+    ("Weakened", "illusion", ["the fog lifting unevenly", "fear losing its grip slowly", "the test half-faced", "the deceptive light dimming"]),
+    ("Inverted", "clarity", ["illusion mistaken for truth", "projection cast on others", "the path lost in the dark", "fear dressed as fact"]),
+    ("Negative", "deception", ["deceiving yourself willingly", "feeding the fear", "the descent refused", "fantasy preferred to sight"]),
+    ("Delayed", "the path", ["still mid-crossing", "the dawn not yet near", "the test still underway", "the unseen road still long"]),
+  ],
+  "maj19": [
+    ("Weakened", "joy", ["the light behind cloud", "clarity slightly dimmed", "warmth that won't quite reach", "the child's play subdued"]),
+    ("Inverted", "clarity", ["shadow creeping back in", "optimism gone naive", "the light glaring, not warming", "seeing too simply"]),
+    ("Negative", "ego", ["shining to be seen", "joy that denies the dark", "clarity used to bypass", "brightness as performance"]),
+    ("Delayed", "wholeness", ["the dawn still rising", "integration not complete", "the light still arriving", "the self still emerging"]),
+  ],
+  "maj20": [
+    ("Weakened", "awakening", ["the call heard faintly", "rebirth stalling", "the summons half-answered", "the new age slow to come"]),
+    ("Inverted", "judgment", ["clinging to the old law", "the past refusing to close", "accounting where freedom was due", "the verdict re-litigated"]),
+    ("Negative", "reckoning", ["self-condemnation", "deafness to the call", "fear of the new self", "judging where you should rise"]),
+    ("Delayed", "rebirth", ["the trumpet not yet sounded", "the new aeon still dawning", "the call still on its way", "awakening delayed"]),
+  ],
+  "maj21": [
+    ("Weakened", "completion", ["the circle nearly closed", "the dance losing its rhythm", "wholeness just out of reach", "the work all but finished"]),
+    ("Inverted", "fulfillment", ["closure refused", "clinging past the ending", "the mandala left broken", "stasis mistaken for arrival"]),
+    ("Negative", "stagnation", ["resting on the finished work", "refusing the next cycle", "completion as a cage", "the dance stopped too soon"]),
+    ("Delayed", "completion", ["the last step pending", "integration still weaving", "the circle not yet closed", "arrival on slow approach"]),
+  ],
+}

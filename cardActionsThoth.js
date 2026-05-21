@@ -1,395 +1,434 @@
-// PLACEHOLDER lorem-ipsum data for the Thoth deck (upright).
-// Same structure as cardActions.js; real meanings to be
-// swapped in later. Used by the info overlay when the active
-// deck is Thoth and the card is upright.
+// Real Thoth-deck meanings (upright), authored from the Book of
+// Thoth / Crowley consensus with Jungian angles in the subs.
+// Same structure as cardActions.js. Used by the info overlay
+// when the active deck is Thoth and the card is upright.
 const CARD_ACTIONS_THOTH = {
   "maj00": [
-    {"lead": "aute", "key": "deserunt", "subs": ["consectetur adipiscing", "do eiusmod tempor incididunt", "exercitation ullamco laboris", "cupidatat non", "in reprehenderit voluptate", "voluptate velit"]},
-    {"lead": "anim", "key": "esse", "subs": ["sunt culpa qui officia deserunt mollit", "exercitation ullamco laboris nisi", "esse cillum", "occaecat cupidatat"]},
-    {"lead": "deserunt", "key": "occaecat", "subs": ["id est laborum", "eiusmod tempor incididunt ut labore", "aliqua enim ad minim veniam quis", "aliqua enim ad minim veniam quis", "ut labore et dolore"]}
+    {"lead": "embodying", "key": "zero", "subs": ["the point before all points", "spirit not yet condensed", "pure potential, no form yet", "the green man dancing", "everything held in nothing"]},
+    {"lead": "leaping", "key": "into being", "subs": ["stepping off the known edge", "trusting the air to hold", "movement before meaning", "the divine fool's abandon", "saying yes to incarnation"]},
+    {"lead": "", "key": "innocence", "subs": ["the puer, eternally young", "ego before it divides the world", "wholeness not yet split", "wonder uncalculated", "the unfallen self"]},
+    {"lead": "carrying", "key": "all elements", "subs": ["the wallet of unspent gifts", "every suit folded in one", "tiger and crocodile both", "spirit ungoverned by sense"]}
   ],
   "maj01": [
-    {"lead": "sint", "key": "aliqua", "subs": ["sit amet", "reprehenderit voluptate velit", "consectetur adipiscing", "deserunt mollit"]},
-    {"lead": "proident", "key": "officia", "subs": ["irure in reprehenderit", "irure in reprehenderit", "do eiusmod tempor incididunt ut", "nisi aliquip ex ea"]},
-    {"lead": "consectetur", "key": "mollit", "subs": ["exercitation ullamco laboris nisi", "fugiat nulla pariatur", "do eiusmod tempor incididunt ut labore", "cillum eu fugiat nulla pariatur"]}
+    {"lead": "wielding", "key": "the word", "subs": ["speaking reality into form", "will made articulate", "the message becomes the medium", "thought tipped with intent", "naming the thing to call it"]},
+    {"lead": "juggling", "key": "forces", "subs": ["all four tools in play", "keeping every element aloft", "directing energy through skill", "the magician's swift hands"]},
+    {"lead": "", "key": "mercury", "subs": ["quicksilver intelligence", "the trickster who reveals", "logos shaping matter", "wit as a working tool"]},
+    {"lead": "channeling", "key": "will", "subs": ["becoming conduit, not source", "aligning desire with act", "the true will moving through you"]}
   ],
   "maj02": [
-    {"lead": "eu", "key": "voluptate", "subs": ["voluptate velit esse cillum", "commodo consequat", "enim ad", "ipsum dolor sit amet consectetur", "commodo consequat duis aute irure", "ipsum dolor"]},
-    {"lead": "veniam", "key": "dolor", "subs": ["lorem ipsum", "ullamco laboris nisi aliquip ex ea", "commodo consequat duis", "culpa qui officia deserunt", "sed do eiusmod tempor incididunt ut", "velit esse cillum eu", "dolor sit amet"]},
-    {"lead": "fugiat", "key": "id", "subs": ["eu fugiat", "ut labore et dolore", "sit amet consectetur adipiscing elit", "veniam quis nostrud exercitation ullamco", "magna aliqua enim ad minim veniam"]},
-    {"lead": "qui", "key": "cillum", "subs": ["minim veniam quis nostrud exercitation", "consequat duis aute irure in", "aliqua enim ad minim veniam", "lorem ipsum dolor", "dolor sit amet consectetur"]}
+    {"lead": "keeping", "key": "the veil", "subs": ["guarding what can't be spoken", "the threshold between worlds", "mystery that resists capture", "silence as a kind of speech"]},
+    {"lead": "", "key": "intuition", "subs": ["knowing without evidence", "the lunar tide in you", "trusting the inner water", "the anima's quiet counsel"]},
+    {"lead": "reflecting", "key": "light", "subs": ["the moon borrowing the sun", "receiving before acting", "stillness that mirrors truth", "becoming a clear pool"]},
+    {"lead": "holding", "key": "the secret", "subs": ["wisdom not yet ready to speak", "the unconscious holding its cards", "potential coiled in the dark"]}
   ],
   "maj03": [
-    {"lead": "est", "key": "irure", "subs": ["sint occaecat cupidatat", "quis nostrud exercitation ullamco", "ipsum dolor sit amet consectetur", "commodo consequat duis aute"]},
-    {"lead": "do", "key": "nulla", "subs": ["lorem ipsum", "reprehenderit voluptate velit esse", "enim ad", "duis aute", "deserunt mollit", "elit sed do eiusmod"]},
-    {"lead": "labore", "key": "aliquip", "subs": ["non proident sunt culpa qui officia", "ea commodo", "velit esse cillum eu fugiat", "tempor incididunt ut labore et", "voluptate velit esse", "laboris nisi aliquip", "do eiusmod tempor incididunt ut labore"]}
+    {"lead": "", "key": "abundance", "subs": ["fertility overflowing", "nature giving freely", "beauty as a force of growth", "the green world ripening"]},
+    {"lead": "loving", "key": "openly", "subs": ["venusian warmth", "desire that creates", "tenderness with power", "eros as life force"]},
+    {"lead": "mothering", "key": "creation", "subs": ["the great mother's embrace", "nourishing what you've made", "holding the growing thing", "love that builds bodies"]},
+    {"lead": "", "key": "beauty", "subs": ["harmony made visible", "pleasure without apology", "the senses honored", "grace in the material"]}
   ],
   "maj04": [
-    {"lead": "ullamco", "key": "sit", "subs": ["deserunt mollit anim id est", "enim ad minim", "ex ea commodo consequat duis", "exercitation ullamco laboris", "fugiat nulla pariatur excepteur sint", "amet consectetur adipiscing elit sed", "sunt culpa qui officia deserunt"]},
-    {"lead": "excepteur", "key": "irure", "subs": ["voluptate velit esse", "velit esse", "veniam quis nostrud exercitation", "dolor sit", "reprehenderit voluptate", "consequat duis aute", "ut labore et dolore"]}
+    {"lead": "", "key": "authority", "subs": ["the will that organizes", "sovereignty earned, not seized", "standing as the fixed point", "command that protects"]},
+    {"lead": "building", "key": "structure", "subs": ["giving chaos a frame", "laws that let things grow", "the architecture of order", "boundaries as kindness"]},
+    {"lead": "fathering", "key": "the realm", "subs": ["the senex's steady hand", "providing the container", "leadership as responsibility"]},
+    {"lead": "", "key": "fire", "subs": ["aries energy directed", "drive shaped into rule", "ambition with a throne"]}
   ],
   "maj05": [
-    {"lead": "laboris", "key": "deserunt", "subs": ["esse cillum eu fugiat", "labore et dolore magna", "eu fugiat nulla pariatur", "et dolore magna aliqua enim ad", "qui officia deserunt mollit anim id"]},
-    {"lead": "cillum", "key": "consectetur", "subs": ["anim id", "do eiusmod tempor incididunt", "id est laborum", "mollit anim", "esse cillum eu"]}
+    {"lead": "", "key": "teaching", "subs": ["the bridge to the sacred", "wisdom handed down", "the outer form of inner truth", "ritual that opens a door"]},
+    {"lead": "keeping", "key": "tradition", "subs": ["the lineage carried forward", "the vessel of the mysteries", "belonging through shared rite"]},
+    {"lead": "blessing", "key": "the seeker", "subs": ["the wise old man's counsel", "initiation offered", "sanction from above"]},
+    {"lead": "", "key": "the word", "subs": ["the new aeon spoken", "doctrine made living", "meaning behind the form"]}
   ],
   "maj06": [
-    {"lead": "deserunt", "key": "laborum", "subs": ["reprehenderit voluptate velit esse", "esse cillum eu fugiat nulla", "magna aliqua enim", "fugiat nulla pariatur", "irure in reprehenderit"]},
-    {"lead": "adipiscing", "key": "laborum", "subs": ["aliqua enim ad minim", "velit esse cillum eu fugiat", "ipsum dolor sit amet", "fugiat nulla pariatur excepteur", "consequat duis aute irure", "quis nostrud exercitation"]}
+    {"lead": "", "key": "union", "subs": ["opposites married", "the alchemical wedding", "two becoming a third thing", "the coniunctio achieved"]},
+    {"lead": "choosing", "key": "rightly", "subs": ["the oracle over the impulse", "discrimination then union", "the vow made conscious", "love as a decision"]},
+    {"lead": "joining", "key": "opposites", "subs": ["king and queen wedded", "sun and moon reconciled", "the syzygy within you", "analysis then synthesis"]},
+    {"lead": "", "key": "the child", "subs": ["what the union creates", "innocence reborn from two", "the third that heals the split"]}
   ],
   "maj07": [
-    {"lead": "dolor", "key": "culpa", "subs": ["sunt culpa qui officia deserunt mollit", "cupidatat non proident", "do eiusmod tempor incididunt ut labore", "sunt culpa qui", "cupidatat non proident", "amet consectetur adipiscing"]},
-    {"lead": "qui", "key": "sed", "subs": ["irure in", "ipsum dolor sit amet consectetur", "aliqua enim ad minim veniam quis", "excepteur sint occaecat", "consectetur adipiscing elit sed do"]},
-    {"lead": "sed", "key": "sit", "subs": ["amet consectetur adipiscing elit sed", "sunt culpa qui officia deserunt", "reprehenderit voluptate velit esse", "magna aliqua enim ad", "ipsum dolor sit amet consectetur"]},
-    {"lead": "fugiat", "key": "ex", "subs": ["quis nostrud exercitation ullamco", "lorem ipsum dolor sit amet consectetur", "aliquip ex ea", "labore et dolore"]}
+    {"lead": "", "key": "triumph", "subs": ["victory by holding the reins", "forces yoked, not fought", "momentum under control", "the still center moving fast"]},
+    {"lead": "carrying", "key": "the grail", "subs": ["the vessel held steady", "bearing something sacred", "the cup amid the speed"]},
+    {"lead": "directing", "key": "opposites", "subs": ["black and white sphinxes pull", "ego steering its drives", "willpower as armor"]},
+    {"lead": "", "key": "control", "subs": ["stillness inside motion", "mastery that needn't strain", "command of the inner team"]}
   ],
   "maj08": [
-    {"lead": "lorem", "key": "ut", "subs": ["mollit anim id est", "proident sunt culpa", "commodo consequat", "tempor incididunt ut"]},
-    {"lead": "sint", "key": "dolor", "subs": ["esse cillum eu fugiat nulla", "duis aute irure", "ea commodo consequat duis aute", "velit esse cillum eu", "quis nostrud exercitation ullamco", "consequat duis aute irure in"]}
+    {"lead": "", "key": "balance", "subs": ["the scales finding true", "every act answered exactly", "equilibrium as the law", "the dancer poised on a point"]},
+    {"lead": "weighing", "key": "truth", "subs": ["the feather against the heart", "seeing without distortion", "maat's impartial gaze", "fact severed from wish"]},
+    {"lead": "adjusting", "key": "the self", "subs": ["the transcendent function at work", "correcting the inner imbalance", "tuning toward fairness"]},
+    {"lead": "", "key": "karma", "subs": ["cause and effect made visible", "the debt settled precisely", "consequence without cruelty"]}
   ],
   "maj09": [
-    {"lead": "esse", "key": "veniam", "subs": ["laboris nisi aliquip ex ea", "elit sed do eiusmod tempor", "nostrud exercitation ullamco laboris", "est laborum", "proident sunt culpa qui", "lorem ipsum"]},
-    {"lead": "in", "key": "officia", "subs": ["nulla pariatur excepteur sint occaecat", "non proident sunt", "proident sunt culpa qui", "pariatur excepteur sint occaecat", "quis nostrud"]},
-    {"lead": "amet", "key": "ex", "subs": ["duis aute irure in reprehenderit", "sed do eiusmod tempor incididunt", "incididunt ut", "voluptate velit esse cillum eu", "aliquip ex ea commodo", "anim id", "pariatur excepteur sint occaecat"]}
+    {"lead": "", "key": "solitude", "subs": ["withdrawing to find the light", "the cave as a workshop", "quiet that ripens insight", "being alone, not lonely"]},
+    {"lead": "carrying", "key": "the lamp", "subs": ["the inner light shown outward", "wisdom lighting one step", "the secret flame guarded"]},
+    {"lead": "", "key": "the seed", "subs": ["growth hidden in the dark", "virgo's fertile patience", "what germinates unseen"]},
+    {"lead": "seeking", "key": "the self", "subs": ["the wise old man within", "introversion as a path", "meeting yourself in the still"]}
   ],
   "maj10": [
-    {"lead": "magna", "key": "sint", "subs": ["sit amet", "veniam quis nostrud exercitation ullamco", "ea commodo consequat duis aute", "laboris nisi aliquip ex ea commodo", "qui officia deserunt mollit"]},
-    {"lead": "laborum", "key": "eiusmod", "subs": ["officia deserunt mollit anim", "sunt culpa qui officia deserunt mollit", "quis nostrud exercitation ullamco", "magna aliqua enim ad", "ipsum dolor", "quis nostrud"]}
+    {"lead": "", "key": "the turn", "subs": ["the wheel always moving", "change as the only constant", "fortune favoring motion", "what's down will rise"]},
+    {"lead": "riding", "key": "cycles", "subs": ["jupiter's expansion", "the gunas spinning", "accepting the rhythm", "luck meeting readiness"]},
+    {"lead": "", "key": "synchronicity", "subs": ["meaningful coincidence", "fate winking through chance", "the pattern beneath events"]},
+    {"lead": "trusting", "key": "flux", "subs": ["letting the wheel carry you", "change without grasping", "the long view of fate"]}
   ],
   "maj11": [
-    {"lead": "consectetur", "key": "incididunt", "subs": ["adipiscing elit", "duis aute irure", "ullamco laboris nisi", "ut labore", "eu fugiat nulla pariatur", "commodo consequat duis aute"]},
-    {"lead": "reprehenderit", "key": "adipiscing", "subs": ["quis nostrud exercitation", "cupidatat non proident", "incididunt ut labore et", "ut labore et dolore", "esse cillum eu fugiat nulla", "mollit anim", "labore et dolore magna"]},
-    {"lead": "aute", "key": "ipsum", "subs": ["lorem ipsum dolor sit amet consectetur", "amet consectetur adipiscing elit sed do", "ea commodo consequat", "aliqua enim ad minim", "eiusmod tempor incididunt ut labore", "deserunt mollit anim id est laborum", "minim veniam quis"]}
+    {"lead": "", "key": "lust for life", "subs": ["strength felt as joy", "appetite for existence", "riding the beast, not caging it", "courage that laughs"]},
+    {"lead": "", "key": "ecstasy", "subs": ["passion as a sacred force", "the holy whore's abandon", "desire fully owned", "union with the wild"]},
+    {"lead": "riding", "key": "the beast", "subs": ["the instincts ridden well", "libido affirmed, not feared", "the shadow made an ally"]},
+    {"lead": "", "key": "vitality", "subs": ["the lion's solar heat", "power that delights", "raw life saying yes"]}
   ],
   "maj12": [
-    {"lead": "adipiscing", "key": "anim", "subs": ["reprehenderit voluptate velit", "magna aliqua enim", "nisi aliquip ex", "ipsum dolor"]},
-    {"lead": "sit", "key": "deserunt", "subs": ["proident sunt culpa qui officia deserunt", "nisi aliquip", "nulla pariatur", "sit amet"]},
-    {"lead": "laborum", "key": "excepteur", "subs": ["labore et dolore", "sit amet consectetur", "aliqua enim", "cillum eu fugiat nulla"]},
-    {"lead": "commodo", "key": "nulla", "subs": ["occaecat cupidatat", "eiusmod tempor incididunt ut labore", "nulla pariatur excepteur", "aliquip ex ea commodo consequat", "tempor incididunt ut labore", "minim veniam quis nostrud exercitation", "laboris nisi"]}
+    {"lead": "", "key": "surrender", "subs": ["letting go of the struggle", "sacrifice made willingly", "release as a doorway", "hanging between worlds"]},
+    {"lead": "reversing", "key": "the view", "subs": ["the world seen upside down", "new sight from suspension", "what inversion reveals", "perspective bought by pause"]},
+    {"lead": "", "key": "the sacrifice", "subs": ["the dying god's gift", "ego offered up", "losing to gain", "drowning the old self"]},
+    {"lead": "waiting", "key": "in water", "subs": ["stillness before rebirth", "suspended, not stuck", "trusting the long pause"]}
   ],
   "maj13": [
-    {"lead": "qui", "key": "officia", "subs": ["elit sed do eiusmod", "do eiusmod tempor", "aliquip ex", "nulla pariatur excepteur sint", "qui officia deserunt"]},
-    {"lead": "nulla", "key": "culpa", "subs": ["eu fugiat nulla pariatur", "occaecat cupidatat", "aliqua enim ad minim veniam quis", "nostrud exercitation ullamco laboris", "ullamco laboris nisi aliquip ex ea", "pariatur excepteur sint occaecat", "laboris nisi aliquip ex ea commodo"]},
-    {"lead": "nostrud", "key": "fugiat", "subs": ["magna aliqua enim ad minim", "minim veniam", "ut labore et dolore", "consectetur adipiscing", "non proident sunt", "ea commodo consequat duis aute"]},
-    {"lead": "enim", "key": "sint", "subs": ["ea commodo consequat duis aute irure", "mollit anim id est", "dolore magna aliqua enim ad", "incididunt ut labore", "ipsum dolor", "nisi aliquip ex"]}
+    {"lead": "", "key": "transformation", "subs": ["the old form dissolving", "death as a passage, not an end", "clearing for the new", "scorpio's deep change"]},
+    {"lead": "harvesting", "key": "the dead", "subs": ["the scythe cutting clean", "what's finished, finishing", "necessary endings", "reaping the spent"]},
+    {"lead": "", "key": "putrefaction", "subs": ["the nigredo, blackening", "rot that feeds the next life", "decay as alchemy"]},
+    {"lead": "releasing", "key": "the form", "subs": ["shedding the outworn skin", "letting the husk fall", "change you can't reverse"]}
   ],
   "maj14": [
-    {"lead": "officia", "key": "tempor", "subs": ["nulla pariatur excepteur sint occaecat", "ullamco laboris", "do eiusmod tempor incididunt ut", "duis aute irure"]},
-    {"lead": "ea", "key": "elit", "subs": ["qui officia deserunt mollit", "labore et dolore", "labore et", "aute irure in", "cillum eu fugiat nulla pariatur"]},
-    {"lead": "veniam", "key": "esse", "subs": ["occaecat cupidatat", "elit sed do eiusmod tempor", "enim ad minim", "ea commodo", "amet consectetur adipiscing elit sed"]}
+    {"lead": "", "key": "the great work", "subs": ["opposites fused in the cauldron", "fire and water made one", "alchemy of the self", "gold from contraries"]},
+    {"lead": "tempering", "key": "extremes", "subs": ["blending what fought", "the middle way forged", "moderation as a craft", "two streams, one vessel"]},
+    {"lead": "", "key": "synthesis", "subs": ["the transcendent function", "integration into wholeness", "the rainbow over the brew"]},
+    {"lead": "transmuting", "key": "the base", "subs": ["lead toward gold", "raw matter refined", "the slow patient cooking"]}
   ],
   "maj15": [
-    {"lead": "proident", "key": "quis", "subs": ["fugiat nulla pariatur", "nisi aliquip ex ea commodo consequat", "nisi aliquip ex ea commodo", "magna aliqua enim ad minim veniam", "qui officia deserunt"]},
-    {"lead": "elit", "key": "et", "subs": ["enim ad minim veniam", "officia deserunt mollit anim", "in reprehenderit voluptate", "officia deserunt mollit anim id", "nisi aliquip ex ea commodo", "do eiusmod", "veniam quis"]},
-    {"lead": "irure", "key": "esse", "subs": ["ipsum dolor sit amet consectetur", "proident sunt culpa", "aliquip ex ea commodo consequat duis", "do eiusmod tempor incididunt ut", "qui officia deserunt mollit anim id"]}
+    {"lead": "", "key": "matter", "subs": ["the goat dancing in flesh", "creative force in the dense", "desire rooted in earth", "the body's blunt joy"]},
+    {"lead": "", "key": "bondage", "subs": ["chains loose enough to drop", "what you cling to clings back", "the shadow you won't own", "appetite running the house"]},
+    {"lead": "laughing", "key": "in the dark", "subs": ["the god of mirth", "ecstasy without apology", "capricorn's earthy humor"]},
+    {"lead": "facing", "key": "the shadow", "subs": ["meeting the disowned", "the devil as your own mask", "integrating the instinct"]}
   ],
   "maj16": [
-    {"lead": "mollit", "key": "aute", "subs": ["lorem ipsum dolor sit amet consectetur", "excepteur sint occaecat cupidatat non", "non proident sunt culpa qui officia", "laboris nisi aliquip ex"]},
-    {"lead": "reprehenderit", "key": "reprehenderit", "subs": ["culpa qui", "officia deserunt mollit", "amet consectetur adipiscing elit sed do", "sed do eiusmod tempor incididunt", "nisi aliquip ex ea commodo", "commodo consequat"]},
-    {"lead": "culpa", "key": "duis", "subs": ["sed do eiusmod tempor incididunt", "ea commodo consequat duis", "veniam quis", "magna aliqua enim", "excepteur sint occaecat cupidatat non", "culpa qui officia deserunt mollit anim", "fugiat nulla pariatur excepteur sint"]}
+    {"lead": "", "key": "the lightning", "subs": ["the false struck down", "sudden necessary collapse", "mars breaking the prison", "truth that arrives as shock"]},
+    {"lead": "burning", "key": "the tower", "subs": ["the structure that must fall", "ego's fortress shattered", "clearing by fire"]},
+    {"lead": "", "key": "revelation", "subs": ["the eye of shiva opens", "what the ruin uncovers", "liberation through breakdown"]},
+    {"lead": "falling", "key": "free", "subs": ["thrown from the false safety", "the persona cracking off", "release in the rubble"]}
   ],
   "maj17": [
-    {"lead": "nulla", "key": "ad", "subs": ["voluptate velit", "duis aute irure in reprehenderit", "nostrud exercitation", "eu fugiat nulla pariatur excepteur sint"]},
-    {"lead": "irure", "key": "proident", "subs": ["anim id est", "minim veniam quis", "elit sed do eiusmod", "commodo consequat", "commodo consequat duis aute irure", "voluptate velit esse cillum", "veniam quis nostrud exercitation"]}
+    {"lead": "", "key": "hope", "subs": ["light after the tower's fall", "the star that steadies you", "quiet faith renewed", "calm pouring in"]},
+    {"lead": "pouring", "key": "the water", "subs": ["nuit's endless giving", "feeding earth and stream both", "generosity from the source"]},
+    {"lead": "", "key": "guidance", "subs": ["the star to steer by", "the anima leading on", "the transpersonal touch"]},
+    {"lead": "", "key": "renewal", "subs": ["washed clean and open", "meditation's clear pool", "trust restored gently"]}
   ],
   "maj18": [
-    {"lead": "irure", "key": "aliquip", "subs": ["nostrud exercitation ullamco laboris", "ad minim veniam quis nostrud", "lorem ipsum dolor", "officia deserunt mollit anim id", "nulla pariatur excepteur sint", "minim veniam quis"]},
-    {"lead": "reprehenderit", "key": "sint", "subs": ["enim ad minim veniam quis nostrud", "labore et dolore magna aliqua", "duis aute irure in reprehenderit", "do eiusmod tempor"]}
+    {"lead": "", "key": "illusion", "subs": ["light that deceives", "the path through the fog", "what the moon distorts", "fear dressed as fact"]},
+    {"lead": "crossing", "key": "the dark", "subs": ["the gateway between towers", "walking through the test", "the descent you must make"]},
+    {"lead": "", "key": "the unconscious", "subs": ["the deep waters stirring", "old fears surfacing", "projection mistaken for world"]},
+    {"lead": "trusting", "key": "the path", "subs": ["moving though you can't see", "the dog and wolf both howling", "faith in the unseen road"]}
   ],
   "maj19": [
-    {"lead": "anim", "key": "laboris", "subs": ["aute irure in reprehenderit", "incididunt ut labore", "aliquip ex ea commodo consequat duis", "anim id est laborum", "nisi aliquip ex", "pariatur excepteur sint"]},
-    {"lead": "nisi", "key": "officia", "subs": ["voluptate velit esse cillum", "ut labore", "non proident sunt", "officia deserunt mollit"]},
-    {"lead": "eu", "key": "deserunt", "subs": ["sed do eiusmod tempor", "amet consectetur", "esse cillum", "cillum eu fugiat nulla pariatur", "officia deserunt"]},
-    {"lead": "proident", "key": "occaecat", "subs": ["sed do eiusmod", "sed do eiusmod", "reprehenderit voluptate", "ex ea commodo consequat duis", "voluptate velit esse cillum eu"]}
+    {"lead": "", "key": "joy", "subs": ["the sun's unguarded light", "clarity that warms", "life affirmed simply", "the dancing children"]},
+    {"lead": "", "key": "clarity", "subs": ["everything seen plainly", "no shadow left to hide", "consciousness at noon"]},
+    {"lead": "shining", "key": "freely", "subs": ["the regenerated self", "light given without fear", "the lord of life awake"]},
+    {"lead": "", "key": "wholeness", "subs": ["the self made radiant", "integration shining out", "the green earth blessed"]}
   ],
   "maj20": [
-    {"lead": "ipsum", "key": "ipsum", "subs": ["veniam quis nostrud", "aliqua enim", "qui officia", "eu fugiat nulla pariatur excepteur sint", "cillum eu", "dolor sit amet consectetur adipiscing", "adipiscing elit sed"]},
-    {"lead": "anim", "key": "et", "subs": ["in reprehenderit", "dolore magna aliqua enim ad", "irure in reprehenderit voluptate velit", "nostrud exercitation ullamco laboris"]},
-    {"lead": "enim", "key": "ipsum", "subs": ["labore et dolore", "sit amet", "cupidatat non proident sunt culpa", "exercitation ullamco laboris nisi", "eiusmod tempor incididunt ut labore et", "elit sed do eiusmod tempor"]}
+    {"lead": "", "key": "the new aeon", "subs": ["horus crowned and conquering", "the old law ending", "awakening to a new age", "the child of the future"]},
+    {"lead": "answering", "key": "the call", "subs": ["rising to the summons", "the deep voice heard", "stepping into rebirth"]},
+    {"lead": "", "key": "awakening", "subs": ["consciousness reborn", "the self called higher", "the stele revealing"]},
+    {"lead": "judging", "key": "nothing", "subs": ["beyond reward and blame", "the new law of freedom", "accounting transcended"]}
   ],
   "maj21": [
-    {"lead": "sint", "key": "magna", "subs": ["ad minim veniam quis", "eiusmod tempor incididunt ut labore", "qui officia deserunt", "consequat duis aute irure in", "duis aute irure", "proident sunt", "nostrud exercitation ullamco laboris"]},
-    {"lead": "id", "key": "ullamco", "subs": ["tempor incididunt ut labore et dolore", "qui officia deserunt mollit anim id", "excepteur sint occaecat cupidatat non", "elit sed do eiusmod tempor incididunt", "ea commodo consequat duis aute", "fugiat nulla pariatur"]},
-    {"lead": "irure", "key": "sunt", "subs": ["cupidatat non proident", "amet consectetur adipiscing elit sed do", "officia deserunt", "consectetur adipiscing elit sed do", "nostrud exercitation", "elit sed do eiusmod tempor", "sit amet consectetur adipiscing elit"]}
+    {"lead": "", "key": "completion", "subs": ["the great work fulfilled", "the circle closed", "all parts in their place", "the dance finished and begun"]},
+    {"lead": "dancing", "key": "the whole", "subs": ["matter celebrating itself", "the maiden in the wreath", "saturn's structure made joy"]},
+    {"lead": "", "key": "the mandala", "subs": ["the self made whole", "individuation complete", "the four held in one"]},
+    {"lead": "", "key": "synthesis", "subs": ["every element woven in", "the body of the universe", "the end that is a return"]}
   ],
   "wands01": [
-    {"lead": "sint", "key": "reprehenderit", "subs": ["officia deserunt mollit anim", "pariatur excepteur sint", "qui officia deserunt mollit", "cillum eu fugiat", "occaecat cupidatat"]},
-    {"lead": "excepteur", "key": "pariatur", "subs": ["ullamco laboris nisi", "dolor sit", "sed do eiusmod", "amet consectetur adipiscing elit sed", "lorem ipsum dolor", "minim veniam quis"]}
+    {"lead": "", "key": "the spark", "subs": ["fire in its pure state", "the first flame of will", "raw creative force", "the root of all fire"]},
+    {"lead": "igniting", "key": "will", "subs": ["desire before its object", "the impulse to act", "energy seeking a form", "libido as pure heat"]},
+    {"lead": "", "key": "potential", "subs": ["power not yet aimed", "the match before the fire", "a start that could be anything"]}
   ],
   "wands02": [
-    {"lead": "fugiat", "key": "qui", "subs": ["veniam quis nostrud exercitation", "reprehenderit voluptate velit esse", "ipsum dolor sit amet consectetur", "excepteur sint occaecat cupidatat non", "id est laborum"]},
-    {"lead": "ea", "key": "dolor", "subs": ["amet consectetur adipiscing elit sed", "duis aute irure in reprehenderit", "dolore magna aliqua enim ad", "sed do", "pariatur excepteur sint occaecat"]},
-    {"lead": "exercitation", "key": "deserunt", "subs": ["sunt culpa qui officia", "in reprehenderit voluptate velit esse", "amet consectetur adipiscing elit", "veniam quis nostrud", "lorem ipsum dolor sit"]},
-    {"lead": "labore", "key": "proident", "subs": ["exercitation ullamco", "minim veniam quis nostrud exercitation", "voluptate velit esse cillum eu", "ipsum dolor"]}
+    {"lead": "", "key": "dominion", "subs": ["will that has chosen", "bold command of the field", "power decisively held", "the realm laid out before you"]},
+    {"lead": "claiming", "key": "the field", "subs": ["marking what is yours", "aries certainty", "first move made with force"]},
+    {"lead": "", "key": "resolve", "subs": ["doubt burned off", "the decision that energizes", "will fused to a goal"]}
   ],
   "wands03": [
-    {"lead": "nulla", "key": "aliqua", "subs": ["consectetur adipiscing elit", "in reprehenderit voluptate velit esse", "voluptate velit esse", "magna aliqua enim", "mollit anim id est", "non proident", "enim ad minim"]},
-    {"lead": "tempor", "key": "non", "subs": ["ad minim veniam quis", "excepteur sint occaecat", "fugiat nulla pariatur", "commodo consequat"]},
-    {"lead": "cupidatat", "key": "ex", "subs": ["non proident sunt culpa qui", "eiusmod tempor incididunt", "eiusmod tempor incididunt ut labore et", "sit amet consectetur adipiscing elit", "dolore magna aliqua"]},
-    {"lead": "ullamco", "key": "ipsum", "subs": ["ipsum dolor sit amet consectetur", "nisi aliquip ex", "quis nostrud", "sunt culpa qui officia deserunt mollit", "nulla pariatur excepteur sint"]}
+    {"lead": "", "key": "established strength", "subs": ["the spark now rooted", "power that holds its ground", "virtue as steady fire", "strength you can rely on"]},
+    {"lead": "", "key": "virtue", "subs": ["strength turned to good use", "the will made trustworthy", "fire that warms, not burns"]},
+    {"lead": "trusting", "key": "the work", "subs": ["ships sent out with faith", "strength that can wait", "confidence well-earned"]}
   ],
   "wands04": [
-    {"lead": "veniam", "key": "excepteur", "subs": ["id est", "nisi aliquip", "eu fugiat", "nulla pariatur excepteur sint occaecat", "ullamco laboris", "sed do", "deserunt mollit"]},
-    {"lead": "do", "key": "qui", "subs": ["velit esse cillum eu fugiat nulla", "ex ea commodo", "cupidatat non proident sunt culpa qui", "tempor incididunt ut labore et", "do eiusmod tempor incididunt", "aliqua enim"]},
-    {"lead": "sint", "key": "sunt", "subs": ["excepteur sint occaecat cupidatat non", "culpa qui officia deserunt", "eu fugiat nulla pariatur excepteur", "nostrud exercitation ullamco laboris", "exercitation ullamco laboris nisi", "ex ea commodo"]},
-    {"lead": "magna", "key": "et", "subs": ["reprehenderit voluptate velit esse", "pariatur excepteur sint occaecat", "duis aute irure in reprehenderit", "anim id est laborum", "eiusmod tempor incididunt ut labore", "non proident"]}
+    {"lead": "", "key": "completion", "subs": ["the work brought to rest", "fire harmonized", "a cycle satisfyingly closed", "the foundation finished"]},
+    {"lead": "celebrating", "key": "the made", "subs": ["venusian joy in the result", "harmony after effort", "the threshold reached"]},
+    {"lead": "", "key": "stability", "subs": ["energy settled into form", "a structure that holds", "peace earned by fire"]}
   ],
   "wands05": [
-    {"lead": "aliquip", "key": "sunt", "subs": ["dolor sit amet consectetur", "enim ad minim veniam quis", "ex ea", "proident sunt culpa", "velit esse cillum eu fugiat", "velit esse cillum"]},
-    {"lead": "in", "key": "veniam", "subs": ["deserunt mollit anim id", "excepteur sint occaecat", "ut labore et dolore magna", "cupidatat non proident sunt", "exercitation ullamco", "elit sed do eiusmod tempor incididunt", "incididunt ut labore et dolore"]},
-    {"lead": "nisi", "key": "sint", "subs": ["officia deserunt mollit", "esse cillum eu fugiat nulla pariatur", "dolore magna aliqua enim", "pariatur excepteur", "aliquip ex ea commodo consequat", "aliquip ex ea commodo"]},
-    {"lead": "culpa", "key": "proident", "subs": ["excepteur sint", "duis aute irure", "sed do eiusmod tempor incididunt", "nisi aliquip ex ea", "minim veniam quis", "ipsum dolor sit amet"]}
+    {"lead": "", "key": "strife", "subs": ["fires clashing without aim", "competition for its own sake", "friction that wastes heat", "everyone's torch raised"]},
+    {"lead": "wrestling", "key": "the same fire", "subs": ["rivals who are really kin", "conflict that could be play", "heat with no target"]},
+    {"lead": "", "key": "tension", "subs": ["saturn cooling the lion", "struggle before order", "the chaos that precedes form"]}
   ],
   "wands06": [
-    {"lead": "consequat", "key": "sed", "subs": ["culpa qui", "fugiat nulla pariatur excepteur", "voluptate velit", "qui officia deserunt"]},
-    {"lead": "eu", "key": "non", "subs": ["proident sunt culpa qui", "ex ea commodo consequat duis aute", "proident sunt culpa qui officia", "cillum eu fugiat", "proident sunt culpa qui", "tempor incididunt", "occaecat cupidatat non proident"]}
+    {"lead": "", "key": "victory", "subs": ["the strife resolved in triumph", "leadership recognized", "jupiter's expansive win", "the laurel earned"]},
+    {"lead": "leading", "key": "openly", "subs": ["stepping up to be seen", "authority by merit", "the front of the line"]},
+    {"lead": "", "key": "confidence", "subs": ["success that steadies you", "fire that has proven itself", "pride without arrogance"]}
   ],
   "wands07": [
-    {"lead": "officia", "key": "mollit", "subs": ["aliquip ex ea", "dolore magna aliqua", "dolor sit amet consectetur", "consectetur adipiscing elit sed"]},
-    {"lead": "occaecat", "key": "reprehenderit", "subs": ["nostrud exercitation ullamco laboris", "commodo consequat duis aute irure", "duis aute irure in reprehenderit", "sit amet"]},
-    {"lead": "mollit", "key": "consectetur", "subs": ["non proident sunt culpa qui", "qui officia", "aliquip ex", "occaecat cupidatat", "proident sunt culpa qui", "elit sed do"]}
+    {"lead": "", "key": "valour", "subs": ["courage against the many", "holding the high ground", "standing when outnumbered", "the brave refusal to yield"]},
+    {"lead": "defending", "key": "the position", "subs": ["fighting from advantage", "nerve under pressure", "mars in the lion's heat"]},
+    {"lead": "", "key": "resolve", "subs": ["courage as a choice", "the will to keep the ground", "fear used as fuel"]}
   ],
   "wands08": [
-    {"lead": "non", "key": "tempor", "subs": ["ut labore", "quis nostrud exercitation ullamco", "quis nostrud exercitation ullamco", "ex ea commodo consequat duis aute"]},
-    {"lead": "eu", "key": "lorem", "subs": ["non proident sunt culpa qui", "ea commodo", "nisi aliquip ex ea commodo", "anim id", "tempor incididunt ut labore", "ea commodo consequat"]}
+    {"lead": "", "key": "swiftness", "subs": ["energy moving fast", "arrows already loosed", "momentum you can't recall", "the message racing ahead"]},
+    {"lead": "moving", "key": "fast", "subs": ["events accelerating", "mercury's quick fire", "action outpacing thought"]},
+    {"lead": "", "key": "directness", "subs": ["the straight line to the target", "force aimed and released", "no hesitation in flight"]}
   ],
   "wands09": [
-    {"lead": "ex", "key": "qui", "subs": ["exercitation ullamco laboris nisi", "dolore magna aliqua enim ad minim", "adipiscing elit", "incididunt ut labore et", "cupidatat non proident sunt culpa qui", "in reprehenderit voluptate velit esse"]},
-    {"lead": "ad", "key": "cupidatat", "subs": ["ullamco laboris", "dolore magna aliqua enim ad minim", "mollit anim id est laborum", "commodo consequat duis", "incididunt ut", "incididunt ut labore", "consectetur adipiscing elit sed do"]},
-    {"lead": "laborum", "key": "occaecat", "subs": ["consectetur adipiscing", "id est", "nisi aliquip ex ea", "elit sed", "labore et dolore magna", "fugiat nulla pariatur excepteur sint"]},
-    {"lead": "cupidatat", "key": "sit", "subs": ["do eiusmod", "consequat duis aute irure in", "exercitation ullamco laboris nisi", "cillum eu", "irure in reprehenderit voluptate", "proident sunt", "fugiat nulla pariatur excepteur"]}
+    {"lead": "", "key": "strength in reserve", "subs": ["power held back for need", "resilience after the fight", "the last stand prepared", "wary, watchful force"]},
+    {"lead": "guarding", "key": "the gain", "subs": ["defending what fire built", "strength tempered by caution", "ready though weary"]},
+    {"lead": "", "key": "endurance", "subs": ["the will to hold on", "recovery between rounds", "fire banked, not spent"]}
   ],
   "wands10": [
-    {"lead": "sunt", "key": "sint", "subs": ["incididunt ut labore et dolore magna", "ad minim veniam quis nostrud", "mollit anim id", "et dolore magna aliqua enim"]},
-    {"lead": "aute", "key": "eiusmod", "subs": ["in reprehenderit voluptate", "labore et dolore magna aliqua", "tempor incididunt ut labore et dolore", "pariatur excepteur", "sed do eiusmod", "culpa qui"]},
-    {"lead": "labore", "key": "culpa", "subs": ["fugiat nulla pariatur excepteur sint", "ea commodo consequat duis aute irure", "qui officia deserunt mollit", "ipsum dolor sit", "lorem ipsum", "et dolore magna aliqua enim ad", "nisi aliquip ex ea commodo"]}
+    {"lead": "", "key": "oppression", "subs": ["fire turned to a burden", "force without wisdom", "power that crushes its bearer", "too much will, too little aim"]},
+    {"lead": "carrying", "key": "the weight", "subs": ["the load you took on alone", "saturn weighing the flame", "strength become a cage"]},
+    {"lead": "", "key": "burnout", "subs": ["drive that consumes itself", "the cost of relentless force", "fire that forgot to rest"]}
   ],
   "wands11": [
-    {"lead": "officia", "key": "ad", "subs": ["velit esse cillum eu fugiat nulla", "incididunt ut labore et dolore magna", "duis aute irure", "culpa qui officia deserunt", "aliquip ex ea commodo"]},
-    {"lead": "nisi", "key": "quis", "subs": ["do eiusmod", "ex ea commodo consequat duis", "nostrud exercitation", "deserunt mollit"]}
+    {"lead": "", "key": "fierce earth", "subs": ["fire grounded in the body", "the flame made flesh", "raw vitality, no polish", "the tiger as a companion"]},
+    {"lead": "leaping", "key": "into life", "subs": ["energy seeking expression", "the dancer's bold step", "instinct trusted fully"]},
+    {"lead": "", "key": "individuality", "subs": ["the self that won't conform", "beauty that's untamed", "passion without permission"]},
+    {"lead": "kindling", "key": "the new", "subs": ["starting from pure spirit", "the spark before the plan", "creation by impulse"]}
   ],
   "wands12": [
-    {"lead": "fugiat", "key": "nostrud", "subs": ["adipiscing elit", "pariatur excepteur sint occaecat", "eiusmod tempor incididunt ut", "elit sed do eiusmod tempor", "culpa qui officia", "aliqua enim ad"]},
-    {"lead": "veniam", "key": "est", "subs": ["adipiscing elit sed do eiusmod tempor", "nostrud exercitation", "fugiat nulla pariatur", "ad minim veniam quis nostrud", "excepteur sint occaecat cupidatat", "minim veniam quis nostrud", "tempor incididunt"]},
-    {"lead": "sunt", "key": "amet", "subs": ["aute irure", "ad minim veniam", "adipiscing elit sed do", "ut labore", "mollit anim", "consectetur adipiscing elit", "ex ea commodo consequat duis"]}
+    {"lead": "", "key": "decisive will", "subs": ["thought set instantly alight", "action through clear intent", "the chariot of the lion", "ideas that move at once"]},
+    {"lead": "driving", "key": "forward", "subs": ["swift, purposeful motion", "mind and fire aligned", "cutting through delay"]},
+    {"lead": "", "key": "vision", "subs": ["seeing the goal and going", "the airy spark directed", "strategy fused with daring"]},
+    {"lead": "risking", "key": "the leap", "subs": ["boldness backed by thought", "commitment without dithering", "fire steered by reason"]}
   ],
   "wands13": [
-    {"lead": "lorem", "key": "id", "subs": ["sit amet consectetur adipiscing elit sed", "nostrud exercitation ullamco laboris", "consectetur adipiscing elit sed do", "voluptate velit esse"]},
-    {"lead": "proident", "key": "cillum", "subs": ["amet consectetur adipiscing", "enim ad minim", "reprehenderit voluptate velit", "sint occaecat cupidatat non proident", "aute irure in", "sit amet"]},
-    {"lead": "duis", "key": "ut", "subs": ["aliquip ex ea commodo consequat", "esse cillum eu fugiat", "proident sunt culpa qui officia", "eu fugiat nulla pariatur excepteur sint", "exercitation ullamco laboris nisi", "ullamco laboris nisi aliquip", "mollit anim id"]}
+    {"lead": "", "key": "magnetic warmth", "subs": ["fire held with grace", "passion that draws others in", "steady inner flame", "warmth that doesn't demand"]},
+    {"lead": "holding", "key": "the flame", "subs": ["tending fire without burning", "calm command of energy", "the leopard at her feet"]},
+    {"lead": "", "key": "adaptability", "subs": ["fire that flows like water", "strength that bends", "poise within intensity"]},
+    {"lead": "radiating", "key": "presence", "subs": ["being fully, warmly yourself", "charisma rooted in calm", "the anima's bright heat"]}
   ],
   "wands14": [
-    {"lead": "commodo", "key": "sit", "subs": ["tempor incididunt ut", "nisi aliquip ex ea", "nisi aliquip ex ea commodo", "dolore magna aliqua enim"]},
-    {"lead": "nisi", "key": "id", "subs": ["qui officia", "anim id est laborum", "sed do eiusmod tempor incididunt", "non proident sunt culpa", "proident sunt", "quis nostrud exercitation ullamco"]},
-    {"lead": "incididunt", "key": "aliquip", "subs": ["consequat duis", "ea commodo consequat duis aute", "cillum eu fugiat nulla pariatur", "mollit anim", "ullamco laboris"]}
+    {"lead": "", "key": "fire of fire", "subs": ["the swiftest, fiercest force", "flame fully in motion", "power that overwhelms", "the charge that can't be stopped"]},
+    {"lead": "charging", "key": "ahead", "subs": ["headlong into the work", "force at full draw", "the warrior's hot resolve"]},
+    {"lead": "", "key": "intensity", "subs": ["burning bright and brief", "passion at its peak", "the leap before the look"]},
+    {"lead": "blazing", "key": "through", "subs": ["obstacles met with fire", "momentum as identity", "the flame that lights or scorches"]}
   ],
   "cups01": [
-    {"lead": "anim", "key": "qui", "subs": ["sint occaecat cupidatat", "ullamco laboris nisi aliquip ex ea", "irure in reprehenderit voluptate", "labore et dolore magna aliqua enim", "elit sed do eiusmod"]},
-    {"lead": "laborum", "key": "veniam", "subs": ["quis nostrud exercitation ullamco", "officia deserunt", "ullamco laboris", "nulla pariatur excepteur sint occaecat", "duis aute irure in reprehenderit", "occaecat cupidatat non proident sunt", "qui officia deserunt mollit anim"]},
-    {"lead": "nulla", "key": "adipiscing", "subs": ["magna aliqua", "qui officia", "sed do eiusmod", "duis aute irure in", "occaecat cupidatat non proident sunt", "sint occaecat cupidatat", "irure in reprehenderit voluptate velit"]},
-    {"lead": "id", "key": "cupidatat", "subs": ["aliquip ex ea commodo consequat duis", "aliqua enim ad minim veniam", "enim ad minim veniam quis nostrud", "sed do", "eu fugiat", "labore et dolore magna aliqua"]}
+    {"lead": "", "key": "the grail", "subs": ["water in its pure state", "the cup overflowing", "love before its object", "the spring of all feeling"]},
+    {"lead": "opening", "key": "the heart", "subs": ["feeling without defense", "the first welling of love", "emotion as pure source"]},
+    {"lead": "", "key": "potential", "subs": ["love not yet given", "the still pool before the ripple", "openness itself"]}
   ],
   "cups02": [
-    {"lead": "incididunt", "key": "eiusmod", "subs": ["sint occaecat", "excepteur sint occaecat cupidatat non", "officia deserunt mollit", "consectetur adipiscing elit sed do", "ea commodo", "exercitation ullamco laboris nisi"]},
-    {"lead": "ad", "key": "ad", "subs": ["commodo consequat duis aute irure in", "voluptate velit esse cillum eu fugiat", "pariatur excepteur sint occaecat", "magna aliqua enim ad", "lorem ipsum dolor sit amet consectetur", "quis nostrud exercitation ullamco"]},
-    {"lead": "ipsum", "key": "do", "subs": ["sint occaecat cupidatat", "cillum eu fugiat nulla pariatur", "nulla pariatur excepteur sint occaecat", "nulla pariatur excepteur", "ex ea commodo consequat duis aute", "deserunt mollit anim id"]}
+    {"lead": "", "key": "love", "subs": ["two cups joined", "feeling answered in kind", "the heart's perfect mirror", "union without loss of self"]},
+    {"lead": "joining", "key": "hearts", "subs": ["venusian harmony", "the dolphins entwined", "reciprocity of feeling"]},
+    {"lead": "", "key": "harmony", "subs": ["emotions in tune", "attraction that nourishes", "love as a shared spring"]}
   ],
   "cups03": [
-    {"lead": "veniam", "key": "anim", "subs": ["eu fugiat nulla pariatur excepteur sint", "minim veniam quis nostrud exercitation", "ut labore et", "voluptate velit", "lorem ipsum dolor sit amet", "ad minim"]},
-    {"lead": "cillum", "key": "nisi", "subs": ["veniam quis", "quis nostrud exercitation ullamco", "sunt culpa qui officia", "occaecat cupidatat", "reprehenderit voluptate velit esse", "exercitation ullamco laboris nisi", "velit esse"]}
+    {"lead": "", "key": "abundance", "subs": ["feeling overflowing", "joy that spills to others", "plenty of the heart", "the cups brimming together"]},
+    {"lead": "sharing", "key": "the joy", "subs": ["celebration with others", "gratitude made social", "the harvest of feeling"]},
+    {"lead": "", "key": "generosity", "subs": ["love freely poured", "emotional plenty", "abundance that multiplies"]}
   ],
   "cups04": [
-    {"lead": "commodo", "key": "consequat", "subs": ["aliquip ex ea commodo consequat", "dolor sit", "reprehenderit voluptate velit esse", "reprehenderit voluptate velit esse", "aute irure in reprehenderit voluptate"]},
-    {"lead": "aute", "key": "est", "subs": ["pariatur excepteur sint occaecat", "occaecat cupidatat non", "ut labore", "consequat duis", "enim ad", "amet consectetur adipiscing elit"]},
-    {"lead": "consequat", "key": "culpa", "subs": ["incididunt ut", "enim ad minim veniam quis nostrud", "cupidatat non proident sunt culpa", "nostrud exercitation ullamco laboris", "sit amet consectetur", "elit sed do eiusmod", "aute irure in"]}
+    {"lead": "", "key": "luxury", "subs": ["comfort grown heavy", "pleasure that dulls", "ease tipping toward excess", "feeling settling into stupor"]},
+    {"lead": "", "key": "indulgence", "subs": ["too much of a good thing", "the moon's languid pull", "emotion grown stagnant"]},
+    {"lead": "noticing", "key": "the surfeit", "subs": ["the offered cup unseen", "comfort that closes you off", "satiety before it sours"]}
   ],
   "cups05": [
-    {"lead": "esse", "key": "magna", "subs": ["cupidatat non proident sunt culpa qui", "non proident", "eiusmod tempor", "adipiscing elit sed do", "aliquip ex ea commodo", "consequat duis aute", "excepteur sint occaecat cupidatat non"]},
-    {"lead": "duis", "key": "excepteur", "subs": ["cupidatat non proident", "ex ea commodo consequat", "non proident", "nulla pariatur excepteur", "laboris nisi"]},
-    {"lead": "proident", "key": "cupidatat", "subs": ["sit amet consectetur", "eu fugiat", "ipsum dolor sit amet", "occaecat cupidatat non proident sunt", "labore et dolore magna"]}
+    {"lead": "", "key": "disappointment", "subs": ["the pleasure gone flat", "what spilled despite fullness", "feeling let down by hope", "the cups dimmed"]},
+    {"lead": "grieving", "key": "the loss", "subs": ["mars stirring the dark water", "mourning what didn't last", "the ache after expectation"]},
+    {"lead": "", "key": "letdown", "subs": ["joy that curdled", "the gap between want and gain", "sorrow inside abundance"]}
   ],
   "cups06": [
-    {"lead": "minim", "key": "pariatur", "subs": ["deserunt mollit anim id", "pariatur excepteur sint", "magna aliqua", "ut labore et dolore magna"]},
-    {"lead": "ullamco", "key": "sit", "subs": ["magna aliqua enim", "commodo consequat duis aute irure", "aute irure in", "sunt culpa qui officia deserunt"]},
-    {"lead": "veniam", "key": "ipsum", "subs": ["consectetur adipiscing elit sed do", "qui officia deserunt mollit anim", "sunt culpa qui officia deserunt", "in reprehenderit voluptate velit esse"]}
+    {"lead": "", "key": "pleasure", "subs": ["feeling at its sweetest", "well-being freely felt", "the sun on still water", "joy in the simple"]},
+    {"lead": "", "key": "nostalgia", "subs": ["the warmth of memory", "childhood's bright cup", "innocence recalled"]},
+    {"lead": "savoring", "key": "the moment", "subs": ["pleasure without guilt", "the gift of the present", "emotion at ease"]}
   ],
   "cups07": [
-    {"lead": "minim", "key": "aliqua", "subs": ["lorem ipsum dolor sit amet consectetur", "quis nostrud", "enim ad minim veniam quis", "aute irure in reprehenderit voluptate"]},
-    {"lead": "qui", "key": "laboris", "subs": ["magna aliqua enim ad minim", "aliquip ex", "reprehenderit voluptate velit esse", "veniam quis nostrud exercitation"]},
-    {"lead": "sunt", "key": "quis", "subs": ["voluptate velit esse cillum", "non proident", "sint occaecat cupidatat non proident", "do eiusmod tempor incididunt ut", "exercitation ullamco laboris"]},
-    {"lead": "mollit", "key": "ullamco", "subs": ["voluptate velit esse", "ut labore et dolore magna aliqua", "dolore magna aliqua enim", "dolor sit"]}
+    {"lead": "", "key": "debauch", "subs": ["pleasure turned poison", "fantasy mistaken for feeling", "the cups gone rotten", "desire feeding on itself"]},
+    {"lead": "", "key": "illusion", "subs": ["wish dressed as reality", "the lotus-dream's lure", "emotion divorced from truth"]},
+    {"lead": "drifting", "key": "in fantasy", "subs": ["scorpio's seductive fog", "feeling that won't act", "the seductive false image"]}
   ],
   "cups08": [
-    {"lead": "eu", "key": "ut", "subs": ["minim veniam quis nostrud exercitation", "consectetur adipiscing elit sed do", "ullamco laboris nisi", "fugiat nulla pariatur", "tempor incididunt ut labore et dolore", "tempor incididunt ut", "do eiusmod tempor incididunt"]},
-    {"lead": "fugiat", "key": "exercitation", "subs": ["ea commodo consequat duis aute", "proident sunt culpa qui", "ex ea commodo consequat", "occaecat cupidatat non proident sunt", "in reprehenderit", "cupidatat non proident sunt culpa", "voluptate velit esse"]}
+    {"lead": "", "key": "indolence", "subs": ["feeling abandoned mid-stream", "walking away from the full cup", "emotional withdrawal", "the spark gone out of joy"]},
+    {"lead": "leaving", "key": "the cups", "subs": ["turning from what's hollow", "the search beyond comfort", "saturn dimming the water"]},
+    {"lead": "", "key": "weariness", "subs": ["joy that no longer satisfies", "the quiet exit from pleasure", "seeking a deeper draught"]}
   ],
   "cups09": [
-    {"lead": "incididunt", "key": "esse", "subs": ["nulla pariatur excepteur sint occaecat", "lorem ipsum", "fugiat nulla pariatur excepteur sint", "occaecat cupidatat non proident", "non proident sunt culpa", "cupidatat non proident sunt", "incididunt ut labore et dolore"]},
-    {"lead": "amet", "key": "ex", "subs": ["sint occaecat cupidatat", "ipsum dolor sit amet consectetur", "minim veniam", "exercitation ullamco", "sunt culpa qui", "in reprehenderit"]}
+    {"lead": "", "key": "happiness", "subs": ["the wish granted", "contentment fully felt", "jupiter's abundant cup", "emotion satisfied"]},
+    {"lead": "", "key": "contentment", "subs": ["enough, and knowing it", "well-being that holds", "the heart at rest"]},
+    {"lead": "savoring", "key": "fullness", "subs": ["joy without anxiety", "gratitude made whole", "the good held lightly"]}
   ],
   "cups10": [
-    {"lead": "fugiat", "key": "anim", "subs": ["in reprehenderit voluptate velit", "laboris nisi aliquip ex", "aute irure in reprehenderit voluptate", "ipsum dolor sit", "sint occaecat"]},
-    {"lead": "ex", "key": "esse", "subs": ["enim ad minim veniam quis", "amet consectetur", "fugiat nulla pariatur excepteur", "voluptate velit esse cillum"]}
+    {"lead": "", "key": "satiety", "subs": ["feeling at its peak", "the rainbow of fulfilled love", "joy complete, soon to turn", "the heart utterly full"]},
+    {"lead": "", "key": "fulfillment", "subs": ["the family of cups arrayed", "peace after the long feeling", "emotion brought home"]},
+    {"lead": "holding", "key": "the peak", "subs": ["knowing the tide will turn", "fullness honored before it fades", "the perfect, fragile moment"]}
   ],
   "cups11": [
-    {"lead": "fugiat", "key": "laboris", "subs": ["labore et dolore", "ipsum dolor sit amet", "voluptate velit esse", "id est", "pariatur excepteur sint occaecat", "cupidatat non"]},
-    {"lead": "nostrud", "key": "lorem", "subs": ["fugiat nulla pariatur excepteur sint", "veniam quis nostrud exercitation ullamco", "cillum eu", "reprehenderit voluptate velit esse"]},
-    {"lead": "fugiat", "key": "incididunt", "subs": ["nisi aliquip ex ea", "consectetur adipiscing elit sed do", "consequat duis aute", "esse cillum", "id est laborum", "do eiusmod tempor incididunt ut", "irure in reprehenderit"]}
+    {"lead": "", "key": "tender earth", "subs": ["feeling made gentle and real", "love grounded in the body", "softness with substance", "the heart that nurtures quietly"]},
+    {"lead": "opening", "key": "to wonder", "subs": ["receiving the new feeling", "the dreamer awake to beauty", "trust that risks tenderness"]},
+    {"lead": "", "key": "imagination", "subs": ["creativity rising from water", "the dream taking form", "intuition made visible"]},
+    {"lead": "reflecting", "key": "calm", "subs": ["the still pool of the young soul", "feeling without agenda", "grace in the small gesture"]}
   ],
   "cups12": [
-    {"lead": "in", "key": "eiusmod", "subs": ["nostrud exercitation ullamco", "eu fugiat nulla pariatur", "nostrud exercitation", "sunt culpa qui", "culpa qui officia"]},
-    {"lead": "nulla", "key": "ea", "subs": ["ea commodo consequat duis", "in reprehenderit", "pariatur excepteur sint occaecat", "labore et dolore magna"]},
-    {"lead": "id", "key": "consequat", "subs": ["lorem ipsum dolor", "consequat duis aute", "cupidatat non", "incididunt ut", "aliquip ex", "reprehenderit voluptate", "commodo consequat duis aute"]},
-    {"lead": "pariatur", "key": "ut", "subs": ["ipsum dolor", "fugiat nulla pariatur excepteur sint", "culpa qui officia deserunt mollit anim", "labore et dolore magna", "pariatur excepteur sint occaecat"]}
+    {"lead": "", "key": "feeling thought", "subs": ["emotion guided by mind", "depth that knows itself", "the artist's calculated heart", "intensity held in form"]},
+    {"lead": "moving", "key": "with intent", "subs": ["desire steered by purpose", "the eagle over the water", "calm hiding deep currents"]},
+    {"lead": "", "key": "subtlety", "subs": ["feeling that plans its course", "charm with hidden depth", "the diplomat of the heart"]},
+    {"lead": "creating", "key": "from depth", "subs": ["art born of inner water", "imagination given direction", "the dream made deliberate"]}
   ],
   "cups13": [
-    {"lead": "cupidatat", "key": "incididunt", "subs": ["consectetur adipiscing elit", "ut labore et dolore magna aliqua", "esse cillum eu fugiat nulla pariatur", "dolore magna aliqua enim ad", "cillum eu", "consectetur adipiscing elit sed do", "elit sed do eiusmod"]},
-    {"lead": "ipsum", "key": "sint", "subs": ["commodo consequat duis aute irure", "anim id est laborum", "pariatur excepteur sint", "fugiat nulla pariatur", "non proident sunt culpa qui", "commodo consequat"]},
-    {"lead": "dolor", "key": "lorem", "subs": ["amet consectetur adipiscing elit sed do", "fugiat nulla pariatur excepteur sint", "culpa qui officia", "proident sunt culpa qui officia", "commodo consequat duis aute irure in", "ex ea commodo consequat duis"]}
+    {"lead": "", "key": "pure feeling", "subs": ["emotion in its deepest form", "the mirror of the soul", "love without condition", "the watery depths held still"]},
+    {"lead": "reflecting", "key": "the divine", "subs": ["the surface that shows all", "receptivity made holy", "the dreaming oracle"]},
+    {"lead": "", "key": "empathy", "subs": ["feeling with another fully", "the anima's deep compassion", "intuition trusted completely"]},
+    {"lead": "holding", "key": "the depths", "subs": ["calm over the unconscious sea", "tenderness as a power", "the still water that knows"]}
   ],
   "cups14": [
-    {"lead": "sed", "key": "nisi", "subs": ["incididunt ut", "proident sunt culpa qui officia", "in reprehenderit", "non proident sunt culpa qui", "id est", "lorem ipsum dolor sit"]},
-    {"lead": "qui", "key": "elit", "subs": ["excepteur sint occaecat cupidatat non", "ex ea commodo consequat duis", "lorem ipsum dolor sit amet", "duis aute"]},
-    {"lead": "tempor", "key": "laborum", "subs": ["fugiat nulla pariatur excepteur", "officia deserunt mollit anim id", "laboris nisi", "aute irure", "voluptate velit esse cillum eu", "veniam quis"]},
-    {"lead": "et", "key": "eu", "subs": ["dolore magna aliqua enim", "sed do eiusmod tempor", "eiusmod tempor incididunt ut labore", "dolor sit amet consectetur adipiscing"]}
+    {"lead": "", "key": "passionate feeling", "subs": ["fire and water at once", "love pursued with fervor", "the romantic at full charge", "emotion in swift motion"]},
+    {"lead": "riding", "key": "the wave", "subs": ["chasing the beautiful thing", "feeling that won't sit still", "the quest of the heart"]},
+    {"lead": "", "key": "fervor", "subs": ["intensity that may flood", "passion outrunning sense", "the grail sought headlong"]},
+    {"lead": "offering", "key": "the cup", "subs": ["love proffered boldly", "the gesture of devotion", "feeling made an act"]}
   ],
   "swords01": [
-    {"lead": "magna", "key": "et", "subs": ["ullamco laboris nisi", "ea commodo consequat duis", "quis nostrud", "lorem ipsum dolor sit amet"]},
-    {"lead": "dolore", "key": "mollit", "subs": ["ea commodo consequat duis aute", "elit sed do eiusmod tempor", "esse cillum eu fugiat", "mollit anim", "incididunt ut labore et dolore magna", "quis nostrud exercitation ullamco", "est laborum"]},
-    {"lead": "sunt", "key": "nostrud", "subs": ["exercitation ullamco laboris nisi", "proident sunt", "voluptate velit esse cillum eu", "laboris nisi aliquip ex ea commodo"]},
-    {"lead": "laborum", "key": "pariatur", "subs": ["occaecat cupidatat non proident sunt", "magna aliqua enim ad minim veniam", "occaecat cupidatat non proident sunt", "sed do eiusmod tempor"]}
+    {"lead": "", "key": "the sword", "subs": ["mind in its pure state", "truth that cuts clean", "the first clear thought", "the root of all intellect"]},
+    {"lead": "cutting", "key": "to truth", "subs": ["clarity without mercy", "the blade through confusion", "thought as a sharp edge"]},
+    {"lead": "", "key": "potential", "subs": ["the idea not yet wielded", "reason before its use", "clarity itself"]}
   ],
   "swords02": [
-    {"lead": "pariatur", "key": "sit", "subs": ["incididunt ut labore et", "sint occaecat cupidatat non", "pariatur excepteur sint occaecat", "eiusmod tempor incididunt"]},
-    {"lead": "excepteur", "key": "minim", "subs": ["consequat duis aute irure", "non proident sunt culpa qui", "dolor sit amet", "ea commodo consequat", "eiusmod tempor incididunt", "veniam quis nostrud", "lorem ipsum dolor sit amet"]},
-    {"lead": "eiusmod", "key": "dolor", "subs": ["officia deserunt mollit anim", "ut labore et dolore magna", "nostrud exercitation ullamco laboris", "voluptate velit", "consectetur adipiscing"]}
+    {"lead": "", "key": "peace", "subs": ["a balance of opposing thoughts", "quiet held by tension", "the swords crossed, not clashing", "stillness between forces"]},
+    {"lead": "balancing", "key": "the mind", "subs": ["two truths held at once", "libra's poised blades", "conflict suspended"]},
+    {"lead": "", "key": "stalemate", "subs": ["rest that could tip", "the calm of held breath", "peace that needs guarding"]}
   ],
   "swords03": [
-    {"lead": "incididunt", "key": "occaecat", "subs": ["do eiusmod tempor incididunt", "ad minim veniam quis nostrud", "sint occaecat cupidatat non", "non proident", "ex ea commodo consequat duis aute", "eu fugiat nulla pariatur excepteur sint", "mollit anim id est"]},
-    {"lead": "adipiscing", "key": "reprehenderit", "subs": ["elit sed do", "sint occaecat cupidatat non proident", "proident sunt culpa qui officia", "amet consectetur adipiscing elit", "ipsum dolor", "qui officia deserunt mollit"]},
-    {"lead": "ex", "key": "sit", "subs": ["commodo consequat duis aute irure in", "qui officia deserunt mollit anim id", "minim veniam", "mollit anim id", "et dolore magna aliqua enim ad", "aliquip ex ea commodo"]}
+    {"lead": "", "key": "sorrow", "subs": ["the heart pierced by thought", "grief seen clearly", "the cut that tells the truth", "pain that clarifies"]},
+    {"lead": "", "key": "grief", "subs": ["saturn's heavy clarity", "mourning that must be felt", "the storm behind the blades"]},
+    {"lead": "facing", "key": "the pain", "subs": ["looking at what hurts", "sorrow as honest sight", "the wound acknowledged"]}
   ],
   "swords04": [
-    {"lead": "quis", "key": "reprehenderit", "subs": ["lorem ipsum dolor sit", "lorem ipsum dolor sit", "sunt culpa qui officia deserunt mollit", "ex ea commodo consequat duis", "exercitation ullamco laboris nisi", "voluptate velit esse cillum eu", "do eiusmod tempor"]},
-    {"lead": "ea", "key": "eiusmod", "subs": ["consectetur adipiscing elit sed", "incididunt ut labore", "qui officia deserunt mollit", "nisi aliquip ex"]},
-    {"lead": "quis", "key": "exercitation", "subs": ["nisi aliquip", "aute irure in reprehenderit voluptate", "ad minim veniam quis nostrud", "in reprehenderit"]},
-    {"lead": "enim", "key": "veniam", "subs": ["aliquip ex", "elit sed do eiusmod tempor", "duis aute irure in", "exercitation ullamco laboris", "lorem ipsum dolor"]}
+    {"lead": "", "key": "truce", "subs": ["the mind given rest", "conflict set down for now", "recovery between battles", "thought allowed to settle"]},
+    {"lead": "resting", "key": "the blade", "subs": ["stepping back to recover", "jupiter's restorative pause", "peace by agreement"]},
+    {"lead": "", "key": "recovery", "subs": ["the quiet that heals", "strategy in stillness", "retreat that isn't defeat"]}
   ],
   "swords05": [
-    {"lead": "anim", "key": "quis", "subs": ["magna aliqua enim ad minim", "proident sunt culpa qui officia deserunt", "voluptate velit", "consectetur adipiscing elit sed do", "ipsum dolor sit amet consectetur", "adipiscing elit sed do eiusmod tempor"]},
-    {"lead": "reprehenderit", "key": "quis", "subs": ["non proident", "sunt culpa qui", "aliquip ex", "incididunt ut labore et"]},
-    {"lead": "sint", "key": "nostrud", "subs": ["magna aliqua enim ad", "laboris nisi aliquip ex", "minim veniam quis nostrud", "aliqua enim ad", "fugiat nulla pariatur excepteur sint"]},
-    {"lead": "officia", "key": "mollit", "subs": ["in reprehenderit", "nulla pariatur excepteur sint occaecat", "sint occaecat cupidatat non", "occaecat cupidatat non proident sunt", "laboris nisi aliquip", "do eiusmod tempor incididunt ut labore"]}
+    {"lead": "", "key": "defeat", "subs": ["the mind outmaneuvered", "a win not worth the cost", "losing the higher ground", "leverage turned to loss"]},
+    {"lead": "", "key": "loss", "subs": ["the shameful retreat", "cunning that backfires", "being undone by your own edge"]},
+    {"lead": "counting", "key": "the cost", "subs": ["what cleverness cost you", "the empty triumph", "aquarian detachment gone cold"]}
   ],
   "swords06": [
-    {"lead": "irure", "key": "culpa", "subs": ["lorem ipsum dolor sit amet", "ea commodo consequat duis aute irure", "proident sunt culpa qui officia deserunt", "duis aute irure", "lorem ipsum dolor sit amet consectetur", "velit esse cillum eu"]},
-    {"lead": "ullamco", "key": "velit", "subs": ["nostrud exercitation ullamco", "tempor incididunt ut labore et", "id est", "proident sunt", "occaecat cupidatat non", "adipiscing elit sed do eiusmod tempor"]}
+    {"lead": "", "key": "science", "subs": ["the mind finding the way", "method over emotion", "clear passage through trouble", "reason restoring order"]},
+    {"lead": "crossing", "key": "to clarity", "subs": ["the journey to calmer water", "problems solved, not fled", "mercury's clean technique"]},
+    {"lead": "", "key": "understanding", "subs": ["the structure made visible", "intellect at its best", "the path reasoned out"]}
   ],
   "swords07": [
-    {"lead": "lorem", "key": "anim", "subs": ["sit amet consectetur adipiscing elit sed", "sunt culpa qui officia", "consequat duis aute", "eu fugiat nulla", "sunt culpa qui officia deserunt", "proident sunt culpa qui officia", "pariatur excepteur sint occaecat"]},
-    {"lead": "ea", "key": "commodo", "subs": ["do eiusmod", "consequat duis aute irure", "nostrud exercitation ullamco laboris", "ullamco laboris", "amet consectetur adipiscing elit sed", "consectetur adipiscing elit sed"]},
-    {"lead": "in", "key": "proident", "subs": ["aliquip ex ea commodo consequat duis", "sed do eiusmod tempor incididunt", "sed do eiusmod tempor incididunt ut", "commodo consequat duis aute irure", "eiusmod tempor incididunt ut"]},
-    {"lead": "mollit", "key": "labore", "subs": ["aliqua enim ad minim", "cupidatat non", "proident sunt", "exercitation ullamco laboris", "sint occaecat", "officia deserunt mollit anim", "ullamco laboris nisi aliquip ex ea"]}
+    {"lead": "", "key": "futility", "subs": ["effort that won't suffice", "the plan that undercuts itself", "trying by halves", "cleverness without commitment"]},
+    {"lead": "", "key": "self-defeat", "subs": ["the mind at odds with itself", "stealing your own swords", "cunning that fails the test"]},
+    {"lead": "second-guessing", "key": "the move", "subs": ["doubt eroding the act", "strategy gone slippery", "the unstable middle"]}
   ],
   "swords08": [
-    {"lead": "duis", "key": "eiusmod", "subs": ["proident sunt culpa qui", "do eiusmod tempor", "elit sed do eiusmod tempor incididunt", "ea commodo consequat duis aute", "in reprehenderit voluptate velit", "reprehenderit voluptate velit esse", "qui officia deserunt mollit anim"]},
-    {"lead": "ullamco", "key": "voluptate", "subs": ["esse cillum eu", "magna aliqua enim", "eu fugiat nulla", "dolore magna aliqua enim", "commodo consequat duis aute"]},
-    {"lead": "ipsum", "key": "et", "subs": ["veniam quis nostrud exercitation ullamco", "labore et dolore", "elit sed do", "lorem ipsum dolor", "laboris nisi", "duis aute", "pariatur excepteur sint occaecat"]}
+    {"lead": "", "key": "interference", "subs": ["the mind hemmed in", "thought blocked by detail", "too many swords, no room", "analysis as a trap"]},
+    {"lead": "", "key": "restriction", "subs": ["the cage of overthinking", "options that paralyze", "gemini's scattered blades"]},
+    {"lead": "freeing", "key": "the mind", "subs": ["one clean cut through the tangle", "stepping past the static", "seeing the way out"]}
   ],
   "swords09": [
-    {"lead": "tempor", "key": "laborum", "subs": ["voluptate velit esse cillum", "adipiscing elit sed do", "et dolore magna aliqua enim", "laboris nisi aliquip", "sint occaecat cupidatat non proident", "dolore magna"]},
-    {"lead": "cillum", "key": "proident", "subs": ["dolor sit", "ad minim veniam quis nostrud", "commodo consequat duis aute irure in", "laboris nisi aliquip ex ea"]},
-    {"lead": "elit", "key": "quis", "subs": ["labore et dolore magna aliqua", "labore et dolore", "ullamco laboris nisi aliquip", "proident sunt culpa"]},
-    {"lead": "ipsum", "key": "anim", "subs": ["reprehenderit voluptate velit esse", "dolore magna aliqua enim", "enim ad minim veniam", "veniam quis nostrud exercitation ullamco", "proident sunt culpa qui", "est laborum", "non proident"]}
+    {"lead": "", "key": "cruelty", "subs": ["the mind turned against itself", "anguish bred by thought", "nightmare logic", "the blades drawing blood"]},
+    {"lead": "", "key": "anguish", "subs": ["worry sharpened to torment", "mars cutting in the dark", "despair that feeds on itself"]},
+    {"lead": "naming", "key": "the wound", "subs": ["seeing the cruelty plainly", "what the mind does at night", "the first step out of dread"]}
   ],
   "swords10": [
-    {"lead": "proident", "key": "deserunt", "subs": ["proident sunt culpa qui officia", "commodo consequat duis aute irure", "non proident sunt", "dolor sit amet consectetur adipiscing", "aute irure in", "eu fugiat", "esse cillum eu"]},
-    {"lead": "qui", "key": "nisi", "subs": ["cupidatat non proident sunt culpa qui", "qui officia", "cupidatat non proident sunt culpa qui", "tempor incididunt ut", "ea commodo"]},
-    {"lead": "consequat", "key": "exercitation", "subs": ["sint occaecat cupidatat non proident", "sit amet consectetur adipiscing elit sed", "deserunt mollit anim id est laborum", "irure in reprehenderit"]}
+    {"lead": "", "key": "ruin", "subs": ["the thought taken to its end", "collapse of a mental structure", "the blades all fallen", "the worst, now finished"]},
+    {"lead": "", "key": "the bottom", "subs": ["where overthinking lands", "the idea spent entirely", "ruin that clears the ground"]},
+    {"lead": "rising", "key": "after", "subs": ["nowhere left but up", "the dawn after the ruin", "the mind free to rebuild"]}
   ],
   "swords11": [
-    {"lead": "aute", "key": "amet", "subs": ["sint occaecat", "adipiscing elit sed do eiusmod tempor", "aliqua enim ad minim veniam", "sed do eiusmod"]},
-    {"lead": "dolor", "key": "cillum", "subs": ["magna aliqua", "occaecat cupidatat non proident sunt", "velit esse cillum eu fugiat nulla", "sed do eiusmod tempor incididunt ut", "proident sunt"]}
+    {"lead": "", "key": "grounded thought", "subs": ["mind put to practical use", "ideas brought to earth", "sharp wit, real footing", "truth defended on the ground"]},
+    {"lead": "cutting", "key": "the false", "subs": ["clearing illusion decisively", "the avenger of wrongs", "fearless honesty"]},
+    {"lead": "", "key": "vigilance", "subs": ["watching for the lie", "thought that protects", "cleverness with a spine"]},
+    {"lead": "acting", "key": "on truth", "subs": ["the idea made concrete", "resolve behind the blade", "mind that won't just theorize"]}
   ],
   "swords12": [
-    {"lead": "reprehenderit", "key": "incididunt", "subs": ["ex ea", "ad minim veniam quis nostrud", "eiusmod tempor", "dolore magna aliqua enim ad minim", "eiusmod tempor"]},
-    {"lead": "nulla", "key": "cillum", "subs": ["consectetur adipiscing elit sed do", "nulla pariatur excepteur sint occaecat", "consequat duis aute", "qui officia deserunt mollit anim id", "in reprehenderit", "ad minim veniam", "culpa qui officia deserunt"]}
+    {"lead": "", "key": "pure intellect", "subs": ["mind at its most abstract", "brilliance unmoored from ground", "ideas spinning ideas", "the airy thinker"]},
+    {"lead": "analyzing", "key": "everything", "subs": ["dissecting to understand", "logic chasing logic", "the chariot of thought"]},
+    {"lead": "", "key": "abstraction", "subs": ["clarity that risks coldness", "plans that outrun reality", "intellect for its own sake"]},
+    {"lead": "deciding", "key": "swiftly", "subs": ["thought cutting to action", "the quick incisive call", "reason given a blade"]}
   ],
   "swords13": [
-    {"lead": "dolore", "key": "ullamco", "subs": ["anim id est laborum", "cupidatat non proident sunt culpa", "aute irure", "elit sed do eiusmod", "sit amet consectetur adipiscing"]},
-    {"lead": "consectetur", "key": "deserunt", "subs": ["deserunt mollit anim id", "exercitation ullamco laboris", "ut labore et dolore", "in reprehenderit", "consectetur adipiscing elit sed", "incididunt ut", "velit esse"]},
-    {"lead": "aliqua", "key": "voluptate", "subs": ["anim id", "exercitation ullamco", "anim id", "dolore magna aliqua", "occaecat cupidatat non", "duis aute irure in reprehenderit", "officia deserunt mollit anim id est"]},
-    {"lead": "id", "key": "magna", "subs": ["culpa qui", "sint occaecat cupidatat non proident", "culpa qui", "incididunt ut", "cillum eu fugiat", "cupidatat non proident"]}
+    {"lead": "", "key": "clear perception", "subs": ["feeling clarified by thought", "honest, unflinching insight", "the keen and fair mind", "truth softened by understanding"]},
+    {"lead": "seeing", "key": "through", "subs": ["perceiving the real motive", "fairness with an edge", "the severed head of illusion"]},
+    {"lead": "", "key": "discernment", "subs": ["judgment born of experience", "sorrow turned to wisdom", "clarity that has grieved"]},
+    {"lead": "speaking", "key": "plainly", "subs": ["truth said without cruelty", "the honest word", "insight others can use"]}
   ],
   "swords14": [
-    {"lead": "cupidatat", "key": "enim", "subs": ["fugiat nulla", "fugiat nulla pariatur excepteur sint", "mollit anim id est laborum", "velit esse cillum", "quis nostrud exercitation ullamco", "duis aute irure in reprehenderit", "eu fugiat nulla"]},
-    {"lead": "sunt", "key": "commodo", "subs": ["do eiusmod", "esse cillum eu fugiat", "minim veniam quis nostrud", "ea commodo consequat", "eu fugiat nulla"]},
-    {"lead": "id", "key": "elit", "subs": ["cillum eu", "enim ad minim veniam quis nostrud", "laboris nisi aliquip ex ea commodo", "excepteur sint occaecat cupidatat non"]}
+    {"lead": "", "key": "fierce intellect", "subs": ["thought charging into action", "the storming mind", "ideas wielded like weapons", "the warrior of reason"]},
+    {"lead": "charging", "key": "in", "subs": ["the swift decisive strike", "mind and force fused", "cutting through all at once"]},
+    {"lead": "", "key": "drive", "subs": ["intellect at full gallop", "conviction backed by speed", "the relentless argument"]},
+    {"lead": "risking", "key": "the strike", "subs": ["boldness that may overshoot", "force ahead of caution", "the blade that doesn't pause"]}
   ],
   "pents01": [
-    {"lead": "do", "key": "mollit", "subs": ["veniam quis nostrud", "sint occaecat cupidatat non", "duis aute", "ea commodo consequat duis aute irure", "voluptate velit esse cillum eu", "eu fugiat nulla pariatur excepteur sint"]},
-    {"lead": "veniam", "key": "voluptate", "subs": ["enim ad minim", "eiusmod tempor", "sit amet consectetur adipiscing elit sed", "lorem ipsum", "dolore magna aliqua enim ad minim"]},
-    {"lead": "exercitation", "key": "exercitation", "subs": ["fugiat nulla pariatur excepteur", "exercitation ullamco", "quis nostrud exercitation", "exercitation ullamco", "dolor sit amet consectetur adipiscing", "et dolore"]},
-    {"lead": "ipsum", "key": "aliquip", "subs": ["ad minim veniam quis", "ullamco laboris nisi aliquip", "sed do eiusmod tempor incididunt ut", "commodo consequat", "proident sunt", "officia deserunt mollit anim id"]}
+    {"lead": "", "key": "the seed", "subs": ["earth in its pure state", "matter as pure potential", "the root of all substance", "wealth before its form"]},
+    {"lead": "grounding", "key": "spirit", "subs": ["the divine made physical", "value taking shape", "the first solid thing"]},
+    {"lead": "", "key": "potential", "subs": ["the coin not yet spent", "abundance latent in soil", "substance itself"]}
   ],
   "pents02": [
-    {"lead": "esse", "key": "minim", "subs": ["sed do eiusmod", "aute irure", "anim id", "ullamco laboris nisi aliquip ex ea", "dolore magna aliqua enim ad", "quis nostrud exercitation ullamco"]},
-    {"lead": "qui", "key": "nisi", "subs": ["nisi aliquip ex ea commodo consequat", "cillum eu fugiat nulla pariatur", "et dolore magna", "et dolore magna"]}
+    {"lead": "", "key": "change", "subs": ["matter in constant flux", "balance kept while moving", "the serpent of cycles", "stability through motion"]},
+    {"lead": "juggling", "key": "the cycle", "subs": ["managing the ups and downs", "flow over fixed ground", "keeping the two coins spinning"]},
+    {"lead": "", "key": "flexibility", "subs": ["earth that adapts", "the dance of give and take", "change as the only stability"]}
   ],
   "pents03": [
-    {"lead": "cillum", "key": "quis", "subs": ["occaecat cupidatat non proident sunt", "sunt culpa qui officia deserunt", "duis aute", "nisi aliquip"]},
-    {"lead": "occaecat", "key": "officia", "subs": ["magna aliqua", "ipsum dolor sit amet consectetur", "esse cillum eu fugiat", "ad minim veniam quis nostrud", "magna aliqua enim"]}
+    {"lead": "", "key": "works", "subs": ["skill applied to matter", "the great work taking form", "craft made manifest", "building with intent"]},
+    {"lead": "", "key": "craft", "subs": ["mastery of the material", "mars shaping the earth", "labor that means something"]},
+    {"lead": "constructing", "key": "the form", "subs": ["the pyramid rising", "skill recognized", "the foundation laid well"]}
   ],
   "pents04": [
-    {"lead": "dolor", "key": "enim", "subs": ["esse cillum eu fugiat nulla pariatur", "mollit anim id est", "proident sunt", "elit sed"]},
-    {"lead": "cillum", "key": "magna", "subs": ["officia deserunt mollit anim id", "consectetur adipiscing elit sed do", "consequat duis aute irure", "sunt culpa qui officia deserunt", "fugiat nulla pariatur excepteur sint"]}
+    {"lead": "", "key": "earthly power", "subs": ["matter held firmly", "the law made solid", "structure that endures", "the fortress of the realized"]},
+    {"lead": "holding", "key": "the gain", "subs": ["consolidating what's built", "the grip that secures", "capricorn's steady command"]},
+    {"lead": "", "key": "stability", "subs": ["order locked in place", "the risk of holding too tight", "power that can stagnate"]}
   ],
   "pents05": [
-    {"lead": "consectetur", "key": "culpa", "subs": ["do eiusmod tempor incididunt ut", "qui officia deserunt mollit anim", "proident sunt culpa qui", "consequat duis aute irure in", "proident sunt culpa qui"]},
-    {"lead": "pariatur", "key": "duis", "subs": ["culpa qui officia deserunt mollit anim", "et dolore", "amet consectetur adipiscing elit sed", "magna aliqua", "incididunt ut labore et", "excepteur sint occaecat cupidatat non", "cupidatat non proident sunt culpa qui"]},
-    {"lead": "deserunt", "key": "est", "subs": ["sit amet consectetur adipiscing", "cillum eu fugiat nulla pariatur", "pariatur excepteur", "consectetur adipiscing elit sed do", "do eiusmod tempor incididunt ut"]},
-    {"lead": "elit", "key": "minim", "subs": ["velit esse", "excepteur sint occaecat cupidatat non", "exercitation ullamco laboris nisi", "esse cillum", "nostrud exercitation ullamco laboris", "irure in reprehenderit voluptate velit", "occaecat cupidatat non"]}
+    {"lead": "", "key": "worry", "subs": ["the fear of not enough", "material anxiety", "the mind gnawing at lack", "scarcity felt in the body"]},
+    {"lead": "", "key": "lack", "subs": ["the cold outside the window", "value seemingly withdrawn", "poverty of spirit or coin"]},
+    {"lead": "noticing", "key": "the door", "subs": ["help nearer than it seems", "worry that blinds to aid", "the way out unseen"]}
   ],
   "pents06": [
-    {"lead": "nostrud", "key": "tempor", "subs": ["duis aute irure in reprehenderit", "aliqua enim ad minim veniam quis", "sit amet consectetur adipiscing", "enim ad minim veniam quis", "ut labore et"]},
-    {"lead": "enim", "key": "sunt", "subs": ["esse cillum eu fugiat nulla", "non proident sunt culpa qui officia", "eiusmod tempor incididunt", "velit esse", "ut labore et dolore magna"]}
+    {"lead": "", "key": "success", "subs": ["matter rewarding effort", "the balanced exchange", "gain fairly given and got", "earth yielding its fruit"]},
+    {"lead": "", "key": "generosity", "subs": ["giving from real plenty", "the scales of fair trade", "wealth that circulates"]},
+    {"lead": "receiving", "key": "the due", "subs": ["effort meeting reward", "the harvest measured out", "success that's shared"]}
   ],
   "pents07": [
-    {"lead": "veniam", "key": "pariatur", "subs": ["consectetur adipiscing elit sed", "ut labore et", "magna aliqua", "sed do eiusmod", "pariatur excepteur sint occaecat", "ex ea commodo consequat duis"]},
-    {"lead": "quis", "key": "dolor", "subs": ["nisi aliquip ex ea commodo consequat", "veniam quis nostrud", "minim veniam quis nostrud exercitation", "nostrud exercitation ullamco laboris", "tempor incididunt", "in reprehenderit voluptate"]}
+    {"lead": "", "key": "failure", "subs": ["labor without harvest", "the work that doesn't pay", "effort poured into barren ground", "gain that won't ripen"]},
+    {"lead": "", "key": "frustration", "subs": ["saturn blighting the field", "watching the crop fail", "the pause to reckon loss"]},
+    {"lead": "reassessing", "key": "the field", "subs": ["knowing when to stop", "redirecting wasted effort", "learning from the empty yield"]}
   ],
   "pents08": [
-    {"lead": "ut", "key": "culpa", "subs": ["id est", "nisi aliquip", "commodo consequat duis aute", "quis nostrud exercitation ullamco", "tempor incididunt ut labore", "sunt culpa"]},
-    {"lead": "adipiscing", "key": "velit", "subs": ["duis aute irure in", "pariatur excepteur", "cillum eu fugiat nulla pariatur", "duis aute irure in reprehenderit", "culpa qui officia deserunt mollit", "duis aute irure in reprehenderit", "ipsum dolor sit amet consectetur"]},
-    {"lead": "id", "key": "irure", "subs": ["qui officia deserunt mollit anim", "id est laborum", "nostrud exercitation ullamco", "sunt culpa"]}
+    {"lead": "", "key": "prudence", "subs": ["careful, patient work", "skill honed by repetition", "diligence as a virtue", "attention to the small"]},
+    {"lead": "", "key": "diligence", "subs": ["the craft practiced daily", "virgo's precise hand", "mastery built coin by coin"]},
+    {"lead": "tending", "key": "the detail", "subs": ["the long apprenticeship", "quality over haste", "earth rewarding patience"]}
   ],
   "pents09": [
-    {"lead": "deserunt", "key": "quis", "subs": ["minim veniam quis nostrud exercitation", "reprehenderit voluptate velit esse", "ad minim veniam", "sit amet consectetur adipiscing elit sed"]},
-    {"lead": "ex", "key": "proident", "subs": ["enim ad minim veniam quis nostrud", "sit amet", "ad minim veniam quis nostrud", "voluptate velit esse cillum"]},
-    {"lead": "sit", "key": "non", "subs": ["reprehenderit voluptate velit esse", "esse cillum eu fugiat nulla pariatur", "fugiat nulla pariatur", "velit esse", "esse cillum eu fugiat", "dolore magna aliqua enim ad minim"]},
-    {"lead": "est", "key": "do", "subs": ["incididunt ut", "ipsum dolor sit", "consequat duis aute", "dolore magna aliqua enim ad minim", "eu fugiat nulla pariatur excepteur sint"]}
+    {"lead": "", "key": "gain", "subs": ["matter bearing real fruit", "reward refined and earned", "plenty enjoyed with grace", "the garden in full coin"]},
+    {"lead": "", "key": "self-sufficiency", "subs": ["enough by your own hand", "independence in the material", "venusian comfort earned"]},
+    {"lead": "savoring", "key": "the harvest", "subs": ["pleasure in what you built", "abundance held with ease", "the discipline that paid"]}
   ],
   "pents10": [
-    {"lead": "laboris", "key": "tempor", "subs": ["cillum eu fugiat nulla pariatur", "adipiscing elit sed do eiusmod tempor", "voluptate velit", "id est", "aliqua enim", "laboris nisi aliquip ex", "anim id"]},
-    {"lead": "aliquip", "key": "voluptate", "subs": ["exercitation ullamco laboris nisi", "fugiat nulla pariatur excepteur sint", "minim veniam quis", "esse cillum eu fugiat", "nisi aliquip ex ea", "occaecat cupidatat non"]},
-    {"lead": "laboris", "key": "sed", "subs": ["commodo consequat", "consectetur adipiscing", "cupidatat non proident sunt", "et dolore magna aliqua", "sed do eiusmod"]},
-    {"lead": "consequat", "key": "nulla", "subs": ["sint occaecat cupidatat non", "nostrud exercitation ullamco", "reprehenderit voluptate velit", "in reprehenderit voluptate", "proident sunt culpa qui", "deserunt mollit anim id"]}
+    {"lead": "", "key": "wealth", "subs": ["matter at its fullest", "the great work made gold", "legacy and inheritance", "abundance settled into roots"]},
+    {"lead": "", "key": "legacy", "subs": ["what outlasts you", "the family wealth secured", "value passed down"]},
+    {"lead": "completing", "key": "the cycle", "subs": ["the material work finished", "wealth as a foundation, not end", "earth fully realized"]}
   ],
   "pents11": [
-    {"lead": "officia", "key": "id", "subs": ["sed do eiusmod", "nisi aliquip ex ea commodo", "ut labore et dolore magna aliqua", "veniam quis nostrud"]},
-    {"lead": "ad", "key": "nisi", "subs": ["nostrud exercitation ullamco", "nulla pariatur excepteur sint", "ex ea commodo consequat duis aute", "ad minim veniam quis", "dolore magna aliqua"]}
+    {"lead": "", "key": "earth of earth", "subs": ["matter at its most solid", "the womb of the material", "pregnant with the new", "value about to be born"]},
+    {"lead": "grounding", "key": "the seed", "subs": ["the new growth in soil", "potential taking root", "the practical first step"]},
+    {"lead": "", "key": "fertility", "subs": ["the earth ready to bear", "abundance gestating", "substance becoming life"]},
+    {"lead": "tending", "key": "the real", "subs": ["patient care of the material", "the body honored", "earth as sacred ground"]}
   ],
   "pents12": [
-    {"lead": "laboris", "key": "minim", "subs": ["ipsum dolor sit amet", "duis aute irure in", "sint occaecat cupidatat non", "qui officia deserunt mollit", "adipiscing elit sed do eiusmod"]},
-    {"lead": "magna", "key": "fugiat", "subs": ["dolore magna aliqua", "pariatur excepteur sint occaecat", "velit esse cillum", "aliqua enim", "ipsum dolor sit amet"]},
-    {"lead": "ut", "key": "cillum", "subs": ["consequat duis", "velit esse cillum eu", "enim ad minim veniam quis", "sed do eiusmod tempor", "deserunt mollit anim id est laborum", "deserunt mollit anim id", "esse cillum eu fugiat nulla"]},
-    {"lead": "commodo", "key": "reprehenderit", "subs": ["eiusmod tempor", "duis aute irure", "qui officia deserunt mollit anim id", "velit esse", "quis nostrud exercitation ullamco"]}
+    {"lead": "", "key": "industry", "subs": ["thought applied to the land", "steady, productive labor", "the engineer of matter", "plans that build real things"]},
+    {"lead": "working", "key": "the ground", "subs": ["method meeting soil", "the chariot over the field", "reliability as a power"]},
+    {"lead": "", "key": "competence", "subs": ["the mind that gets it done", "practical intelligence", "slow sure progress"]},
+    {"lead": "planning", "key": "the harvest", "subs": ["foresight in the material", "cultivating what pays off", "the long, grounded view"]}
   ],
   "pents13": [
-    {"lead": "mollit", "key": "sint", "subs": ["cillum eu fugiat", "amet consectetur adipiscing", "culpa qui officia", "consequat duis aute irure in", "enim ad minim", "commodo consequat duis", "laboris nisi"]},
-    {"lead": "anim", "key": "proident", "subs": ["excepteur sint", "irure in reprehenderit voluptate velit", "lorem ipsum dolor sit amet", "occaecat cupidatat non proident", "consectetur adipiscing", "eu fugiat nulla pariatur", "magna aliqua"]}
+    {"lead": "", "key": "fertile care", "subs": ["feeling poured into the land", "nurturing what grows", "the mother of the harvest", "matter loved into fullness"]},
+    {"lead": "tending", "key": "the garden", "subs": ["patient, sensual care", "the oasis she creates", "abundance through devotion"]},
+    {"lead": "", "key": "groundedness", "subs": ["calm rooted in the earth", "the body as a home", "quiet material wisdom"]},
+    {"lead": "providing", "key": "warmth", "subs": ["comfort that nourishes", "the hearth kept burning", "care made tangible"]}
   ],
   "pents14": [
-    {"lead": "cillum", "key": "amet", "subs": ["adipiscing elit sed do eiusmod", "minim veniam quis", "minim veniam quis nostrud exercitation", "non proident"]},
-    {"lead": "reprehenderit", "key": "ullamco", "subs": ["sunt culpa qui", "commodo consequat duis aute", "quis nostrud", "voluptate velit esse"]}
+    {"lead": "", "key": "steady force", "subs": ["fire harnessed to labor", "slow, relentless work", "the worker of the land", "power applied with patience"]},
+    {"lead": "plowing", "key": "ahead", "subs": ["the long task seen through", "endurance over flash", "the harvest earned by toil"]},
+    {"lead": "", "key": "reliability", "subs": ["the one who finishes", "strength that doesn't quit", "earth's patient fire"]},
+    {"lead": "carrying", "key": "the load", "subs": ["duty shouldered fully", "the unglamorous essential work", "force that builds slowly"]}
   ]
 };

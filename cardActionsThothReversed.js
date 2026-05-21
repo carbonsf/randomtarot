@@ -1,473 +1,473 @@
-// PLACEHOLDER lorem-ipsum data for the Thoth deck (reversed).
-// Same structure as cardActionsReversed.js (Weakened /
-// Inverted / Negative / Delayed). Real meanings later.
+// Real Thoth-deck meanings (reversed). Four angles —
+// Weakened / Inverted / Negative / Delayed — authored from the
+// Thoth consensus with Jungian shadow framings in the subs.
 const CARD_ACTIONS_REVERSED_THOTH = {
   "maj00": [
-    {"lead": "Weakened", "key": "nisi", "subs": ["commodo consequat duis", "aliquip ex", "consequat duis aute irure in", "dolore magna aliqua enim ad", "ea commodo"]},
-    {"lead": "Inverted", "key": "nulla", "subs": ["qui officia deserunt", "labore et dolore magna aliqua enim", "velit esse cillum eu", "ex ea commodo", "enim ad minim veniam", "nostrud exercitation"]},
-    {"lead": "Negative", "key": "culpa", "subs": ["aliqua enim ad minim veniam quis", "in reprehenderit voluptate velit esse", "ullamco laboris nisi aliquip ex ea", "cillum eu fugiat nulla", "officia deserunt mollit"]},
-    {"lead": "Delayed", "key": "et", "subs": ["fugiat nulla pariatur excepteur sint", "culpa qui officia deserunt", "excepteur sint occaecat", "dolor sit amet consectetur adipiscing", "ea commodo consequat", "eu fugiat"]}
+    {"lead": "Weakened", "key": "innocence", "subs": ["the leap that won't quite launch", "wonder dimmed by caution", "spirit afraid to incarnate", "the green man standing still"]},
+    {"lead": "Inverted", "key": "spontaneity", "subs": ["calculation where there was abandon", "the careful step over the leap", "weight where there was lightness", "planning the journey away"]},
+    {"lead": "Negative", "key": "folly", "subs": ["recklessness in courage's mask", "leaping for the rush alone", "mistaking chaos for freedom", "the cliff edge ignored"]},
+    {"lead": "Delayed", "key": "beginning", "subs": ["still poised at the edge", "spirit gathering to descend", "the yes not yet spoken", "potential held a moment longer"]}
   ],
   "maj01": [
-    {"lead": "Weakened", "key": "tempor", "subs": ["amet consectetur", "laboris nisi aliquip", "ea commodo consequat duis aute irure", "consequat duis aute irure in"]},
-    {"lead": "Inverted", "key": "eu", "subs": ["sed do eiusmod tempor incididunt", "aliquip ex", "sed do eiusmod tempor incididunt ut", "in reprehenderit voluptate velit esse"]},
-    {"lead": "Negative", "key": "incididunt", "subs": ["lorem ipsum dolor", "veniam quis nostrud exercitation", "ut labore et dolore magna aliqua", "sed do eiusmod tempor incididunt ut"]},
-    {"lead": "Delayed", "key": "ad", "subs": ["nulla pariatur excepteur", "magna aliqua enim ad", "nostrud exercitation ullamco laboris", "ut labore et dolore magna", "lorem ipsum"]}
+    {"lead": "Weakened", "key": "will", "subs": ["skill that won't quite catch", "the word without the spark", "tools that won't align", "power with no traction"]},
+    {"lead": "Inverted", "key": "the word", "subs": ["speech to deceive, not reveal", "the trickster turned con", "sleight where there was craft", "all sleeve, no card"]},
+    {"lead": "Negative", "key": "skill", "subs": ["manipulating with the gift", "tricking yourself it's done", "performance over practice", "mercury gone slippery"]},
+    {"lead": "Delayed", "key": "manifestation", "subs": ["the act before the doing", "skill not yet summoned", "the word still forming", "magic waking slowly"]}
   ],
   "maj02": [
-    {"lead": "Weakened", "key": "nulla", "subs": ["exercitation ullamco laboris nisi", "dolore magna aliqua", "incididunt ut", "veniam quis nostrud exercitation ullamco"]},
-    {"lead": "Inverted", "key": "aliqua", "subs": ["ea commodo consequat duis aute", "enim ad minim veniam quis nostrud", "ea commodo consequat duis aute irure", "ea commodo consequat duis", "lorem ipsum dolor sit amet", "occaecat cupidatat non proident sunt"]},
-    {"lead": "Negative", "key": "qui", "subs": ["exercitation ullamco", "fugiat nulla pariatur", "aliqua enim ad minim veniam quis", "enim ad", "consequat duis aute irure in", "lorem ipsum"]},
-    {"lead": "Delayed", "key": "commodo", "subs": ["magna aliqua enim ad", "magna aliqua enim ad minim", "aliqua enim ad", "nostrud exercitation ullamco laboris", "ullamco laboris nisi aliquip ex"]}
+    {"lead": "Weakened", "key": "intuition", "subs": ["the inner voice gone faint", "knowing dulled by proof-seeking", "the lunar tide at ebb", "stillness disturbed too soon"]},
+    {"lead": "Inverted", "key": "mystery", "subs": ["secrets that leak too early", "depth flattened to surface", "intuition mistrusted to noise", "the veil torn carelessly"]},
+    {"lead": "Negative", "key": "knowing", "subs": ["performing a wisdom you lack", "hiding from what you sense", "mystery used to manipulate", "silence as a weapon"]},
+    {"lead": "Delayed", "key": "revelation", "subs": ["the answer still forming", "the voice not yet returned", "patience the only door", "truth on slow approach"]}
   ],
   "maj03": [
-    {"lead": "Weakened", "key": "nisi", "subs": ["irure in reprehenderit", "elit sed do", "incididunt ut labore et", "minim veniam quis nostrud exercitation", "culpa qui officia deserunt"]},
-    {"lead": "Inverted", "key": "ea", "subs": ["ipsum dolor sit amet consectetur", "aliqua enim ad", "ullamco laboris nisi", "et dolore", "aute irure in"]},
-    {"lead": "Negative", "key": "fugiat", "subs": ["id est", "aute irure in reprehenderit", "nostrud exercitation ullamco", "laboris nisi aliquip ex ea"]},
-    {"lead": "Delayed", "key": "occaecat", "subs": ["non proident sunt culpa qui officia", "nostrud exercitation ullamco laboris", "qui officia deserunt mollit anim", "id est", "consequat duis aute irure"]}
+    {"lead": "Weakened", "key": "abundance", "subs": ["fullness that won't spill", "the giver run dry", "earth tired this season", "creativity blocked at the root"]},
+    {"lead": "Inverted", "key": "nurture", "subs": ["smothering dressed as care", "love that wants itself back", "fertility gone to overgrowth", "beauty turned to vanity"]},
+    {"lead": "Negative", "key": "comfort", "subs": ["hiding in luxury", "over-mothering the work", "abundance as anesthetic", "appetite mistaken for love"]},
+    {"lead": "Delayed", "key": "bloom", "subs": ["the gestation still gestating", "soil still warming", "fullness on its way", "nature taking its time"]}
   ],
   "maj04": [
-    {"lead": "Weakened", "key": "commodo", "subs": ["ullamco laboris nisi aliquip ex ea", "pariatur excepteur sint", "incididunt ut labore et dolore magna", "culpa qui officia deserunt mollit anim", "lorem ipsum dolor sit amet consectetur", "dolor sit amet consectetur adipiscing"]},
-    {"lead": "Inverted", "key": "ut", "subs": ["aute irure in", "ex ea commodo consequat duis aute", "magna aliqua enim ad minim", "proident sunt culpa qui", "adipiscing elit sed"]},
-    {"lead": "Negative", "key": "quis", "subs": ["reprehenderit voluptate velit", "nostrud exercitation ullamco laboris", "aliqua enim ad minim", "commodo consequat duis", "ipsum dolor sit amet consectetur", "ad minim veniam quis nostrud"]},
-    {"lead": "Delayed", "key": "sint", "subs": ["do eiusmod", "excepteur sint occaecat cupidatat non", "eiusmod tempor incididunt ut labore et", "occaecat cupidatat non proident sunt", "minim veniam quis nostrud exercitation"]}
+    {"lead": "Weakened", "key": "authority", "subs": ["command with no room behind it", "structure losing its corners", "stability you can't stand on", "rule grown brittle"]},
+    {"lead": "Inverted", "key": "structure", "subs": ["control hardened to rigidity", "law without mercy", "order calcified to stuckness", "the father as tyrant"]},
+    {"lead": "Negative", "key": "control", "subs": ["tyranny dressed as protection", "authority unearned", "squeezing what should breathe", "force where guidance was due"]},
+    {"lead": "Delayed", "key": "sovereignty", "subs": ["the throne still being built", "authority still arriving", "structure mid-construction", "a realm not yet recognized"]}
   ],
   "maj05": [
-    {"lead": "Weakened", "key": "tempor", "subs": ["minim veniam", "mollit anim id", "velit esse", "elit sed do eiusmod", "sint occaecat cupidatat", "quis nostrud exercitation ullamco"]},
-    {"lead": "Inverted", "key": "minim", "subs": ["duis aute", "laboris nisi aliquip ex", "consequat duis aute irure in", "consequat duis aute irure"]},
-    {"lead": "Negative", "key": "sunt", "subs": ["cillum eu fugiat nulla pariatur", "elit sed do", "officia deserunt mollit anim", "non proident sunt", "nulla pariatur excepteur"]},
-    {"lead": "Delayed", "key": "mollit", "subs": ["exercitation ullamco laboris", "labore et dolore", "ipsum dolor", "tempor incididunt ut labore", "non proident sunt culpa", "sed do eiusmod tempor"]}
+    {"lead": "Weakened", "key": "teaching", "subs": ["rites that no longer reach", "wisdom mouthed without meaning", "the lineage frayed", "form without the spirit"]},
+    {"lead": "Inverted", "key": "tradition", "subs": ["dogma where there was insight", "instruction that won't listen", "convention strangling meaning", "the bridge gone one-way"]},
+    {"lead": "Negative", "key": "orthodoxy", "subs": ["hiding inside the rules", "tradition used to shame", "belonging only by belief", "the wise old man as gatekeeper"]},
+    {"lead": "Delayed", "key": "initiation", "subs": ["the rite still ahead", "the teacher not yet here", "the door before the door", "belonging still unfolding"]}
   ],
   "maj06": [
-    {"lead": "Weakened", "key": "tempor", "subs": ["deserunt mollit anim id est", "culpa qui officia deserunt", "id est laborum", "cupidatat non proident sunt"]},
-    {"lead": "Inverted", "key": "ipsum", "subs": ["consectetur adipiscing elit", "lorem ipsum dolor sit amet", "mollit anim id est", "consectetur adipiscing elit sed do"]},
-    {"lead": "Negative", "key": "aliquip", "subs": ["et dolore magna aliqua enim ad", "in reprehenderit voluptate velit", "incididunt ut labore", "occaecat cupidatat non proident", "sint occaecat cupidatat non proident", "cillum eu fugiat"]},
-    {"lead": "Delayed", "key": "cupidatat", "subs": ["minim veniam quis nostrud", "sed do", "labore et dolore magna", "culpa qui officia deserunt mollit anim", "aute irure", "sit amet consectetur"]}
+    {"lead": "Weakened", "key": "union", "subs": ["the bond losing its current", "one yes still missing", "alignment off a degree", "the marriage half-made"]},
+    {"lead": "Inverted", "key": "choice", "subs": ["deciding without conviction", "union as avoidance", "values negotiated to nothing", "opposites that won't meet"]},
+    {"lead": "Negative", "key": "attraction", "subs": ["drawn to what undoes you", "love as escape from self", "commitment by compulsion", "the easier wrong chosen"]},
+    {"lead": "Delayed", "key": "union", "subs": ["the meeting deferred", "hearts on slow approach", "the vow still ripening", "the child not yet conceived"]}
   ],
   "maj07": [
-    {"lead": "Weakened", "key": "nisi", "subs": ["ut labore et dolore magna aliqua", "pariatur excepteur sint occaecat", "commodo consequat duis", "qui officia deserunt", "pariatur excepteur", "labore et dolore magna aliqua"]},
-    {"lead": "Inverted", "key": "magna", "subs": ["consequat duis aute irure in", "dolor sit amet", "in reprehenderit voluptate", "non proident sunt", "esse cillum eu"]},
-    {"lead": "Negative", "key": "proident", "subs": ["ex ea commodo consequat", "ex ea commodo consequat", "excepteur sint occaecat cupidatat", "non proident"]},
-    {"lead": "Delayed", "key": "duis", "subs": ["occaecat cupidatat non", "occaecat cupidatat non", "nisi aliquip ex ea commodo consequat", "sint occaecat cupidatat", "culpa qui officia"]}
+    {"lead": "Weakened", "key": "triumph", "subs": ["drive without traction", "the reins gone slack", "momentum stalling at the gate", "the team pulling apart"]},
+    {"lead": "Inverted", "key": "control", "subs": ["motion in circles", "victory aimed wrong", "steering given to the loudest", "the grail set down mid-race"]},
+    {"lead": "Negative", "key": "drive", "subs": ["force mistaken for progress", "steamrolling your own team", "pushing past every stop sign", "momentum as identity"]},
+    {"lead": "Delayed", "key": "arrival", "subs": ["the journey longer than the map", "the finish line receding", "victory not yet at hand", "the road still ahead"]}
   ],
   "maj08": [
-    {"lead": "Weakened", "key": "duis", "subs": ["minim veniam quis nostrud exercitation", "sint occaecat cupidatat non proident", "in reprehenderit", "laboris nisi aliquip ex ea commodo"]},
-    {"lead": "Inverted", "key": "consequat", "subs": ["commodo consequat duis aute irure in", "enim ad minim veniam quis nostrud", "eu fugiat nulla pariatur excepteur sint", "exercitation ullamco laboris nisi", "anim id est laborum", "nulla pariatur"]},
-    {"lead": "Negative", "key": "minim", "subs": ["est laborum", "minim veniam quis nostrud", "ad minim veniam", "voluptate velit esse cillum", "nostrud exercitation ullamco laboris", "eu fugiat nulla"]},
-    {"lead": "Delayed", "key": "fugiat", "subs": ["ea commodo", "lorem ipsum dolor sit", "occaecat cupidatat non proident", "ipsum dolor sit amet consectetur", "labore et dolore magna aliqua enim"]}
+    {"lead": "Weakened", "key": "balance", "subs": ["the scales trembling", "equilibrium hard to find", "truth blurred by wish", "the dancer losing her poise"]},
+    {"lead": "Inverted", "key": "justice", "subs": ["fairness bent to favor", "the verdict before the weighing", "bias dressed as law", "the feather thumbed"]},
+    {"lead": "Negative", "key": "truth", "subs": ["weighing with a crooked scale", "excusing your own debt", "blame outrunning fact", "maat's gaze averted"]},
+    {"lead": "Delayed", "key": "equilibrium", "subs": ["the correction still pending", "the account not yet settled", "balance on slow approach", "the verdict withheld"]}
   ],
   "maj09": [
-    {"lead": "Weakened", "key": "voluptate", "subs": ["dolor sit amet consectetur adipiscing", "deserunt mollit anim", "sit amet consectetur adipiscing elit sed", "excepteur sint occaecat cupidatat non", "esse cillum eu fugiat nulla pariatur"]},
-    {"lead": "Inverted", "key": "adipiscing", "subs": ["nostrud exercitation", "reprehenderit voluptate velit", "tempor incididunt", "eu fugiat nulla pariatur excepteur", "officia deserunt mollit anim id est", "consequat duis aute"]},
-    {"lead": "Negative", "key": "dolor", "subs": ["et dolore magna aliqua enim ad", "ea commodo consequat duis", "aute irure", "mollit anim id est", "eu fugiat nulla", "amet consectetur adipiscing elit"]},
-    {"lead": "Delayed", "key": "qui", "subs": ["cupidatat non", "sint occaecat cupidatat non proident", "eiusmod tempor incididunt ut", "cillum eu fugiat nulla pariatur", "aliquip ex ea commodo consequat duis", "aliqua enim ad minim veniam"]}
+    {"lead": "Weakened", "key": "wisdom", "subs": ["insight you can't quite reach", "the lantern dim in the cave", "solitude curdling to isolation", "guidance audible but vague"]},
+    {"lead": "Inverted", "key": "introspection", "subs": ["hiding instead of seeking", "withdrawal that calcifies", "examining without conclusion", "the inward gaze gone obsessive"]},
+    {"lead": "Negative", "key": "isolation", "subs": ["cutting off, calling it depth", "solitude as avoidance", "hoarding insight you won't share", "loneliness misnamed wisdom"]},
+    {"lead": "Delayed", "key": "insight", "subs": ["the lesson still gathering", "the chamber not yet entered", "wisdom on long approach", "the mountain still being climbed"]}
   ],
   "maj10": [
-    {"lead": "Weakened", "key": "nulla", "subs": ["deserunt mollit anim id", "quis nostrud exercitation", "dolor sit amet", "commodo consequat", "culpa qui", "cillum eu fugiat nulla pariatur"]},
-    {"lead": "Inverted", "key": "id", "subs": ["in reprehenderit voluptate velit esse", "adipiscing elit sed do", "ex ea commodo consequat duis", "veniam quis nostrud exercitation ullamco", "duis aute irure in reprehenderit"]},
-    {"lead": "Negative", "key": "ad", "subs": ["excepteur sint occaecat cupidatat non", "ad minim veniam quis nostrud", "ullamco laboris nisi aliquip ex", "ullamco laboris nisi aliquip ex ea", "cillum eu"]},
-    {"lead": "Delayed", "key": "fugiat", "subs": ["consectetur adipiscing elit", "pariatur excepteur sint occaecat", "quis nostrud exercitation ullamco", "culpa qui officia deserunt", "cillum eu"]}
+    {"lead": "Weakened", "key": "fortune", "subs": ["the turn that won't quite turn", "luck on a delay", "change muffled at the apex", "momentum stalled"]},
+    {"lead": "Inverted", "key": "cycle", "subs": ["the same season again", "progress that loops", "fate misread as choice", "change cosmetic only"]},
+    {"lead": "Negative", "key": "fate", "subs": ["blaming the wheel you steer", "waiting instead of acting", "surrender that's resignation", "superstition over agency"]},
+    {"lead": "Delayed", "key": "turn", "subs": ["the wheel paused at the worst notch", "the shift still ahead", "fortune slow this round", "the turning point not here"]}
   ],
   "maj11": [
-    {"lead": "Weakened", "key": "ut", "subs": ["ex ea commodo", "veniam quis", "non proident sunt", "mollit anim", "dolor sit amet consectetur adipiscing"]},
-    {"lead": "Inverted", "key": "do", "subs": ["incididunt ut labore et dolore magna", "tempor incididunt ut labore et", "ea commodo", "nulla pariatur excepteur sint occaecat", "magna aliqua enim ad minim veniam", "aute irure"]},
-    {"lead": "Negative", "key": "quis", "subs": ["cillum eu fugiat nulla pariatur", "exercitation ullamco laboris nisi", "ipsum dolor sit amet", "ullamco laboris nisi aliquip ex ea", "dolore magna aliqua", "proident sunt"]},
-    {"lead": "Delayed", "key": "fugiat", "subs": ["fugiat nulla", "dolore magna", "anim id", "ex ea"]}
+    {"lead": "Weakened", "key": "vitality", "subs": ["the fire turned to embers", "appetite gone listless", "the beast barely ridden", "joy drained from strength"]},
+    {"lead": "Inverted", "key": "passion", "subs": ["lust gone compulsive", "desire that consumes the self", "ecstasy turned to craving", "the rider thrown"]},
+    {"lead": "Negative", "key": "appetite", "subs": ["indulgence without joy", "using the beast on the weak", "passion as domination", "strength flaunted, not felt"]},
+    {"lead": "Delayed", "key": "ecstasy", "subs": ["the fire still kindling", "union not yet dared", "passion held in reserve", "the lion still being learned"]}
   ],
   "maj12": [
-    {"lead": "Weakened", "key": "pariatur", "subs": ["eiusmod tempor incididunt ut", "nulla pariatur", "eiusmod tempor incididunt", "eu fugiat", "ullamco laboris nisi aliquip"]},
-    {"lead": "Inverted", "key": "sunt", "subs": ["excepteur sint occaecat cupidatat non", "consectetur adipiscing elit", "officia deserunt mollit anim", "exercitation ullamco laboris", "reprehenderit voluptate velit esse", "voluptate velit"]},
-    {"lead": "Negative", "key": "aute", "subs": ["dolore magna", "culpa qui officia deserunt", "lorem ipsum dolor sit amet consectetur", "do eiusmod tempor incididunt ut", "duis aute irure in", "amet consectetur"]},
-    {"lead": "Delayed", "key": "duis", "subs": ["non proident sunt", "voluptate velit", "veniam quis nostrud exercitation", "do eiusmod tempor incididunt", "in reprehenderit voluptate"]}
+    {"lead": "Weakened", "key": "surrender", "subs": ["letting go that won't release", "the sacrifice half-offered", "suspension that just aches", "release stalled mid-air"]},
+    {"lead": "Inverted", "key": "perspective", "subs": ["clinging to the old view", "martyrdom for show", "losing with no gain", "the pause turned to paralysis"]},
+    {"lead": "Negative", "key": "sacrifice", "subs": ["suffering for its own sake", "playing the victim role", "stalling, calling it surrender", "the cross taken on for pity"]},
+    {"lead": "Delayed", "key": "rebirth", "subs": ["stillness before the turn", "suspended, not yet freed", "the long pause still holding", "the new sight not yet arrived"]}
   ],
   "maj13": [
-    {"lead": "Weakened", "key": "ea", "subs": ["do eiusmod tempor", "in reprehenderit voluptate", "consectetur adipiscing elit", "magna aliqua enim ad", "magna aliqua enim ad minim veniam"]},
-    {"lead": "Inverted", "key": "ex", "subs": ["lorem ipsum dolor", "duis aute", "magna aliqua", "et dolore magna aliqua enim ad"]},
-    {"lead": "Negative", "key": "aliqua", "subs": ["pariatur excepteur", "cillum eu fugiat nulla pariatur", "incididunt ut", "velit esse cillum eu", "excepteur sint occaecat cupidatat non", "qui officia"]},
-    {"lead": "Delayed", "key": "laboris", "subs": ["nulla pariatur excepteur sint occaecat", "qui officia deserunt mollit anim id", "voluptate velit", "cupidatat non", "aliqua enim ad minim veniam quis", "amet consectetur adipiscing"]}
+    {"lead": "Weakened", "key": "transformation", "subs": ["the old form clinging on", "change stalled in decay", "the scythe gone dull", "endings that won't end"]},
+    {"lead": "Inverted", "key": "change", "subs": ["fearing the necessary death", "resisting the dissolution", "stasis dressed as survival", "holding the husk shut"]},
+    {"lead": "Negative", "key": "decay", "subs": ["rot with no rebirth", "wallowing in the ending", "clinging to what's finished", "the nigredo refused"]},
+    {"lead": "Delayed", "key": "rebirth", "subs": ["the passage still underway", "the new form gestating", "change you can't yet see", "release on slow approach"]}
   ],
   "maj14": [
-    {"lead": "Weakened", "key": "duis", "subs": ["sint occaecat cupidatat", "tempor incididunt ut", "sit amet", "cupidatat non", "dolore magna aliqua enim", "adipiscing elit sed do eiusmod tempor"]},
-    {"lead": "Inverted", "key": "ex", "subs": ["nostrud exercitation ullamco laboris", "labore et dolore", "adipiscing elit sed do eiusmod", "excepteur sint occaecat cupidatat non", "dolor sit amet"]},
-    {"lead": "Negative", "key": "tempor", "subs": ["labore et", "eu fugiat nulla", "tempor incididunt ut", "enim ad minim veniam", "ipsum dolor sit", "eiusmod tempor incididunt ut"]},
-    {"lead": "Delayed", "key": "magna", "subs": ["cupidatat non proident", "non proident", "anim id est", "culpa qui officia deserunt", "sed do eiusmod tempor incididunt", "sit amet consectetur adipiscing elit"]}
+    {"lead": "Weakened", "key": "synthesis", "subs": ["the blend that won't combine", "fire and water still apart", "the brew gone tepid", "balance hard to hold"]},
+    {"lead": "Inverted", "key": "temperance", "subs": ["extremes pulling back apart", "the middle way abandoned", "mixing without transmuting", "contraries left at war"]},
+    {"lead": "Negative", "key": "excess", "subs": ["overdoing one element", "forcing the fusion", "impatience spoiling the work", "the cauldron rushed"]},
+    {"lead": "Delayed", "key": "the great work", "subs": ["the cooking still slow", "gold not yet from lead", "the rainbow not yet arched", "integration still forming"]}
   ],
   "maj15": [
-    {"lead": "Weakened", "key": "duis", "subs": ["eu fugiat nulla pariatur", "sed do", "nostrud exercitation ullamco laboris", "sint occaecat cupidatat non proident", "esse cillum", "qui officia deserunt mollit anim"]},
-    {"lead": "Inverted", "key": "non", "subs": ["consequat duis aute irure in", "aliquip ex ea commodo consequat duis", "ut labore et dolore", "nulla pariatur excepteur sint occaecat", "amet consectetur adipiscing elit sed do"]},
-    {"lead": "Negative", "key": "laborum", "subs": ["veniam quis nostrud exercitation ullamco", "mollit anim id est", "sint occaecat cupidatat non proident", "consequat duis aute"]},
-    {"lead": "Delayed", "key": "velit", "subs": ["pariatur excepteur sint occaecat", "sunt culpa qui officia", "mollit anim id est laborum", "culpa qui officia deserunt mollit anim", "aliqua enim ad minim veniam quis", "labore et dolore"]}
+    {"lead": "Weakened", "key": "bondage", "subs": ["the chains felt but unbroken", "appetite losing its joy", "matter's grip loosening slowly", "the goat gone quiet"]},
+    {"lead": "Inverted", "key": "matter", "subs": ["shame where there was mirth", "instinct denied, not owned", "the body distrusted", "ecstasy turned to compulsion"]},
+    {"lead": "Negative", "key": "attachment", "subs": ["feeding the addiction", "mistaking the chain for the self", "the shadow projected outward", "desire running the house"]},
+    {"lead": "Delayed", "key": "liberation", "subs": ["the chain ready to drop", "the shadow nearly faced", "release still pending", "the mask not yet removed"]}
   ],
   "maj16": [
-    {"lead": "Weakened", "key": "excepteur", "subs": ["adipiscing elit sed do eiusmod", "minim veniam quis", "velit esse cillum eu", "fugiat nulla pariatur excepteur sint", "ipsum dolor sit amet"]},
-    {"lead": "Inverted", "key": "cupidatat", "subs": ["eu fugiat nulla pariatur excepteur", "occaecat cupidatat non", "deserunt mollit anim id est laborum", "ex ea commodo", "enim ad minim", "eiusmod tempor incididunt ut labore et"]},
-    {"lead": "Negative", "key": "elit", "subs": ["non proident", "eu fugiat nulla pariatur excepteur sint", "commodo consequat duis aute irure in", "dolore magna"]},
-    {"lead": "Delayed", "key": "aliquip", "subs": ["sit amet", "consectetur adipiscing elit sed do", "eu fugiat nulla", "amet consectetur adipiscing elit sed", "consectetur adipiscing elit sed do", "ea commodo consequat duis aute irure"]}
+    {"lead": "Weakened", "key": "upheaval", "subs": ["the crack not yet collapse", "the shock absorbed too well", "the false propped up again", "lightning that didn't strike clean"]},
+    {"lead": "Inverted", "key": "revelation", "subs": ["clinging to the falling tower", "denial of the obvious", "rebuilding the same prison", "truth refused at the door"]},
+    {"lead": "Negative", "key": "collapse", "subs": ["self-sabotage as catastrophe", "tearing down out of spite", "disaster courted", "the fall made worse by grasping"]},
+    {"lead": "Delayed", "key": "breakthrough", "subs": ["the lightning still gathering", "the false safety still standing", "the necessary fall delayed", "release postponed"]}
   ],
   "maj17": [
-    {"lead": "Weakened", "key": "nulla", "subs": ["aliqua enim ad minim", "ad minim veniam quis nostrud", "dolor sit amet", "duis aute irure in", "non proident sunt", "qui officia deserunt mollit anim id"]},
-    {"lead": "Inverted", "key": "eiusmod", "subs": ["elit sed", "nulla pariatur", "in reprehenderit voluptate velit", "mollit anim id est"]},
-    {"lead": "Negative", "key": "pariatur", "subs": ["aute irure in reprehenderit voluptate", "dolore magna", "occaecat cupidatat non proident sunt", "cupidatat non proident sunt culpa qui", "veniam quis nostrud exercitation", "dolore magna aliqua enim ad"]},
-    {"lead": "Delayed", "key": "culpa", "subs": ["occaecat cupidatat non proident", "deserunt mollit anim id", "veniam quis", "ut labore et dolore", "velit esse cillum", "enim ad"]}
+    {"lead": "Weakened", "key": "hope", "subs": ["the light gone faint", "faith hard to summon", "the pour run thin", "calm just out of reach"]},
+    {"lead": "Inverted", "key": "guidance", "subs": ["the star mistrusted", "hope curdled to wishful thinking", "the source doubted", "despair where faith was"]},
+    {"lead": "Negative", "key": "despair", "subs": ["giving up the calm", "cynicism as armor", "the water withheld from earth", "the anima abandoned"]},
+    {"lead": "Delayed", "key": "renewal", "subs": ["healing on slow approach", "the water not yet poured", "trust still rebuilding", "the star behind cloud"]}
   ],
   "maj18": [
-    {"lead": "Weakened", "key": "labore", "subs": ["minim veniam", "consectetur adipiscing elit sed", "veniam quis", "irure in", "sit amet consectetur adipiscing elit"]},
-    {"lead": "Inverted", "key": "culpa", "subs": ["eiusmod tempor incididunt ut labore et", "duis aute irure in reprehenderit", "et dolore magna aliqua enim", "mollit anim id est", "lorem ipsum dolor sit amet consectetur", "exercitation ullamco laboris nisi"]},
-    {"lead": "Negative", "key": "lorem", "subs": ["reprehenderit voluptate velit", "ex ea commodo", "et dolore magna aliqua enim", "qui officia deserunt", "exercitation ullamco laboris nisi", "eiusmod tempor incididunt"]},
-    {"lead": "Delayed", "key": "ullamco", "subs": ["mollit anim", "esse cillum", "enim ad", "deserunt mollit anim id"]}
+    {"lead": "Weakened", "key": "illusion", "subs": ["the fog lifting unevenly", "fear losing its grip slowly", "the test half-faced", "the deceptive light dimming"]},
+    {"lead": "Inverted", "key": "clarity", "subs": ["illusion mistaken for truth", "projection cast on others", "the path lost in the dark", "fear dressed as fact"]},
+    {"lead": "Negative", "key": "deception", "subs": ["deceiving yourself willingly", "feeding the fear", "the descent refused", "fantasy preferred to sight"]},
+    {"lead": "Delayed", "key": "the path", "subs": ["still mid-crossing", "the dawn not yet near", "the test still underway", "the unseen road still long"]}
   ],
   "maj19": [
-    {"lead": "Weakened", "key": "minim", "subs": ["est laborum", "cupidatat non proident sunt", "magna aliqua enim ad", "fugiat nulla pariatur excepteur"]},
-    {"lead": "Inverted", "key": "magna", "subs": ["pariatur excepteur", "commodo consequat", "aliqua enim ad minim veniam", "do eiusmod tempor incididunt", "ad minim veniam quis"]},
-    {"lead": "Negative", "key": "non", "subs": ["deserunt mollit anim id est", "non proident sunt culpa qui officia", "amet consectetur adipiscing elit sed do", "commodo consequat duis aute irure in", "sunt culpa qui officia deserunt"]},
-    {"lead": "Delayed", "key": "enim", "subs": ["velit esse", "deserunt mollit anim id est", "exercitation ullamco laboris nisi", "nulla pariatur excepteur sint occaecat"]}
+    {"lead": "Weakened", "key": "joy", "subs": ["the light behind cloud", "clarity slightly dimmed", "warmth that won't quite reach", "the child's play subdued"]},
+    {"lead": "Inverted", "key": "clarity", "subs": ["shadow creeping back in", "optimism gone naive", "the light glaring, not warming", "seeing too simply"]},
+    {"lead": "Negative", "key": "ego", "subs": ["shining to be seen", "joy that denies the dark", "clarity used to bypass", "brightness as performance"]},
+    {"lead": "Delayed", "key": "wholeness", "subs": ["the dawn still rising", "integration not complete", "the light still arriving", "the self still emerging"]}
   ],
   "maj20": [
-    {"lead": "Weakened", "key": "incididunt", "subs": ["duis aute", "exercitation ullamco laboris nisi", "culpa qui officia deserunt", "nostrud exercitation ullamco laboris"]},
-    {"lead": "Inverted", "key": "ullamco", "subs": ["duis aute irure in reprehenderit", "incididunt ut", "duis aute irure", "deserunt mollit", "elit sed do eiusmod tempor"]},
-    {"lead": "Negative", "key": "reprehenderit", "subs": ["sint occaecat cupidatat", "laboris nisi aliquip ex ea commodo", "aute irure", "ipsum dolor sit amet", "exercitation ullamco laboris nisi"]},
-    {"lead": "Delayed", "key": "lorem", "subs": ["minim veniam", "aute irure in reprehenderit voluptate", "consectetur adipiscing elit", "duis aute irure in reprehenderit"]}
+    {"lead": "Weakened", "key": "awakening", "subs": ["the call heard faintly", "rebirth stalling", "the summons half-answered", "the new age slow to come"]},
+    {"lead": "Inverted", "key": "judgment", "subs": ["clinging to the old law", "the past refusing to close", "accounting where freedom was due", "the verdict re-litigated"]},
+    {"lead": "Negative", "key": "reckoning", "subs": ["self-condemnation", "deafness to the call", "fear of the new self", "judging where you should rise"]},
+    {"lead": "Delayed", "key": "rebirth", "subs": ["the trumpet not yet sounded", "the new aeon still dawning", "the call still on its way", "awakening delayed"]}
   ],
   "maj21": [
-    {"lead": "Weakened", "key": "non", "subs": ["incididunt ut labore et", "exercitation ullamco laboris nisi", "excepteur sint occaecat", "cillum eu fugiat nulla pariatur", "mollit anim"]},
-    {"lead": "Inverted", "key": "aliquip", "subs": ["incididunt ut labore et dolore", "ullamco laboris nisi aliquip ex ea", "cillum eu", "eiusmod tempor incididunt ut", "laboris nisi", "aute irure in reprehenderit"]},
-    {"lead": "Negative", "key": "consectetur", "subs": ["veniam quis nostrud exercitation ullamco", "consectetur adipiscing", "sint occaecat cupidatat non proident", "velit esse cillum eu fugiat", "commodo consequat duis aute irure"]},
-    {"lead": "Delayed", "key": "elit", "subs": ["eu fugiat", "proident sunt", "quis nostrud exercitation ullamco", "sint occaecat cupidatat non proident"]}
+    {"lead": "Weakened", "key": "completion", "subs": ["the circle nearly closed", "the dance losing its rhythm", "wholeness just out of reach", "the work all but finished"]},
+    {"lead": "Inverted", "key": "fulfillment", "subs": ["closure refused", "clinging past the ending", "the mandala left broken", "stasis mistaken for arrival"]},
+    {"lead": "Negative", "key": "stagnation", "subs": ["resting on the finished work", "refusing the next cycle", "completion as a cage", "the dance stopped too soon"]},
+    {"lead": "Delayed", "key": "completion", "subs": ["the last step pending", "integration still weaving", "the circle not yet closed", "arrival on slow approach"]}
   ],
   "wands01": [
-    {"lead": "Weakened", "key": "ea", "subs": ["magna aliqua enim ad minim veniam", "consequat duis aute irure", "reprehenderit voluptate velit", "consectetur adipiscing", "nulla pariatur excepteur sint occaecat", "in reprehenderit voluptate velit"]},
-    {"lead": "Inverted", "key": "ipsum", "subs": ["excepteur sint occaecat", "non proident sunt", "exercitation ullamco laboris nisi", "sint occaecat cupidatat non"]},
-    {"lead": "Negative", "key": "consequat", "subs": ["excepteur sint", "et dolore magna aliqua enim", "cupidatat non proident", "ullamco laboris nisi", "non proident sunt"]},
-    {"lead": "Delayed", "key": "eiusmod", "subs": ["pariatur excepteur sint occaecat", "aute irure in", "cupidatat non proident sunt culpa", "nostrud exercitation ullamco laboris"]}
+    {"lead": "Weakened", "key": "spark", "subs": ["the flame that won't catch", "will with no fuel", "the impulse fizzling", "energy leaking out"]},
+    {"lead": "Inverted", "key": "fire", "subs": ["force turned destructive", "drive scattered, not aimed", "heat without light", "the spark gone wild"]},
+    {"lead": "Negative", "key": "impulse", "subs": ["starting fires you won't tend", "energy as aggression", "burning for the sake of burning", "will mistaken for whim"]},
+    {"lead": "Delayed", "key": "ignition", "subs": ["the match not yet struck", "the impulse still gathering", "fire waiting on its fuel", "the start delayed"]}
   ],
   "wands02": [
-    {"lead": "Weakened", "key": "aliqua", "subs": ["voluptate velit esse cillum eu fugiat", "magna aliqua enim ad minim veniam", "culpa qui officia deserunt mollit", "occaecat cupidatat non proident sunt"]},
-    {"lead": "Inverted", "key": "fugiat", "subs": ["sint occaecat cupidatat non proident", "quis nostrud", "sunt culpa qui officia deserunt mollit", "cupidatat non", "elit sed do eiusmod tempor incididunt"]},
-    {"lead": "Negative", "key": "nulla", "subs": ["et dolore", "enim ad minim veniam quis nostrud", "do eiusmod tempor incididunt ut labore", "cillum eu"]},
-    {"lead": "Delayed", "key": "duis", "subs": ["sit amet", "adipiscing elit sed", "elit sed do eiusmod", "aliquip ex ea commodo consequat duis"]}
+    {"lead": "Weakened", "key": "dominion", "subs": ["command that won't hold", "resolve gone soft", "the field slipping from grasp", "bold plans losing heat"]},
+    {"lead": "Inverted", "key": "rule", "subs": ["control that overreaches", "dominion turned to domination", "planning that never acts", "the world held, but cold"]},
+    {"lead": "Negative", "key": "power", "subs": ["grasping more than you can hold", "restlessness within plenty", "ambition with no satisfaction", "control for its own sake"]},
+    {"lead": "Delayed", "key": "dominion", "subs": ["the decision still pending", "the field not yet claimed", "resolve still forming", "the move delayed"]}
   ],
   "wands03": [
-    {"lead": "Weakened", "key": "ipsum", "subs": ["sint occaecat cupidatat non proident", "fugiat nulla", "amet consectetur adipiscing", "exercitation ullamco laboris nisi", "occaecat cupidatat non proident", "proident sunt culpa qui"]},
-    {"lead": "Inverted", "key": "velit", "subs": ["anim id", "velit esse cillum eu fugiat", "in reprehenderit voluptate velit esse", "non proident sunt", "ipsum dolor sit amet consectetur"]},
-    {"lead": "Negative", "key": "laboris", "subs": ["eiusmod tempor incididunt", "officia deserunt mollit", "amet consectetur adipiscing elit sed", "magna aliqua enim ad"]},
-    {"lead": "Delayed", "key": "ut", "subs": ["proident sunt culpa", "velit esse cillum eu fugiat nulla", "sint occaecat cupidatat non proident", "elit sed do eiusmod tempor incididunt", "tempor incididunt ut", "occaecat cupidatat non proident"]}
+    {"lead": "Weakened", "key": "strength", "subs": ["the footing gone uncertain", "virtue without conviction", "the work losing momentum", "strength that wavers"]},
+    {"lead": "Inverted", "key": "virtue", "subs": ["strength turned to stubbornness", "waiting that becomes stalling", "trust curdled to suspicion", "the ships not sent"]},
+    {"lead": "Negative", "key": "pride", "subs": ["resting too soon on strength", "overconfidence in the plan", "virtue performed, not lived", "ground held too cautiously"]},
+    {"lead": "Delayed", "key": "establishment", "subs": ["strength still settling", "the foundation curing", "the harvest still distant", "virtue not yet rooted"]}
   ],
   "wands04": [
-    {"lead": "Weakened", "key": "nulla", "subs": ["minim veniam", "ipsum dolor", "dolore magna aliqua enim ad", "quis nostrud exercitation ullamco"]},
-    {"lead": "Inverted", "key": "sit", "subs": ["officia deserunt mollit anim id", "cupidatat non proident", "fugiat nulla", "id est laborum", "ipsum dolor"]},
-    {"lead": "Negative", "key": "ipsum", "subs": ["in reprehenderit", "aliqua enim ad minim veniam quis", "ex ea commodo", "proident sunt culpa", "elit sed do eiusmod tempor incididunt"]},
-    {"lead": "Delayed", "key": "culpa", "subs": ["officia deserunt mollit", "anim id est", "irure in reprehenderit", "exercitation ullamco laboris nisi", "ea commodo consequat duis aute"]}
+    {"lead": "Weakened", "key": "harmony", "subs": ["the celebration muted", "completion that feels hollow", "the foundation slightly off", "joy that won't quite land"]},
+    {"lead": "Inverted", "key": "stability", "subs": ["rest mistaken for finish", "comfort that stalls growth", "the threshold not crossed", "harmony gone complacent"]},
+    {"lead": "Negative", "key": "complacency", "subs": ["settling before it's done", "mistaking pause for arrival", "ease that dulls ambition", "the home that becomes a cage"]},
+    {"lead": "Delayed", "key": "completion", "subs": ["the work nearly done", "the celebration deferred", "the foundation still setting", "arrival on slow approach"]}
   ],
   "wands05": [
-    {"lead": "Weakened", "key": "nostrud", "subs": ["ea commodo consequat duis aute", "amet consectetur adipiscing elit sed do", "ipsum dolor sit amet consectetur", "labore et"]},
-    {"lead": "Inverted", "key": "lorem", "subs": ["duis aute", "ea commodo consequat duis aute irure", "laboris nisi aliquip", "labore et dolore magna", "ad minim veniam"]},
-    {"lead": "Negative", "key": "voluptate", "subs": ["cupidatat non proident sunt", "ex ea commodo", "aliquip ex", "velit esse cillum eu", "minim veniam quis nostrud", "sed do eiusmod tempor"]},
-    {"lead": "Delayed", "key": "adipiscing", "subs": ["cillum eu fugiat nulla pariatur", "excepteur sint occaecat cupidatat non", "aliquip ex ea commodo", "tempor incididunt ut labore", "ut labore et dolore magna aliqua", "reprehenderit voluptate velit"]}
+    {"lead": "Weakened", "key": "strife", "subs": ["conflict gone half-hearted", "the fire of rivalry cooling", "struggle losing its point", "competition petering out"]},
+    {"lead": "Inverted", "key": "struggle", "subs": ["friction with no growth", "clashing for clashing's sake", "the spar turned spiteful", "heat without progress"]},
+    {"lead": "Negative", "key": "conflict", "subs": ["picking fights you don't need", "ego driving the quarrel", "strife you secretly enjoy", "chaos as a habit"]},
+    {"lead": "Delayed", "key": "resolution", "subs": ["the clash not yet settled", "order still emerging", "the struggle ongoing", "clarity delayed"]}
   ],
   "wands06": [
-    {"lead": "Weakened", "key": "minim", "subs": ["quis nostrud", "et dolore magna aliqua enim ad", "ea commodo", "ad minim veniam quis nostrud", "fugiat nulla pariatur"]},
-    {"lead": "Inverted", "key": "duis", "subs": ["proident sunt", "sed do", "eu fugiat nulla pariatur excepteur", "amet consectetur adipiscing"]},
-    {"lead": "Negative", "key": "consectetur", "subs": ["quis nostrud exercitation ullamco", "velit esse cillum", "nostrud exercitation ullamco laboris", "et dolore magna aliqua", "enim ad minim"]},
-    {"lead": "Delayed", "key": "ullamco", "subs": ["et dolore", "magna aliqua enim ad", "nostrud exercitation ullamco", "consequat duis aute", "enim ad", "et dolore magna"]}
+    {"lead": "Weakened", "key": "victory", "subs": ["the win that feels empty", "recognition delayed", "confidence shaken", "the laurel slipping"]},
+    {"lead": "Inverted", "key": "triumph", "subs": ["pride before the fall", "leading with no followers", "success that isolates", "victory claimed too loud"]},
+    {"lead": "Negative", "key": "ego", "subs": ["needing the applause", "arrogance mistaken for confidence", "resting on past wins", "glory hunted for its own sake"]},
+    {"lead": "Delayed", "key": "victory", "subs": ["the win still pending", "recognition on its way", "the triumph not yet earned", "the crown delayed"]}
   ],
   "wands07": [
-    {"lead": "Weakened", "key": "amet", "subs": ["non proident sunt culpa qui officia", "culpa qui officia deserunt mollit", "elit sed do eiusmod tempor", "culpa qui officia", "esse cillum eu", "voluptate velit esse"]},
-    {"lead": "Inverted", "key": "lorem", "subs": ["nisi aliquip ex", "nulla pariatur excepteur", "sed do eiusmod tempor", "incididunt ut labore et", "ex ea commodo", "consequat duis"]},
-    {"lead": "Negative", "key": "consequat", "subs": ["eu fugiat", "deserunt mollit", "labore et dolore magna aliqua", "aliquip ex ea", "commodo consequat duis aute", "ut labore et"]},
-    {"lead": "Delayed", "key": "adipiscing", "subs": ["incididunt ut labore", "cillum eu fugiat", "reprehenderit voluptate velit esse", "magna aliqua enim", "reprehenderit voluptate velit esse"]}
+    {"lead": "Weakened", "key": "valour", "subs": ["courage running low", "the high ground slipping", "nerve that wavers", "defense growing tired"]},
+    {"lead": "Inverted", "key": "courage", "subs": ["bravado over bravery", "fighting battles already lost", "standing on false ground", "valour gone reckless"]},
+    {"lead": "Negative", "key": "defensiveness", "subs": ["fighting when you could yield", "everything seen as threat", "exhaustion from constant guard", "stubbornness called courage"]},
+    {"lead": "Delayed", "key": "valour", "subs": ["the test still coming", "courage still gathering", "the stand not yet taken", "resolve still forming"]}
   ],
   "wands08": [
-    {"lead": "Weakened", "key": "aute", "subs": ["ea commodo consequat", "sed do eiusmod tempor", "sunt culpa qui officia deserunt", "eiusmod tempor", "excepteur sint occaecat cupidatat", "ea commodo consequat duis aute irure"]},
-    {"lead": "Inverted", "key": "fugiat", "subs": ["dolore magna aliqua", "fugiat nulla pariatur excepteur sint", "tempor incididunt", "in reprehenderit voluptate velit esse", "enim ad minim veniam quis nostrud"]},
-    {"lead": "Negative", "key": "eiusmod", "subs": ["minim veniam quis nostrud exercitation", "do eiusmod tempor", "commodo consequat duis", "incididunt ut labore et dolore magna", "consequat duis"]},
-    {"lead": "Delayed", "key": "et", "subs": ["voluptate velit esse cillum", "aliqua enim ad minim veniam", "cillum eu fugiat", "dolor sit amet consectetur adipiscing"]}
+    {"lead": "Weakened", "key": "swiftness", "subs": ["momentum stalling", "the message delayed", "energy losing its arc", "speed bleeding off"]},
+    {"lead": "Inverted", "key": "speed", "subs": ["haste that scatters", "arrows loosed too soon", "rushing past the point", "movement without aim"]},
+    {"lead": "Negative", "key": "impatience", "subs": ["forcing what needs time", "speed as avoidance", "acting before thinking", "the rush that wastes"]},
+    {"lead": "Delayed", "key": "arrival", "subs": ["the arrows still in flight", "the news still coming", "the pace not yet picked up", "movement delayed"]}
   ],
   "wands09": [
-    {"lead": "Weakened", "key": "incididunt", "subs": ["officia deserunt mollit anim id", "enim ad minim veniam quis", "tempor incididunt ut labore et dolore", "aute irure"]},
-    {"lead": "Inverted", "key": "ex", "subs": ["fugiat nulla pariatur", "commodo consequat duis aute irure in", "non proident", "et dolore magna aliqua", "et dolore magna aliqua"]},
-    {"lead": "Negative", "key": "ad", "subs": ["proident sunt", "fugiat nulla pariatur excepteur", "culpa qui", "anim id", "pariatur excepteur sint"]},
-    {"lead": "Delayed", "key": "qui", "subs": ["eu fugiat nulla", "eiusmod tempor incididunt ut", "incididunt ut", "velit esse cillum eu", "do eiusmod tempor incididunt", "aliquip ex"]}
+    {"lead": "Weakened", "key": "strength", "subs": ["reserves running thin", "resilience worn down", "the guard exhausted", "the last stand faltering"]},
+    {"lead": "Inverted", "key": "resilience", "subs": ["defensiveness over strength", "paranoia at the wall", "guarding what's already gone", "wariness turned to fear"]},
+    {"lead": "Negative", "key": "defensiveness", "subs": ["expecting attack everywhere", "fighting old battles", "strength spent on suspicion", "the wall built too high"]},
+    {"lead": "Delayed", "key": "recovery", "subs": ["strength still returning", "the rest not yet had", "resilience rebuilding", "the next round pending"]}
   ],
   "wands10": [
-    {"lead": "Weakened", "key": "nulla", "subs": ["velit esse cillum eu fugiat", "eiusmod tempor incididunt ut", "exercitation ullamco laboris", "eiusmod tempor incididunt ut"]},
-    {"lead": "Inverted", "key": "laboris", "subs": ["minim veniam quis nostrud exercitation", "sit amet consectetur adipiscing", "in reprehenderit voluptate velit esse", "fugiat nulla pariatur excepteur sint", "excepteur sint occaecat cupidatat non"]},
-    {"lead": "Negative", "key": "irure", "subs": ["adipiscing elit sed", "ipsum dolor sit amet consectetur", "veniam quis nostrud exercitation ullamco", "culpa qui officia deserunt mollit anim", "anim id est laborum"]},
-    {"lead": "Delayed", "key": "qui", "subs": ["minim veniam quis", "mollit anim id est", "consectetur adipiscing elit sed do", "dolor sit amet", "ipsum dolor sit amet consectetur", "pariatur excepteur sint occaecat"]}
+    {"lead": "Weakened", "key": "burden", "subs": ["the load slightly lighter", "force losing its grip", "the weight beginning to shift", "strength nearly spent"]},
+    {"lead": "Inverted", "key": "oppression", "subs": ["carrying what isn't yours", "force that crushes its bearer", "power turned to burden", "drive become a cage"]},
+    {"lead": "Negative", "key": "martyrdom", "subs": ["refusing to set it down", "taking on more to prove worth", "burnout worn as virtue", "the load hoarded"]},
+    {"lead": "Delayed", "key": "relief", "subs": ["the burden ready to lift", "help on its way", "the weight soon shared", "release pending"]}
   ],
   "wands11": [
-    {"lead": "Weakened", "key": "laborum", "subs": ["duis aute irure in reprehenderit", "reprehenderit voluptate velit esse", "lorem ipsum dolor sit", "consectetur adipiscing elit sed"]},
-    {"lead": "Inverted", "key": "sit", "subs": ["in reprehenderit voluptate velit esse", "excepteur sint", "labore et", "enim ad minim veniam quis nostrud", "irure in reprehenderit voluptate"]},
-    {"lead": "Negative", "key": "duis", "subs": ["dolore magna aliqua enim ad minim", "proident sunt", "veniam quis nostrud exercitation ullamco", "culpa qui officia deserunt mollit", "lorem ipsum", "elit sed do eiusmod tempor"]},
-    {"lead": "Delayed", "key": "excepteur", "subs": ["officia deserunt mollit anim id est", "culpa qui officia deserunt mollit anim", "voluptate velit esse cillum eu", "aute irure in", "velit esse cillum eu fugiat", "adipiscing elit sed do"]}
+    {"lead": "Weakened", "key": "fire", "subs": ["the spark gone hesitant", "vitality dimmed", "the bold step withheld", "passion losing heat"]},
+    {"lead": "Inverted", "key": "individuality", "subs": ["rebellion for its own sake", "wildness with no direction", "drama over substance", "the tiger uncontrolled"]},
+    {"lead": "Negative", "key": "impulsiveness", "subs": ["starting what you won't finish", "attention-seeking heat", "passion as performance", "the flame that scorches near"]},
+    {"lead": "Delayed", "key": "kindling", "subs": ["the spark still gathering", "the bold move pending", "vitality not yet expressed", "the leap delayed"]}
   ],
   "wands12": [
-    {"lead": "Weakened", "key": "excepteur", "subs": ["lorem ipsum dolor sit", "ad minim veniam quis nostrud", "sint occaecat cupidatat", "voluptate velit esse cillum eu", "laboris nisi", "nisi aliquip ex"]},
-    {"lead": "Inverted", "key": "et", "subs": ["labore et dolore magna aliqua", "et dolore", "tempor incididunt ut", "laboris nisi aliquip"]},
-    {"lead": "Negative", "key": "id", "subs": ["do eiusmod tempor incididunt ut", "pariatur excepteur", "do eiusmod", "non proident"]},
-    {"lead": "Delayed", "key": "elit", "subs": ["tempor incididunt ut labore", "incididunt ut labore et dolore", "consectetur adipiscing", "sit amet consectetur adipiscing elit"]}
+    {"lead": "Weakened", "key": "will", "subs": ["decisiveness gone shaky", "the vision blurred", "drive without direction", "clear intent muddled"]},
+    {"lead": "Inverted", "key": "vision", "subs": ["thought outrunning action", "plans that never launch", "strategy gone cold", "fire steered nowhere"]},
+    {"lead": "Negative", "key": "arrogance", "subs": ["haste mistaken for vision", "cruelty in the charge", "ego driving the plan", "force without care"]},
+    {"lead": "Delayed", "key": "action", "subs": ["the leap still pending", "the vision still forming", "the move delayed", "fire not yet steered"]}
   ],
   "wands13": [
-    {"lead": "Weakened", "key": "cupidatat", "subs": ["elit sed do eiusmod tempor incididunt", "deserunt mollit anim id est", "nulla pariatur excepteur sint occaecat", "elit sed do", "non proident sunt culpa qui officia", "incididunt ut labore et dolore magna"]},
-    {"lead": "Inverted", "key": "sed", "subs": ["eiusmod tempor incididunt ut labore et", "duis aute irure in reprehenderit", "consectetur adipiscing", "amet consectetur"]},
-    {"lead": "Negative", "key": "aute", "subs": ["consectetur adipiscing elit sed", "magna aliqua enim ad", "consequat duis aute", "sed do eiusmod tempor incididunt ut"]},
-    {"lead": "Delayed", "key": "culpa", "subs": ["duis aute irure in reprehenderit", "amet consectetur adipiscing elit sed", "eu fugiat", "enim ad minim veniam quis nostrud"]}
+    {"lead": "Weakened", "key": "warmth", "subs": ["the flame guttering", "presence dimmed", "passion turned brittle", "charisma run cold"]},
+    {"lead": "Inverted", "key": "confidence", "subs": ["warmth turned demanding", "jealousy under the glow", "poise cracking", "magnetism gone needy"]},
+    {"lead": "Negative", "key": "insecurity", "subs": ["warmth that wants approval", "controlling through charm", "the flame fed on others", "presence as performance"]},
+    {"lead": "Delayed", "key": "radiance", "subs": ["the warmth still gathering", "confidence still rooting", "the flame not yet steady", "presence still emerging"]}
   ],
   "wands14": [
-    {"lead": "Weakened", "key": "sed", "subs": ["proident sunt culpa qui officia deserunt", "tempor incididunt", "quis nostrud exercitation ullamco", "voluptate velit esse cillum"]},
-    {"lead": "Inverted", "key": "anim", "subs": ["esse cillum eu fugiat nulla pariatur", "adipiscing elit sed do eiusmod", "ea commodo", "exercitation ullamco laboris"]},
-    {"lead": "Negative", "key": "lorem", "subs": ["nostrud exercitation ullamco laboris", "excepteur sint occaecat cupidatat non", "aliqua enim ad minim veniam quis", "consequat duis aute irure", "sunt culpa qui officia", "enim ad minim"]},
-    {"lead": "Delayed", "key": "consequat", "subs": ["sunt culpa qui officia deserunt", "ullamco laboris nisi aliquip", "nisi aliquip ex ea commodo", "amet consectetur adipiscing elit sed", "consectetur adipiscing elit sed do", "sunt culpa qui officia"]}
+    {"lead": "Weakened", "key": "fire", "subs": ["the charge losing force", "intensity flickering", "momentum dropping", "the blaze dying down"]},
+    {"lead": "Inverted", "key": "intensity", "subs": ["force that burns out fast", "passion gone reckless", "the charge with no plan", "fire that scorches all"]},
+    {"lead": "Negative", "key": "recklessness", "subs": ["charging with no aim", "ego at full gallop", "leaving wreckage behind", "heat mistaken for purpose"]},
+    {"lead": "Delayed", "key": "charge", "subs": ["the leap still pending", "force still gathering", "the blaze not yet lit", "momentum delayed"]}
   ],
   "cups01": [
-    {"lead": "Weakened", "key": "exercitation", "subs": ["velit esse", "minim veniam quis nostrud exercitation", "consequat duis aute irure", "ad minim veniam quis", "exercitation ullamco laboris nisi"]},
-    {"lead": "Inverted", "key": "sed", "subs": ["qui officia", "labore et dolore magna aliqua", "exercitation ullamco laboris nisi", "voluptate velit esse cillum", "cupidatat non proident sunt culpa"]},
-    {"lead": "Negative", "key": "eu", "subs": ["nulla pariatur excepteur", "voluptate velit esse cillum eu", "voluptate velit", "excepteur sint occaecat cupidatat"]},
-    {"lead": "Delayed", "key": "consectetur", "subs": ["ipsum dolor sit amet consectetur", "qui officia", "mollit anim id est laborum", "sint occaecat cupidatat non proident", "exercitation ullamco laboris", "eiusmod tempor incididunt ut"]}
+    {"lead": "Weakened", "key": "feeling", "subs": ["the heart half-open", "love that won't quite well up", "the cup leaking", "emotion held back"]},
+    {"lead": "Inverted", "key": "love", "subs": ["feeling turned inward only", "the spring blocked", "openness gone guarded", "the grail overturned"]},
+    {"lead": "Negative", "key": "emptiness", "subs": ["numbness mistaken for calm", "refusing to feel", "the cup withheld from others", "love hoarded"]},
+    {"lead": "Delayed", "key": "opening", "subs": ["feeling still gathering", "the heart not yet open", "the spring still rising", "love on slow approach"]}
   ],
   "cups02": [
-    {"lead": "Weakened", "key": "lorem", "subs": ["ad minim veniam", "cillum eu fugiat nulla", "quis nostrud exercitation", "fugiat nulla pariatur excepteur", "et dolore magna aliqua", "duis aute irure in reprehenderit"]},
-    {"lead": "Inverted", "key": "amet", "subs": ["nisi aliquip ex", "enim ad", "reprehenderit voluptate velit esse", "veniam quis nostrud", "consequat duis aute irure"]},
-    {"lead": "Negative", "key": "ipsum", "subs": ["qui officia deserunt", "do eiusmod tempor", "ex ea commodo", "dolore magna aliqua enim"]},
-    {"lead": "Delayed", "key": "commodo", "subs": ["laboris nisi aliquip ex ea", "dolore magna aliqua", "ad minim veniam", "commodo consequat duis aute irure", "culpa qui officia deserunt mollit"]}
+    {"lead": "Weakened", "key": "bond", "subs": ["connection losing its current", "the mirror gone cloudy", "reciprocity faltering", "love at low tide"]},
+    {"lead": "Inverted", "key": "union", "subs": ["attraction without depth", "love as mutual escape", "the cups not quite touching", "harmony performed"]},
+    {"lead": "Negative", "key": "codependence", "subs": ["losing yourself in the other", "love that consumes", "union by need, not choice", "the mirror that traps"]},
+    {"lead": "Delayed", "key": "union", "subs": ["the meeting deferred", "hearts on slow approach", "the bond still forming", "love not yet sealed"]}
   ],
   "cups03": [
-    {"lead": "Weakened", "key": "minim", "subs": ["nulla pariatur excepteur sint occaecat", "ut labore et dolore", "sit amet", "irure in reprehenderit voluptate velit", "eu fugiat nulla pariatur excepteur", "esse cillum eu"]},
-    {"lead": "Inverted", "key": "sed", "subs": ["deserunt mollit", "nulla pariatur excepteur", "aute irure in", "sint occaecat cupidatat", "esse cillum eu fugiat nulla pariatur", "ut labore et"]},
-    {"lead": "Negative", "key": "et", "subs": ["amet consectetur adipiscing elit sed do", "nulla pariatur excepteur sint occaecat", "excepteur sint", "consequat duis aute irure in"]},
-    {"lead": "Delayed", "key": "do", "subs": ["veniam quis nostrud exercitation ullamco", "et dolore magna aliqua", "nulla pariatur excepteur sint", "proident sunt culpa qui officia deserunt", "excepteur sint occaecat"]}
+    {"lead": "Weakened", "key": "joy", "subs": ["the celebration thinning", "gratitude gone faint", "plenty that won't spill", "shared joy fading"]},
+    {"lead": "Inverted", "key": "plenty", "subs": ["celebration over substance", "friendship spread too thin", "joy that's only social", "the cups raised but empty"]},
+    {"lead": "Negative", "key": "excess", "subs": ["partying past the point", "hiding pain in festivity", "indulgence as escape", "abundance that distracts"]},
+    {"lead": "Delayed", "key": "abundance", "subs": ["the harvest still coming", "the celebration deferred", "joy on its way", "plenty not yet here"]}
   ],
   "cups04": [
-    {"lead": "Weakened", "key": "ea", "subs": ["aliquip ex ea", "fugiat nulla pariatur excepteur sint", "non proident sunt culpa qui officia", "non proident sunt culpa", "duis aute", "ex ea commodo consequat duis aute"]},
-    {"lead": "Inverted", "key": "cillum", "subs": ["elit sed do", "id est", "dolor sit amet consectetur adipiscing", "tempor incididunt ut"]},
-    {"lead": "Negative", "key": "dolore", "subs": ["quis nostrud exercitation ullamco", "tempor incididunt ut labore et", "occaecat cupidatat", "pariatur excepteur sint"]},
-    {"lead": "Delayed", "key": "tempor", "subs": ["adipiscing elit sed", "magna aliqua enim ad", "amet consectetur adipiscing elit", "quis nostrud", "sunt culpa qui officia deserunt mollit", "reprehenderit voluptate velit esse"]}
+    {"lead": "Weakened", "key": "comfort", "subs": ["ease losing its appeal", "luxury gone flat", "the offered cup half-seen", "comfort wearing thin"]},
+    {"lead": "Inverted", "key": "contentment", "subs": ["comfort that closes you off", "apathy dressed as peace", "the new cup ignored", "ease that dulls"]},
+    {"lead": "Negative", "key": "apathy", "subs": ["refusing what's offered", "boredom with plenty", "emotional withdrawal", "comfort as avoidance"]},
+    {"lead": "Delayed", "key": "awakening", "subs": ["the offered cup nearly seen", "restlessness stirring", "attention returning", "the shift pending"]}
   ],
   "cups05": [
-    {"lead": "Weakened", "key": "do", "subs": ["laboris nisi aliquip ex ea commodo", "exercitation ullamco laboris nisi", "irure in reprehenderit voluptate velit", "ut labore et dolore", "ut labore", "do eiusmod tempor"]},
-    {"lead": "Inverted", "key": "mollit", "subs": ["quis nostrud exercitation ullamco", "et dolore magna aliqua", "incididunt ut labore et dolore magna", "pariatur excepteur", "fugiat nulla"]},
-    {"lead": "Negative", "key": "ipsum", "subs": ["occaecat cupidatat non proident sunt", "excepteur sint occaecat cupidatat non", "aliqua enim ad minim veniam quis", "cupidatat non"]},
-    {"lead": "Delayed", "key": "voluptate", "subs": ["ad minim veniam quis", "voluptate velit", "cupidatat non proident", "fugiat nulla pariatur excepteur sint", "quis nostrud", "qui officia deserunt mollit anim"]}
+    {"lead": "Weakened", "key": "disappointment", "subs": ["the letdown softening", "grief beginning to ease", "the spill less bitter", "loss losing its sting"]},
+    {"lead": "Inverted", "key": "loss", "subs": ["mourning that won't lift", "fixating on the spilled cups", "ignoring the cups still full", "sorrow as identity"]},
+    {"lead": "Negative", "key": "self-pity", "subs": ["wallowing in the loss", "blaming others for the spill", "grief that refuses comfort", "the two cups unseen"]},
+    {"lead": "Delayed", "key": "acceptance", "subs": ["the grief still moving through", "healing on slow approach", "the upright cups not yet seen", "recovery pending"]}
   ],
   "cups06": [
-    {"lead": "Weakened", "key": "esse", "subs": ["elit sed do eiusmod tempor", "ut labore et dolore magna aliqua", "consectetur adipiscing", "magna aliqua enim ad minim", "laboris nisi"]},
-    {"lead": "Inverted", "key": "duis", "subs": ["voluptate velit esse cillum", "magna aliqua enim", "lorem ipsum dolor sit", "sed do eiusmod tempor"]},
-    {"lead": "Negative", "key": "consequat", "subs": ["nostrud exercitation", "lorem ipsum dolor sit", "sit amet consectetur adipiscing elit", "sed do eiusmod tempor incididunt ut", "nulla pariatur excepteur sint occaecat", "et dolore magna aliqua"]},
-    {"lead": "Delayed", "key": "fugiat", "subs": ["labore et dolore", "consequat duis aute irure in", "quis nostrud exercitation ullamco", "sed do eiusmod tempor incididunt"]}
+    {"lead": "Weakened", "key": "pleasure", "subs": ["the sweetness fading", "joy gone faint", "nostalgia losing its warmth", "well-being thinning"]},
+    {"lead": "Inverted", "key": "innocence", "subs": ["clinging to the past", "nostalgia over the present", "sweetness gone cloying", "memory preferred to now"]},
+    {"lead": "Negative", "key": "escapism", "subs": ["living in the good old days", "refusing to grow up", "pleasure as avoidance", "the past idealized"]},
+    {"lead": "Delayed", "key": "pleasure", "subs": ["the joy still gathering", "sweetness on its way", "the moment not yet savored", "contentment pending"]}
   ],
   "cups07": [
-    {"lead": "Weakened", "key": "dolore", "subs": ["fugiat nulla pariatur excepteur", "velit esse", "ipsum dolor sit amet consectetur", "adipiscing elit sed do"]},
-    {"lead": "Inverted", "key": "cillum", "subs": ["lorem ipsum", "cupidatat non", "minim veniam", "in reprehenderit", "dolor sit amet consectetur adipiscing", "ea commodo consequat duis"]},
-    {"lead": "Negative", "key": "consectetur", "subs": ["excepteur sint occaecat cupidatat", "eu fugiat nulla pariatur excepteur", "do eiusmod tempor", "ipsum dolor"]},
-    {"lead": "Delayed", "key": "officia", "subs": ["aute irure in reprehenderit voluptate", "deserunt mollit", "est laborum", "laboris nisi"]}
+    {"lead": "Weakened", "key": "illusion", "subs": ["the fantasy thinning", "the lure losing power", "the fog beginning to clear", "desire cooling"]},
+    {"lead": "Inverted", "key": "clarity", "subs": ["fantasy mistaken for truth", "choices made in the fog", "wish over reality", "the rotten cup chosen"]},
+    {"lead": "Negative", "key": "delusion", "subs": ["feeding the fantasy", "escape into the dream", "desire that won't act", "poison taken willingly"]},
+    {"lead": "Delayed", "key": "clarity", "subs": ["the fog not yet lifted", "the real choice pending", "sight still returning", "the lotus-dream still holding"]}
   ],
   "cups08": [
-    {"lead": "Weakened", "key": "ad", "subs": ["officia deserunt mollit", "ipsum dolor sit", "in reprehenderit voluptate velit", "deserunt mollit", "qui officia deserunt mollit", "adipiscing elit sed do"]},
-    {"lead": "Inverted", "key": "enim", "subs": ["sunt culpa qui", "cupidatat non proident sunt culpa qui", "pariatur excepteur", "aliquip ex"]},
-    {"lead": "Negative", "key": "proident", "subs": ["sed do eiusmod tempor incididunt", "nulla pariatur excepteur sint occaecat", "nisi aliquip ex ea commodo", "ut labore et dolore", "sunt culpa qui officia"]},
-    {"lead": "Delayed", "key": "amet", "subs": ["excepteur sint occaecat cupidatat", "irure in reprehenderit", "ea commodo consequat duis aute irure", "officia deserunt"]}
+    {"lead": "Weakened", "key": "resolve", "subs": ["the will to leave faltering", "staying out of inertia", "the search half-begun", "weariness winning"]},
+    {"lead": "Inverted", "key": "withdrawal", "subs": ["leaving what could be saved", "quitting too soon", "the cup abandoned in haste", "retreat as habit"]},
+    {"lead": "Negative", "key": "avoidance", "subs": ["walking away from the work", "drifting with no direction", "numbness called moving on", "the deeper draught refused"]},
+    {"lead": "Delayed", "key": "departure", "subs": ["the leaving not yet done", "the search still forming", "the new path pending", "movement delayed"]}
   ],
   "cups09": [
-    {"lead": "Weakened", "key": "irure", "subs": ["nostrud exercitation", "eiusmod tempor incididunt", "reprehenderit voluptate velit", "deserunt mollit anim id est laborum", "sed do"]},
-    {"lead": "Inverted", "key": "deserunt", "subs": ["exercitation ullamco laboris", "duis aute irure", "velit esse cillum eu", "veniam quis nostrud", "velit esse cillum eu fugiat", "exercitation ullamco"]},
-    {"lead": "Negative", "key": "ut", "subs": ["in reprehenderit voluptate velit esse", "lorem ipsum dolor sit", "fugiat nulla", "aute irure in", "qui officia deserunt"]},
-    {"lead": "Delayed", "key": "nisi", "subs": ["qui officia deserunt mollit anim id", "minim veniam quis nostrud exercitation", "laboris nisi aliquip", "ipsum dolor"]}
+    {"lead": "Weakened", "key": "contentment", "subs": ["satisfaction thinning", "the wish half-granted", "happiness gone shallow", "the cup less full"]},
+    {"lead": "Inverted", "key": "fulfillment", "subs": ["smugness over joy", "contentment gone complacent", "wishing only for self", "happiness that excludes"]},
+    {"lead": "Negative", "key": "indulgence", "subs": ["self-satisfaction as a wall", "gloating over the gain", "pleasure that won't share", "comfort that stagnates"]},
+    {"lead": "Delayed", "key": "happiness", "subs": ["the wish still pending", "fulfillment on its way", "the cup still filling", "contentment delayed"]}
   ],
   "cups10": [
-    {"lead": "Weakened", "key": "amet", "subs": ["officia deserunt", "enim ad minim", "consequat duis aute irure in", "duis aute irure", "esse cillum"]},
-    {"lead": "Inverted", "key": "nisi", "subs": ["amet consectetur adipiscing", "reprehenderit voluptate velit esse", "velit esse cillum eu fugiat", "ad minim"]},
-    {"lead": "Negative", "key": "non", "subs": ["quis nostrud exercitation ullamco", "incididunt ut labore et dolore magna", "occaecat cupidatat non proident sunt", "do eiusmod tempor incididunt ut", "labore et"]},
-    {"lead": "Delayed", "key": "aliquip", "subs": ["reprehenderit voluptate velit esse", "elit sed", "amet consectetur adipiscing", "do eiusmod tempor incididunt ut labore", "irure in", "nulla pariatur excepteur sint occaecat"]}
+    {"lead": "Weakened", "key": "fulfillment", "subs": ["the rainbow fading", "family joy strained", "the peak slipping", "wholeness thinning"]},
+    {"lead": "Inverted", "key": "harmony", "subs": ["the perfect picture cracking", "joy performed for show", "the family that isn't", "contentment faked"]},
+    {"lead": "Negative", "key": "discontent", "subs": ["restlessness within plenty", "wanting more than enough", "the peak that won't satisfy", "gratitude withheld"]},
+    {"lead": "Delayed", "key": "fulfillment", "subs": ["the rainbow not yet arched", "peace on its way", "the family not yet whole", "joy still gathering"]}
   ],
   "cups11": [
-    {"lead": "Weakened", "key": "aute", "subs": ["id est", "voluptate velit esse cillum eu fugiat", "cupidatat non proident sunt culpa", "culpa qui officia deserunt"]},
-    {"lead": "Inverted", "key": "magna", "subs": ["cupidatat non proident", "nulla pariatur excepteur sint", "dolore magna aliqua enim", "sit amet consectetur adipiscing elit sed", "magna aliqua enim ad minim"]},
-    {"lead": "Negative", "key": "laboris", "subs": ["consectetur adipiscing elit sed do", "lorem ipsum dolor sit amet consectetur", "qui officia deserunt mollit anim id", "nisi aliquip ex ea commodo consequat", "velit esse cillum eu fugiat"]},
-    {"lead": "Delayed", "key": "proident", "subs": ["reprehenderit voluptate velit esse", "elit sed do eiusmod", "do eiusmod tempor incididunt ut labore", "elit sed do eiusmod tempor incididunt"]}
+    {"lead": "Weakened", "key": "tenderness", "subs": ["the gentle feeling dimmed", "wonder gone quiet", "softness withdrawn", "the dream losing color"]},
+    {"lead": "Inverted", "key": "imagination", "subs": ["fantasy with no form", "feeling that won't ground", "the dream mistaken for the plan", "tenderness gone naive"]},
+    {"lead": "Negative", "key": "moodiness", "subs": ["feeling indulged, not felt", "escape into daydream", "sensitivity as a weapon", "the sulk dressed as depth"]},
+    {"lead": "Delayed", "key": "imagination", "subs": ["the dream still forming", "feeling not yet shaped", "the gift not yet given", "wonder still arriving"]}
   ],
   "cups12": [
-    {"lead": "Weakened", "key": "exercitation", "subs": ["nisi aliquip ex ea commodo", "qui officia", "irure in reprehenderit voluptate", "culpa qui officia deserunt mollit anim", "ullamco laboris nisi aliquip ex", "ullamco laboris nisi aliquip ex ea"]},
-    {"lead": "Inverted", "key": "ex", "subs": ["adipiscing elit sed", "incididunt ut labore et", "esse cillum", "in reprehenderit voluptate velit esse", "consequat duis aute irure"]},
-    {"lead": "Negative", "key": "veniam", "subs": ["commodo consequat", "commodo consequat", "cillum eu", "officia deserunt", "enim ad minim veniam"]},
-    {"lead": "Delayed", "key": "esse", "subs": ["et dolore", "esse cillum", "cupidatat non proident sunt", "non proident sunt culpa", "laboris nisi aliquip"]}
+    {"lead": "Weakened", "key": "subtlety", "subs": ["the depth gone shallow", "feeling losing its form", "intent blurred", "the current slowing"]},
+    {"lead": "Inverted", "key": "feeling thought", "subs": ["calculation without heart", "charm hiding manipulation", "the mask over the depth", "feeling that schemes"]},
+    {"lead": "Negative", "key": "manipulation", "subs": ["using feeling to control", "depth weaponized", "seduction without sincerity", "the still surface that deceives"]},
+    {"lead": "Delayed", "key": "creation", "subs": ["the art still forming", "feeling not yet directed", "the dream not yet made", "intent still gathering"]}
   ],
   "cups13": [
-    {"lead": "Weakened", "key": "sint", "subs": ["sed do eiusmod tempor incididunt", "consequat duis aute irure", "non proident sunt culpa qui officia", "ex ea commodo consequat duis"]},
-    {"lead": "Inverted", "key": "culpa", "subs": ["anim id est", "eu fugiat nulla pariatur excepteur sint", "qui officia deserunt mollit anim id", "deserunt mollit anim id est", "ut labore", "non proident sunt culpa qui"]},
-    {"lead": "Negative", "key": "velit", "subs": ["officia deserunt mollit anim", "enim ad minim veniam quis", "nisi aliquip ex ea commodo", "tempor incididunt ut labore et"]},
-    {"lead": "Delayed", "key": "nulla", "subs": ["quis nostrud exercitation ullamco", "ipsum dolor sit amet consectetur", "aute irure in reprehenderit", "dolor sit amet consectetur adipiscing", "labore et dolore magna aliqua enim"]}
+    {"lead": "Weakened", "key": "empathy", "subs": ["feeling gone foggy", "the mirror clouded", "receptivity dimmed", "the depths gone still and cold"]},
+    {"lead": "Inverted", "key": "feeling", "subs": ["emotion that floods, not holds", "boundaries dissolving", "absorbing every mood", "the dreamer lost in the dream"]},
+    {"lead": "Negative", "key": "enmeshment", "subs": ["losing self in another's pain", "feeling as manipulation", "martyrdom of the heart", "depth used to ensnare"]},
+    {"lead": "Delayed", "key": "empathy", "subs": ["the feeling still rising", "compassion still forming", "the depths not yet calm", "receptivity returning"]}
   ],
   "cups14": [
-    {"lead": "Weakened", "key": "veniam", "subs": ["non proident sunt", "lorem ipsum dolor", "pariatur excepteur sint occaecat", "proident sunt culpa qui officia deserunt", "aliqua enim ad minim veniam quis"]},
-    {"lead": "Inverted", "key": "velit", "subs": ["pariatur excepteur sint", "mollit anim id est laborum", "aliqua enim ad minim", "voluptate velit esse cillum eu", "officia deserunt mollit anim id"]},
-    {"lead": "Negative", "key": "lorem", "subs": ["aliqua enim ad minim veniam", "deserunt mollit", "minim veniam quis nostrud exercitation", "lorem ipsum dolor", "nulla pariatur excepteur sint occaecat"]},
-    {"lead": "Delayed", "key": "lorem", "subs": ["esse cillum eu fugiat nulla pariatur", "consectetur adipiscing", "labore et", "officia deserunt mollit anim"]}
+    {"lead": "Weakened", "key": "fervor", "subs": ["the passion cooling", "the quest losing heart", "feeling gone tepid", "the wave receding"]},
+    {"lead": "Inverted", "key": "feeling", "subs": ["romance over substance", "love that won't land", "the gesture without follow-through", "fervor gone fickle"]},
+    {"lead": "Negative", "key": "moodiness", "subs": ["passion that floods then flees", "jealousy under the charm", "feeling used to seduce", "the romantic who won't stay"]},
+    {"lead": "Delayed", "key": "the quest", "subs": ["the wave still rising", "the offer not yet made", "feeling still gathering", "the pursuit delayed"]}
   ],
   "swords01": [
-    {"lead": "Weakened", "key": "commodo", "subs": ["sed do eiusmod tempor incididunt ut", "sint occaecat cupidatat", "amet consectetur adipiscing", "eiusmod tempor incididunt ut labore et"]},
-    {"lead": "Inverted", "key": "cillum", "subs": ["voluptate velit", "eiusmod tempor incididunt ut labore", "enim ad minim veniam", "aute irure", "nulla pariatur", "nulla pariatur excepteur"]},
-    {"lead": "Negative", "key": "est", "subs": ["sed do eiusmod tempor incididunt ut", "anim id est", "cupidatat non proident", "cillum eu", "eiusmod tempor incididunt ut", "dolor sit amet consectetur adipiscing"]},
-    {"lead": "Delayed", "key": "ipsum", "subs": ["cillum eu", "culpa qui officia deserunt mollit", "officia deserunt mollit anim id est", "sunt culpa qui officia deserunt"]}
+    {"lead": "Weakened", "key": "clarity", "subs": ["the edge gone dull", "truth hard to grasp", "the blade that won't cut clean", "insight blurred"]},
+    {"lead": "Inverted", "key": "truth", "subs": ["clarity used to wound", "reason turned to rationalizing", "the cut that misses", "logic gone crooked"]},
+    {"lead": "Negative", "key": "cruelty", "subs": ["truth wielded to hurt", "the mind cutting needlessly", "clarity as a weapon", "sharpness without care"]},
+    {"lead": "Delayed", "key": "clarity", "subs": ["the insight still forming", "the truth not yet clear", "the cut delayed", "understanding pending"]}
   ],
   "swords02": [
-    {"lead": "Weakened", "key": "officia", "subs": ["labore et", "fugiat nulla pariatur excepteur", "eu fugiat", "irure in"]},
-    {"lead": "Inverted", "key": "non", "subs": ["cillum eu fugiat nulla pariatur", "velit esse", "velit esse cillum eu fugiat nulla", "ad minim veniam quis nostrud", "eiusmod tempor incididunt ut labore et", "sit amet consectetur adipiscing elit sed"]},
-    {"lead": "Negative", "key": "duis", "subs": ["sed do eiusmod", "tempor incididunt", "eiusmod tempor incididunt", "velit esse cillum eu fugiat nulla"]},
-    {"lead": "Delayed", "key": "eiusmod", "subs": ["duis aute irure in reprehenderit", "sint occaecat cupidatat non proident", "deserunt mollit anim", "non proident sunt", "proident sunt culpa"]}
+    {"lead": "Weakened", "key": "peace", "subs": ["the balance trembling", "the truce wearing thin", "stillness hard to hold", "the blades drifting"]},
+    {"lead": "Inverted", "key": "balance", "subs": ["avoidance dressed as peace", "refusing to choose", "the standoff that stalls", "blindfold kept on too long"]},
+    {"lead": "Negative", "key": "denial", "subs": ["peace by not looking", "stalemate as a comfort", "truth avoided", "the choice indefinitely deferred"]},
+    {"lead": "Delayed", "key": "resolution", "subs": ["the decision still pending", "the truce still holding", "clarity on slow approach", "the choice not yet made"]}
   ],
   "swords03": [
-    {"lead": "Weakened", "key": "labore", "subs": ["nostrud exercitation ullamco laboris", "incididunt ut labore et dolore magna", "eu fugiat nulla pariatur excepteur", "incididunt ut"]},
-    {"lead": "Inverted", "key": "aliqua", "subs": ["eu fugiat", "nisi aliquip ex ea", "aliquip ex ea commodo consequat duis", "eu fugiat nulla"]},
-    {"lead": "Negative", "key": "deserunt", "subs": ["eiusmod tempor incididunt ut labore", "mollit anim id est laborum", "aliqua enim ad minim", "occaecat cupidatat non proident"]},
-    {"lead": "Delayed", "key": "veniam", "subs": ["sit amet consectetur adipiscing elit", "minim veniam quis nostrud", "sint occaecat cupidatat non proident", "ex ea commodo", "ea commodo consequat duis aute irure", "proident sunt"]}
+    {"lead": "Weakened", "key": "grief", "subs": ["the ache beginning to ease", "sorrow softening", "the blade withdrawing", "pain losing its edge"]},
+    {"lead": "Inverted", "key": "heartbreak", "subs": ["wallowing in the wound", "grief that won't release", "reopening the cut", "sorrow nursed"]},
+    {"lead": "Negative", "key": "self-pity", "subs": ["rehearsing the hurt", "blame for the heartbreak", "pain made identity", "the storm kept overhead"]},
+    {"lead": "Delayed", "key": "healing", "subs": ["the grief still moving", "the wound still closing", "relief on slow approach", "sorrow not yet spent"]}
   ],
   "swords04": [
-    {"lead": "Weakened", "key": "ea", "subs": ["fugiat nulla pariatur excepteur sint", "consequat duis", "deserunt mollit anim id", "deserunt mollit anim id est laborum"]},
-    {"lead": "Inverted", "key": "ut", "subs": ["anim id", "commodo consequat", "qui officia deserunt mollit anim id", "aliquip ex ea", "sed do eiusmod tempor"]},
-    {"lead": "Negative", "key": "ipsum", "subs": ["labore et dolore", "reprehenderit voluptate velit", "proident sunt culpa qui officia deserunt", "eiusmod tempor incididunt ut labore et"]},
-    {"lead": "Delayed", "key": "consequat", "subs": ["ad minim veniam quis", "sed do eiusmod tempor incididunt ut", "reprehenderit voluptate velit esse", "duis aute", "eu fugiat nulla pariatur excepteur sint", "reprehenderit voluptate"]}
+    {"lead": "Weakened", "key": "rest", "subs": ["recovery interrupted", "the truce breaking early", "stillness hard to find", "peace half-taken"]},
+    {"lead": "Inverted", "key": "recovery", "subs": ["rest that becomes avoidance", "retreat with no return", "stagnation called peace", "the blade sheathed too long"]},
+    {"lead": "Negative", "key": "stagnation", "subs": ["hiding in the retreat", "rest as escape", "refusing to re-engage", "the truce that never ends"]},
+    {"lead": "Delayed", "key": "recovery", "subs": ["the rest still needed", "healing pending", "the return not yet made", "peace still settling"]}
   ],
   "swords05": [
-    {"lead": "Weakened", "key": "incididunt", "subs": ["excepteur sint occaecat", "proident sunt culpa qui officia", "voluptate velit esse cillum eu fugiat", "duis aute irure in reprehenderit"]},
-    {"lead": "Inverted", "key": "commodo", "subs": ["aliquip ex ea commodo consequat duis", "nisi aliquip ex ea", "non proident sunt culpa qui officia", "tempor incididunt ut labore et dolore", "sint occaecat cupidatat", "nostrud exercitation ullamco laboris"]},
-    {"lead": "Negative", "key": "veniam", "subs": ["elit sed do eiusmod", "enim ad minim veniam", "sint occaecat", "do eiusmod tempor incididunt ut labore", "magna aliqua enim ad"]},
-    {"lead": "Delayed", "key": "est", "subs": ["esse cillum", "in reprehenderit voluptate velit esse", "nisi aliquip ex ea", "aliqua enim ad minim veniam quis"]}
+    {"lead": "Weakened", "key": "defeat", "subs": ["the loss less total", "the sting easing", "the retreat softening", "shame loosening"]},
+    {"lead": "Inverted", "key": "loss", "subs": ["winning at any cost", "cunning that backfires", "clinging to a hollow win", "the field held but empty"]},
+    {"lead": "Negative", "key": "dishonor", "subs": ["victory by betrayal", "cleverness as cruelty", "the win that costs you allies", "ego over honor"]},
+    {"lead": "Delayed", "key": "recovery", "subs": ["the lesson still landing", "the loss not yet processed", "the rebuild pending", "clarity delayed"]}
   ],
   "swords06": [
-    {"lead": "Weakened", "key": "amet", "subs": ["esse cillum", "est laborum", "voluptate velit esse cillum", "proident sunt culpa", "dolore magna aliqua enim ad", "sed do eiusmod tempor"]},
-    {"lead": "Inverted", "key": "non", "subs": ["et dolore", "nostrud exercitation ullamco laboris", "proident sunt culpa", "ullamco laboris", "consectetur adipiscing elit sed do"]},
-    {"lead": "Negative", "key": "lorem", "subs": ["quis nostrud exercitation ullamco", "incididunt ut labore et dolore", "officia deserunt mollit anim id est", "labore et dolore magna aliqua"]},
-    {"lead": "Delayed", "key": "anim", "subs": ["non proident sunt culpa", "incididunt ut labore", "adipiscing elit sed do eiusmod", "id est laborum", "tempor incididunt"]}
+    {"lead": "Weakened", "key": "passage", "subs": ["the crossing stalled", "the method faltering", "calmer water still far", "the way unclear"]},
+    {"lead": "Inverted", "key": "understanding", "subs": ["method without feeling", "solving the wrong problem", "logic that misses the heart", "passage that flees, not heals"]},
+    {"lead": "Negative", "key": "avoidance", "subs": ["running rather than crossing", "reason as escape", "leaving the trouble unsolved", "detachment gone cold"]},
+    {"lead": "Delayed", "key": "passage", "subs": ["the crossing not yet done", "calmer water ahead", "the solution forming", "arrival delayed"]}
   ],
   "swords07": [
-    {"lead": "Weakened", "key": "id", "subs": ["officia deserunt mollit", "officia deserunt mollit anim", "ea commodo consequat duis", "dolore magna", "laboris nisi aliquip ex ea commodo", "fugiat nulla"]},
-    {"lead": "Inverted", "key": "irure", "subs": ["mollit anim id est laborum", "ad minim veniam", "nostrud exercitation", "sunt culpa qui", "veniam quis nostrud exercitation ullamco"]},
-    {"lead": "Negative", "key": "fugiat", "subs": ["duis aute irure", "nulla pariatur excepteur sint occaecat", "fugiat nulla pariatur excepteur sint", "in reprehenderit voluptate", "nulla pariatur excepteur"]},
-    {"lead": "Delayed", "key": "ut", "subs": ["pariatur excepteur sint", "consectetur adipiscing elit sed", "in reprehenderit voluptate velit esse", "proident sunt culpa qui officia deserunt"]}
+    {"lead": "Weakened", "key": "resolve", "subs": ["commitment wavering", "the plan undercutting itself", "effort gone half-hearted", "cunning losing its edge"]},
+    {"lead": "Inverted", "key": "strategy", "subs": ["cleverness that fails", "stealing your own swords", "half-measures that ruin all", "the plan that betrays itself"]},
+    {"lead": "Negative", "key": "deception", "subs": ["sneaking when you should ask", "getting away with too little", "self-sabotage by half-truth", "cunning turned on yourself"]},
+    {"lead": "Delayed", "key": "resolution", "subs": ["the plan not yet whole", "commitment still forming", "the move delayed", "clarity pending"]}
   ],
   "swords08": [
-    {"lead": "Weakened", "key": "laboris", "subs": ["officia deserunt mollit anim", "magna aliqua enim", "eiusmod tempor", "qui officia deserunt mollit anim id", "consectetur adipiscing elit sed"]},
-    {"lead": "Inverted", "key": "ad", "subs": ["ipsum dolor sit amet consectetur", "esse cillum eu fugiat", "exercitation ullamco laboris", "elit sed do eiusmod tempor"]},
-    {"lead": "Negative", "key": "est", "subs": ["commodo consequat", "id est", "elit sed do eiusmod tempor incididunt", "magna aliqua enim ad minim", "incididunt ut labore et dolore magna"]},
-    {"lead": "Delayed", "key": "do", "subs": ["nulla pariatur excepteur sint occaecat", "occaecat cupidatat", "cillum eu fugiat nulla pariatur", "proident sunt culpa qui", "elit sed"]}
+    {"lead": "Weakened", "key": "restriction", "subs": ["the cage loosening", "the block beginning to lift", "the mind freeing slowly", "constraint easing"]},
+    {"lead": "Inverted", "key": "freedom", "subs": ["the trap built by your own thought", "options that paralyze", "analysis as a prison", "the swords hemming you in"]},
+    {"lead": "Negative", "key": "victimhood", "subs": ["blaming the cage you built", "helplessness chosen", "overthinking as excuse", "the exit refused"]},
+    {"lead": "Delayed", "key": "freedom", "subs": ["the way out forming", "the block not yet cleared", "release pending", "the cut delayed"]}
   ],
   "swords09": [
-    {"lead": "Weakened", "key": "sunt", "subs": ["minim veniam quis", "dolor sit amet consectetur adipiscing", "sed do eiusmod tempor incididunt ut", "velit esse"]},
-    {"lead": "Inverted", "key": "ut", "subs": ["aliqua enim ad", "consequat duis", "est laborum", "magna aliqua enim"]},
-    {"lead": "Negative", "key": "nostrud", "subs": ["tempor incididunt ut", "irure in", "sunt culpa", "ipsum dolor sit amet consectetur", "quis nostrud exercitation ullamco"]},
-    {"lead": "Delayed", "key": "exercitation", "subs": ["ipsum dolor sit", "voluptate velit esse cillum eu", "laboris nisi aliquip ex ea commodo", "do eiusmod tempor", "in reprehenderit"]}
+    {"lead": "Weakened", "key": "anguish", "subs": ["the torment easing", "the nightmare thinning", "worry losing its grip", "the blades withdrawing"]},
+    {"lead": "Inverted", "key": "despair", "subs": ["anguish that feeds itself", "catastrophe rehearsed nightly", "the mind turned torturer", "fear magnified in the dark"]},
+    {"lead": "Negative", "key": "self-torture", "subs": ["cruelty turned inward", "guilt with no release", "worry as a habit", "the wound kept open"]},
+    {"lead": "Delayed", "key": "dawn", "subs": ["the night still long", "relief on slow approach", "the torment not yet past", "morning pending"]}
   ],
   "swords10": [
-    {"lead": "Weakened", "key": "exercitation", "subs": ["incididunt ut labore et dolore magna", "ex ea commodo consequat duis aute", "amet consectetur", "proident sunt culpa qui", "quis nostrud exercitation"]},
-    {"lead": "Inverted", "key": "consectetur", "subs": ["duis aute irure", "ut labore et dolore", "ipsum dolor sit amet consectetur", "aute irure", "incididunt ut labore et dolore magna", "culpa qui officia deserunt"]},
-    {"lead": "Negative", "key": "culpa", "subs": ["nisi aliquip ex ea commodo", "do eiusmod tempor", "tempor incididunt ut labore", "ut labore et dolore magna aliqua"]},
-    {"lead": "Delayed", "key": "non", "subs": ["reprehenderit voluptate", "fugiat nulla pariatur excepteur", "ipsum dolor sit amet consectetur", "nostrud exercitation ullamco laboris", "dolore magna"]}
+    {"lead": "Weakened", "key": "ruin", "subs": ["the collapse less total", "the bottom softening", "the worst nearly over", "the blades beginning to lift"]},
+    {"lead": "Inverted", "key": "collapse", "subs": ["clinging to the dead idea", "melodrama over the end", "refusing the bottom", "ruin re-staged"]},
+    {"lead": "Negative", "key": "defeatism", "subs": ["playing the martyr", "exaggerating the disaster", "the victim's final pose", "collapse courted"]},
+    {"lead": "Delayed", "key": "recovery", "subs": ["the dawn after ruin near", "the rebuild pending", "the rise not yet begun", "clearing still underway"]}
   ],
   "swords11": [
-    {"lead": "Weakened", "key": "culpa", "subs": ["dolor sit", "dolor sit amet consectetur adipiscing", "dolore magna aliqua", "reprehenderit voluptate", "velit esse cillum eu", "ipsum dolor sit amet consectetur"]},
-    {"lead": "Inverted", "key": "veniam", "subs": ["cupidatat non proident sunt culpa qui", "eu fugiat nulla pariatur", "velit esse cillum eu", "mollit anim id", "sunt culpa qui officia deserunt"]},
-    {"lead": "Negative", "key": "tempor", "subs": ["dolor sit", "proident sunt culpa qui officia", "qui officia deserunt mollit anim", "ad minim veniam quis nostrud", "minim veniam quis nostrud exercitation"]},
-    {"lead": "Delayed", "key": "ullamco", "subs": ["voluptate velit esse cillum eu", "aute irure in reprehenderit voluptate", "mollit anim id est", "veniam quis nostrud", "cillum eu", "commodo consequat duis aute irure in"]}
+    {"lead": "Weakened", "key": "clarity", "subs": ["wit gone scattered", "resolve softening", "the blade losing edge", "focus blurred"]},
+    {"lead": "Inverted", "key": "purpose", "subs": ["cleverness with no aim", "defending the wrong cause", "sharpness gone petty", "truth used carelessly"]},
+    {"lead": "Negative", "key": "ruthlessness", "subs": ["cutting without cause", "words used to wound", "vigilance gone paranoid", "cleverness over kindness"]},
+    {"lead": "Delayed", "key": "action", "subs": ["the cut still pending", "resolve still forming", "the truth not yet acted on", "the strike delayed"]}
   ],
   "swords12": [
-    {"lead": "Weakened", "key": "dolor", "subs": ["cillum eu fugiat nulla pariatur", "irure in reprehenderit voluptate velit", "dolor sit amet consectetur adipiscing", "reprehenderit voluptate velit esse", "excepteur sint"]},
-    {"lead": "Inverted", "key": "quis", "subs": ["adipiscing elit", "pariatur excepteur sint occaecat", "laboris nisi aliquip ex", "irure in reprehenderit", "et dolore magna"]},
-    {"lead": "Negative", "key": "quis", "subs": ["velit esse cillum eu fugiat nulla", "esse cillum eu fugiat nulla pariatur", "commodo consequat duis aute irure in", "velit esse cillum"]},
-    {"lead": "Delayed", "key": "veniam", "subs": ["officia deserunt mollit", "labore et", "consectetur adipiscing elit sed", "ullamco laboris nisi aliquip ex"]}
+    {"lead": "Weakened", "key": "intellect", "subs": ["clarity gone fuzzy", "analysis stalling", "the mind losing its edge", "focus scattering"]},
+    {"lead": "Inverted", "key": "reason", "subs": ["logic divorced from reality", "plans that outrun the world", "brilliance gone cold", "ideas chasing their tails"]},
+    {"lead": "Negative", "key": "coldness", "subs": ["thought without heart", "cruelty in the analysis", "manipulation by argument", "intellect as a weapon"]},
+    {"lead": "Delayed", "key": "decision", "subs": ["the call still pending", "the analysis unfinished", "the move delayed", "clarity forming"]}
   ],
   "swords13": [
-    {"lead": "Weakened", "key": "deserunt", "subs": ["in reprehenderit voluptate velit esse", "ea commodo consequat", "ad minim", "ea commodo consequat duis", "incididunt ut labore et dolore magna"]},
-    {"lead": "Inverted", "key": "ex", "subs": ["fugiat nulla pariatur excepteur", "anim id est", "duis aute", "adipiscing elit sed do eiusmod", "elit sed do eiusmod"]},
-    {"lead": "Negative", "key": "aliquip", "subs": ["tempor incididunt ut labore et", "in reprehenderit voluptate velit esse", "ea commodo", "ad minim", "deserunt mollit anim id est laborum"]},
-    {"lead": "Delayed", "key": "pariatur", "subs": ["veniam quis nostrud exercitation ullamco", "sunt culpa qui", "consequat duis aute irure", "aliquip ex ea commodo consequat duis"]}
+    {"lead": "Weakened", "key": "perception", "subs": ["insight gone cloudy", "discernment softening", "the keen eye dimmed", "judgment wavering"]},
+    {"lead": "Inverted", "key": "clarity", "subs": ["honesty turned to coldness", "insight that wounds", "fairness gone bitter", "sorrow hardened to ice"]},
+    {"lead": "Negative", "key": "bitterness", "subs": ["perception twisted by pain", "cutting words as defense", "cynicism mistaken for wisdom", "the lonely sharp tongue"]},
+    {"lead": "Delayed", "key": "discernment", "subs": ["the insight still forming", "clarity on its way", "judgment not yet clear", "perception settling"]}
   ],
   "swords14": [
-    {"lead": "Weakened", "key": "sunt", "subs": ["ullamco laboris nisi aliquip", "quis nostrud", "mollit anim id", "dolor sit amet consectetur adipiscing", "quis nostrud exercitation"]},
-    {"lead": "Inverted", "key": "aliqua", "subs": ["officia deserunt", "non proident sunt culpa", "nisi aliquip ex ea commodo consequat", "minim veniam quis nostrud exercitation", "lorem ipsum dolor", "laboris nisi"]},
-    {"lead": "Negative", "key": "ipsum", "subs": ["ea commodo consequat duis aute", "velit esse", "deserunt mollit anim id est laborum", "pariatur excepteur sint", "minim veniam quis"]},
-    {"lead": "Delayed", "key": "do", "subs": ["ipsum dolor", "sunt culpa qui officia deserunt", "quis nostrud exercitation", "elit sed"]}
+    {"lead": "Weakened", "key": "drive", "subs": ["the charge losing force", "conviction wavering", "the argument running thin", "momentum dropping"]},
+    {"lead": "Inverted", "key": "intellect", "subs": ["force without direction", "brilliance gone reckless", "the strike that misses", "logic at a gallop nowhere"]},
+    {"lead": "Negative", "key": "aggression", "subs": ["argument as attack", "cruelty in the charge", "force ahead of all caution", "the blade that won't pause"]},
+    {"lead": "Delayed", "key": "charge", "subs": ["the strike still pending", "conviction gathering", "the move delayed", "force not yet aimed"]}
   ],
   "pents01": [
-    {"lead": "Weakened", "key": "reprehenderit", "subs": ["ipsum dolor sit amet consectetur", "cillum eu", "occaecat cupidatat non proident", "tempor incididunt ut labore et", "laboris nisi aliquip ex", "cupidatat non proident sunt"]},
-    {"lead": "Inverted", "key": "officia", "subs": ["consequat duis aute irure in", "ea commodo consequat duis", "eiusmod tempor incididunt ut labore et", "minim veniam quis", "velit esse cillum eu fugiat", "officia deserunt mollit anim id"]},
-    {"lead": "Negative", "key": "tempor", "subs": ["incididunt ut labore et", "aliquip ex ea commodo consequat duis", "culpa qui officia deserunt mollit anim", "pariatur excepteur sint occaecat"]},
-    {"lead": "Delayed", "key": "consequat", "subs": ["sed do", "ipsum dolor sit", "tempor incididunt ut labore", "et dolore magna aliqua enim ad", "velit esse cillum eu"]}
+    {"lead": "Weakened", "key": "potential", "subs": ["the seed slow to root", "value hard to grasp", "the coin that won't land", "substance still vague"]},
+    {"lead": "Inverted", "key": "matter", "subs": ["potential left unplanted", "opportunity squandered", "the gift unopened", "the seed on hard ground"]},
+    {"lead": "Negative", "key": "greed", "subs": ["grasping the coin too tight", "material as the only good", "value hoarded", "the seed eaten, not sown"]},
+    {"lead": "Delayed", "key": "manifestation", "subs": ["the seed not yet sprouted", "value still forming", "the foundation pending", "substance on slow approach"]}
   ],
   "pents02": [
-    {"lead": "Weakened", "key": "exercitation", "subs": ["commodo consequat duis", "veniam quis nostrud exercitation ullamco", "duis aute irure in reprehenderit", "do eiusmod tempor incididunt ut", "cupidatat non", "do eiusmod tempor incididunt ut"]},
-    {"lead": "Inverted", "key": "id", "subs": ["adipiscing elit", "excepteur sint occaecat cupidatat", "consequat duis aute irure in", "amet consectetur adipiscing", "nostrud exercitation ullamco laboris"]},
-    {"lead": "Negative", "key": "aliquip", "subs": ["tempor incididunt ut", "in reprehenderit", "pariatur excepteur sint occaecat", "sunt culpa qui officia deserunt mollit"]},
-    {"lead": "Delayed", "key": "ad", "subs": ["eu fugiat nulla pariatur excepteur sint", "eiusmod tempor incididunt ut labore", "labore et dolore", "occaecat cupidatat"]}
+    {"lead": "Weakened", "key": "balance", "subs": ["the juggling faltering", "flow turning to wobble", "the coins slipping", "adaptability strained"]},
+    {"lead": "Inverted", "key": "flux", "subs": ["change with no center", "motion that exhausts", "the dance gone frantic", "flexibility as instability"]},
+    {"lead": "Negative", "key": "overwhelm", "subs": ["too many balls in the air", "chaos mistaken for flow", "drowning in the juggle", "change for change's sake"]},
+    {"lead": "Delayed", "key": "balance", "subs": ["the rhythm still finding itself", "stability still forming", "the dance settling", "equilibrium pending"]}
   ],
   "pents03": [
-    {"lead": "Weakened", "key": "reprehenderit", "subs": ["exercitation ullamco", "ad minim veniam quis nostrud", "consequat duis aute irure in", "sed do eiusmod", "occaecat cupidatat non proident", "id est laborum"]},
-    {"lead": "Inverted", "key": "elit", "subs": ["eu fugiat nulla pariatur excepteur sint", "sed do eiusmod tempor", "tempor incididunt", "ex ea commodo consequat duis aute"]},
-    {"lead": "Negative", "key": "ea", "subs": ["mollit anim", "officia deserunt mollit anim", "minim veniam quis nostrud exercitation", "labore et dolore magna aliqua enim"]},
-    {"lead": "Delayed", "key": "cupidatat", "subs": ["officia deserunt mollit anim", "ex ea commodo consequat duis aute", "reprehenderit voluptate", "fugiat nulla pariatur excepteur sint", "et dolore magna", "sunt culpa"]}
+    {"lead": "Weakened", "key": "craft", "subs": ["the skill faltering", "the work losing form", "quality slipping", "mastery uncertain"]},
+    {"lead": "Inverted", "key": "works", "subs": ["labor without meaning", "craft cut short", "building on weak ground", "skill unrecognized"]},
+    {"lead": "Negative", "key": "mediocrity", "subs": ["good enough mistaken for done", "cutting corners", "skill not honed", "the work phoned in"]},
+    {"lead": "Delayed", "key": "works", "subs": ["the craft still developing", "the structure rising slowly", "mastery not yet reached", "the build delayed"]}
   ],
   "pents04": [
-    {"lead": "Weakened", "key": "lorem", "subs": ["tempor incididunt ut labore", "tempor incididunt ut labore et", "amet consectetur", "culpa qui officia", "cupidatat non", "adipiscing elit sed do"]},
-    {"lead": "Inverted", "key": "nostrud", "subs": ["nulla pariatur", "proident sunt culpa", "consequat duis", "et dolore", "tempor incididunt ut labore"]},
-    {"lead": "Negative", "key": "eu", "subs": ["velit esse cillum eu", "nisi aliquip ex ea", "ad minim veniam quis nostrud", "sit amet consectetur adipiscing elit sed", "ullamco laboris", "exercitation ullamco"]},
-    {"lead": "Delayed", "key": "anim", "subs": ["enim ad minim veniam quis nostrud", "sint occaecat cupidatat non", "irure in reprehenderit voluptate velit", "exercitation ullamco laboris nisi"]}
+    {"lead": "Weakened", "key": "stability", "subs": ["the grip loosening", "structure softening", "control slipping", "the fortress cracking"]},
+    {"lead": "Inverted", "key": "control", "subs": ["holding so tight it stagnates", "hoarding the gain", "security become a cage", "the realm closed off"]},
+    {"lead": "Negative", "key": "greed", "subs": ["clinging out of fear", "stability as imprisonment", "wealth that owns you", "the grip that strangles"]},
+    {"lead": "Delayed", "key": "stability", "subs": ["the foundation still setting", "control still forming", "security pending", "the structure rising"]}
   ],
   "pents05": [
-    {"lead": "Weakened", "key": "irure", "subs": ["fugiat nulla pariatur excepteur", "pariatur excepteur sint occaecat", "magna aliqua enim", "enim ad minim veniam quis", "dolore magna", "adipiscing elit sed do"]},
-    {"lead": "Inverted", "key": "eu", "subs": ["elit sed", "adipiscing elit sed do eiusmod tempor", "elit sed do eiusmod tempor incididunt", "duis aute irure in reprehenderit", "irure in reprehenderit voluptate velit", "do eiusmod tempor incididunt"]},
-    {"lead": "Negative", "key": "cillum", "subs": ["sint occaecat cupidatat", "et dolore magna", "enim ad minim veniam quis", "consectetur adipiscing elit sed do", "culpa qui officia deserunt"]},
-    {"lead": "Delayed", "key": "ullamco", "subs": ["aliqua enim ad minim veniam", "aliqua enim ad", "non proident sunt culpa qui", "fugiat nulla pariatur excepteur sint", "aliquip ex ea commodo", "sunt culpa qui officia deserunt"]}
+    {"lead": "Weakened", "key": "worry", "subs": ["the fear easing", "scarcity loosening", "anxiety thinning", "lack less sharp"]},
+    {"lead": "Inverted", "key": "lack", "subs": ["poverty made permanent", "the door still unseen", "want fixed as identity", "help refused"]},
+    {"lead": "Negative", "key": "self-neglect", "subs": ["suffering when aid is near", "pride that won't ask", "scarcity as a story", "the warm door ignored"]},
+    {"lead": "Delayed", "key": "recovery", "subs": ["the help still coming", "the door not yet seen", "relief on slow approach", "stability pending"]}
   ],
   "pents06": [
-    {"lead": "Weakened", "key": "ut", "subs": ["incididunt ut labore et dolore", "cillum eu fugiat nulla pariatur", "velit esse cillum eu fugiat", "commodo consequat duis aute irure in"]},
-    {"lead": "Inverted", "key": "consequat", "subs": ["ea commodo consequat duis", "irure in reprehenderit voluptate velit", "qui officia", "duis aute irure in", "sint occaecat cupidatat non proident", "incididunt ut labore"]},
-    {"lead": "Negative", "key": "incididunt", "subs": ["occaecat cupidatat", "aliquip ex ea commodo consequat", "in reprehenderit voluptate velit esse", "sint occaecat cupidatat", "sed do eiusmod tempor incididunt", "laboris nisi"]},
-    {"lead": "Delayed", "key": "aliquip", "subs": ["dolore magna aliqua", "ex ea", "consectetur adipiscing elit", "in reprehenderit voluptate velit", "excepteur sint occaecat cupidatat"]}
+    {"lead": "Weakened", "key": "generosity", "subs": ["the exchange gone uneven", "giving that drains", "the scales tipping", "fairness slipping"]},
+    {"lead": "Inverted", "key": "balance", "subs": ["charity with strings", "power in who gives", "generosity as control", "the scales rigged"]},
+    {"lead": "Negative", "key": "debt", "subs": ["giving to be owed", "dependence dressed as help", "strings on every gift", "power through generosity"]},
+    {"lead": "Delayed", "key": "success", "subs": ["the reward still coming", "the exchange forming", "fair return pending", "the harvest delayed"]}
   ],
   "pents07": [
-    {"lead": "Weakened", "key": "eiusmod", "subs": ["non proident sunt", "anim id est", "aliquip ex", "elit sed do eiusmod tempor", "dolor sit amet consectetur", "sed do eiusmod tempor"]},
-    {"lead": "Inverted", "key": "laboris", "subs": ["amet consectetur", "in reprehenderit", "voluptate velit esse cillum", "do eiusmod tempor", "reprehenderit voluptate velit esse"]},
-    {"lead": "Negative", "key": "enim", "subs": ["velit esse", "deserunt mollit anim", "eu fugiat", "ipsum dolor sit amet consectetur", "laboris nisi aliquip"]},
-    {"lead": "Delayed", "key": "in", "subs": ["qui officia deserunt", "excepteur sint", "excepteur sint occaecat cupidatat non", "ipsum dolor sit amet consectetur"]}
+    {"lead": "Weakened", "key": "frustration", "subs": ["the disappointment easing", "the field less barren", "loss softening", "patience returning"]},
+    {"lead": "Inverted", "key": "failure", "subs": ["effort poured into nothing", "the crop that won't come", "quitting at the last", "harvest abandoned early"]},
+    {"lead": "Negative", "key": "defeatism", "subs": ["giving up too soon", "blaming the field, not the seed", "despair over the slow yield", "effort resented"]},
+    {"lead": "Delayed", "key": "harvest", "subs": ["the crop still ripening", "reward on slow approach", "the yield not yet in", "patience still needed"]}
   ],
   "pents08": [
-    {"lead": "Weakened", "key": "cupidatat", "subs": ["consequat duis", "aliqua enim", "adipiscing elit sed do eiusmod tempor", "do eiusmod tempor incididunt", "adipiscing elit"]},
-    {"lead": "Inverted", "key": "pariatur", "subs": ["dolor sit amet consectetur adipiscing", "excepteur sint occaecat cupidatat non", "proident sunt culpa qui officia", "officia deserunt mollit anim id est", "aute irure in reprehenderit voluptate", "amet consectetur adipiscing elit"]},
-    {"lead": "Negative", "key": "in", "subs": ["labore et dolore magna aliqua", "commodo consequat duis aute", "culpa qui officia deserunt mollit", "sint occaecat cupidatat non", "mollit anim id est"]},
-    {"lead": "Delayed", "key": "deserunt", "subs": ["aliqua enim ad", "ex ea", "incididunt ut labore et dolore magna", "eu fugiat"]}
+    {"lead": "Weakened", "key": "diligence", "subs": ["focus slipping", "the craft losing care", "attention wandering", "skill gone rusty"]},
+    {"lead": "Inverted", "key": "prudence", "subs": ["perfectionism that stalls", "detail over purpose", "busywork, not craft", "skill with no soul"]},
+    {"lead": "Negative", "key": "drudgery", "subs": ["work without meaning", "grinding for its own sake", "quality faked", "the craft gone mechanical"]},
+    {"lead": "Delayed", "key": "mastery", "subs": ["the skill still developing", "the craft maturing", "reward pending", "the apprenticeship ongoing"]}
   ],
   "pents09": [
-    {"lead": "Weakened", "key": "pariatur", "subs": ["lorem ipsum", "sed do eiusmod", "dolor sit amet consectetur adipiscing", "nisi aliquip ex ea commodo consequat", "qui officia deserunt mollit"]},
-    {"lead": "Inverted", "key": "quis", "subs": ["est laborum", "adipiscing elit sed do eiusmod", "ea commodo consequat duis aute irure", "eiusmod tempor incididunt ut labore et", "velit esse cillum"]},
-    {"lead": "Negative", "key": "adipiscing", "subs": ["ut labore et dolore", "tempor incididunt", "deserunt mollit", "enim ad", "aliqua enim ad minim veniam", "ad minim veniam quis nostrud"]},
-    {"lead": "Delayed", "key": "fugiat", "subs": ["incididunt ut", "dolor sit amet consectetur adipiscing", "nulla pariatur excepteur", "ipsum dolor sit amet consectetur", "sunt culpa"]}
+    {"lead": "Weakened", "key": "gain", "subs": ["the harvest thinning", "independence shaky", "comfort losing ease", "plenty less full"]},
+    {"lead": "Inverted", "key": "self-sufficiency", "subs": ["isolation in the garden", "wealth that walls you in", "plenty without sharing", "independence as loneliness"]},
+    {"lead": "Negative", "key": "materialism", "subs": ["value only in possessions", "comfort bought with connection", "plenty that doesn't satisfy", "the gilded cage"]},
+    {"lead": "Delayed", "key": "gain", "subs": ["the harvest still coming", "reward on its way", "plenty not yet ripe", "abundance pending"]}
   ],
   "pents10": [
-    {"lead": "Weakened", "key": "ullamco", "subs": ["do eiusmod tempor incididunt", "sint occaecat cupidatat", "aliqua enim", "fugiat nulla pariatur excepteur sint", "ex ea"]},
-    {"lead": "Inverted", "key": "dolore", "subs": ["velit esse", "lorem ipsum", "cillum eu", "qui officia deserunt mollit", "consequat duis aute irure"]},
-    {"lead": "Negative", "key": "nisi", "subs": ["proident sunt culpa qui officia deserunt", "anim id est laborum", "cillum eu", "sit amet consectetur", "quis nostrud exercitation ullamco"]},
-    {"lead": "Delayed", "key": "magna", "subs": ["sunt culpa qui officia deserunt", "do eiusmod tempor incididunt ut", "sed do", "dolore magna aliqua enim ad minim", "tempor incididunt ut labore et"]}
+    {"lead": "Weakened", "key": "wealth", "subs": ["the foundation softening", "legacy uncertain", "abundance thinning", "roots loosening"]},
+    {"lead": "Inverted", "key": "legacy", "subs": ["wealth that divides the family", "inheritance fought over", "tradition become a burden", "the gold that traps"]},
+    {"lead": "Negative", "key": "greed", "subs": ["hoarding the legacy", "status over substance", "wealth as the only measure", "the family bound by money"]},
+    {"lead": "Delayed", "key": "wealth", "subs": ["the foundation still building", "legacy still forming", "the inheritance pending", "abundance settling"]}
   ],
   "pents11": [
-    {"lead": "Weakened", "key": "reprehenderit", "subs": ["eu fugiat nulla", "consequat duis aute irure", "laboris nisi aliquip ex ea", "fugiat nulla pariatur", "deserunt mollit anim"]},
-    {"lead": "Inverted", "key": "eiusmod", "subs": ["eiusmod tempor incididunt ut labore et", "eu fugiat", "culpa qui officia deserunt mollit anim", "cillum eu fugiat", "quis nostrud"]},
-    {"lead": "Negative", "key": "amet", "subs": ["consequat duis aute irure", "magna aliqua", "tempor incididunt ut labore", "tempor incididunt ut labore et dolore", "qui officia deserunt"]},
-    {"lead": "Delayed", "key": "occaecat", "subs": ["ullamco laboris", "et dolore magna", "sunt culpa qui officia deserunt", "minim veniam quis", "minim veniam quis"]}
+    {"lead": "Weakened", "key": "fertility", "subs": ["the seed slow to take", "groundedness shaky", "potential dormant", "the soil cold"]},
+    {"lead": "Inverted", "key": "practicality", "subs": ["study without doing", "potential left unplanted", "earthbound, not grounded", "the new growth stalled"]},
+    {"lead": "Negative", "key": "materialism", "subs": ["value only in the tangible", "comfort over growth", "the body neglected or overfed", "substance without spirit"]},
+    {"lead": "Delayed", "key": "fertility", "subs": ["the seed still gestating", "growth pending", "the first step delayed", "potential still forming"]}
   ],
   "pents12": [
-    {"lead": "Weakened", "key": "id", "subs": ["nisi aliquip ex ea commodo consequat", "dolor sit", "elit sed do eiusmod tempor incididunt", "eiusmod tempor"]},
-    {"lead": "Inverted", "key": "excepteur", "subs": ["duis aute irure in reprehenderit", "amet consectetur adipiscing", "cupidatat non proident sunt", "et dolore magna", "officia deserunt mollit anim"]},
-    {"lead": "Negative", "key": "eu", "subs": ["anim id est laborum", "ut labore et", "nostrud exercitation ullamco laboris", "irure in reprehenderit voluptate velit"]},
-    {"lead": "Delayed", "key": "nisi", "subs": ["laboris nisi aliquip", "adipiscing elit sed do eiusmod tempor", "consectetur adipiscing elit sed", "amet consectetur adipiscing elit sed", "cillum eu fugiat nulla", "veniam quis"]}
+    {"lead": "Weakened", "key": "competence", "subs": ["the work losing steam", "reliability shaky", "focus drifting", "method faltering"]},
+    {"lead": "Inverted", "key": "industry", "subs": ["labor with no foresight", "plodding with no plan", "stubbornness over progress", "work that never finishes"]},
+    {"lead": "Negative", "key": "greed", "subs": ["industry only for gain", "exploiting the ground", "material obsession", "the plan that strips the soil"]},
+    {"lead": "Delayed", "key": "harvest", "subs": ["the work still underway", "progress slow but coming", "the yield pending", "results delayed"]}
   ],
   "pents13": [
-    {"lead": "Weakened", "key": "magna", "subs": ["incididunt ut labore et", "ea commodo consequat", "nostrud exercitation ullamco laboris", "ut labore et dolore magna aliqua", "sint occaecat cupidatat non proident"]},
-    {"lead": "Inverted", "key": "aliquip", "subs": ["quis nostrud exercitation ullamco", "sed do eiusmod tempor incididunt ut", "dolor sit amet", "tempor incididunt", "incididunt ut"]},
-    {"lead": "Negative", "key": "ut", "subs": ["enim ad minim veniam quis", "quis nostrud exercitation ullamco", "ad minim", "voluptate velit", "cupidatat non", "velit esse cillum eu"]},
-    {"lead": "Delayed", "key": "occaecat", "subs": ["laboris nisi aliquip", "sunt culpa qui officia", "labore et dolore magna aliqua enim", "occaecat cupidatat", "duis aute irure"]}
+    {"lead": "Weakened", "key": "care", "subs": ["nurturing run thin", "the garden untended", "warmth fading", "groundedness shaky"]},
+    {"lead": "Inverted", "key": "nurture", "subs": ["smothering the growth", "care that depletes you", "the oasis gone dry", "comfort that controls"]},
+    {"lead": "Negative", "key": "self-neglect", "subs": ["tending all but yourself", "martyrdom in the care", "material worry under the warmth", "giving past empty"]},
+    {"lead": "Delayed", "key": "fertility", "subs": ["the garden still growing", "care taking root", "abundance pending", "warmth gathering"]}
   ],
   "pents14": [
-    {"lead": "Weakened", "key": "velit", "subs": ["proident sunt culpa qui officia", "pariatur excepteur sint occaecat", "veniam quis nostrud exercitation ullamco", "lorem ipsum", "eiusmod tempor incididunt ut labore et", "consequat duis aute"]},
-    {"lead": "Inverted", "key": "minim", "subs": ["amet consectetur adipiscing elit sed", "fugiat nulla pariatur", "fugiat nulla pariatur", "veniam quis nostrud exercitation ullamco", "pariatur excepteur sint occaecat", "veniam quis"]},
-    {"lead": "Negative", "key": "amet", "subs": ["exercitation ullamco laboris nisi", "cupidatat non proident sunt culpa qui", "officia deserunt mollit anim", "nulla pariatur excepteur sint"]},
-    {"lead": "Delayed", "key": "veniam", "subs": ["sunt culpa qui officia deserunt mollit", "ut labore et dolore", "magna aliqua enim ad minim", "ea commodo consequat duis aute irure"]}
+    {"lead": "Weakened", "key": "reliability", "subs": ["the steady pace slowing", "endurance flagging", "force losing patience", "the load slipping"]},
+    {"lead": "Inverted", "key": "industry", "subs": ["plodding mistaken for progress", "work with no vision", "stubbornness over sense", "the field over-tilled"]},
+    {"lead": "Negative", "key": "inertia", "subs": ["stuck in the routine", "rigidity called reliability", "fear of change", "the rut worn deep"]},
+    {"lead": "Delayed", "key": "harvest", "subs": ["the long work still going", "the yield not yet in", "reward on slow approach", "completion pending"]}
   ]
 };
