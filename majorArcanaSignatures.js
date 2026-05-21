@@ -20,6 +20,10 @@
   let activeOverlays = [];
   let activeAnims = [];
   let activeTimer = null;
+  // Which deck is active ("rw" | "thoth"). A few effects whose geometry
+  // depends on where art sits on the card (currently just the Sun) read
+  // this to pick per-deck coordinates. Set via the public setDeck().
+  let activeDeck = "rw";
 
   // ---- helpers ------------------------------------------------------
   const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -1282,9 +1286,15 @@
     const src = imgEl.src;
     const totalMs = 1900;
 
-    const sunCxFrac = 0.50;
-    const sunCyFrac = 0.25;
-    const sunRFrac  = 0.24;
+    // Where the sun disc sits on the card, per deck. RW (Rider-Waite)
+    // has it upper-centre; the Thoth Sun's disc is larger and a touch
+    // lower-centre in the ARTFILL crop. (User will fine-tune Thoth.)
+    var coords = (activeDeck === "thoth")
+      ? { cx: 0.50, cy: 0.36, r: 0.27 }
+      : { cx: 0.50, cy: 0.25, r: 0.24 };
+    const sunCxFrac = coords.cx;
+    const sunCyFrac = coords.cy;
+    const sunRFrac  = coords.r;
     const sunCx = cr.left + cr.width  * sunCxFrac;
     const sunCy = cr.top  + cr.height * sunCyFrac;
     const sunR  = cr.width * sunRFrac;
@@ -1530,10 +1540,13 @@
   const reduceMotion =
     window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  function setDeck(id) { activeDeck = (id === "thoth") ? "thoth" : "rw"; }
+
   window.MajorArcanaSignature = {
     isMajor: isMajor,
     play:    reduceMotion ? function () {} : play,
     cancel:  clearAll,
-    schedule: reduceMotion ? function () {} : schedule
+    schedule: reduceMotion ? function () {} : schedule,
+    setDeck: setDeck
   };
 })();

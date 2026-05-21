@@ -5,11 +5,56 @@ const MIN_HOLD_MS = 260;
 // Re-entrancy guard: ignore a click while a draw or reset is mid-flight.
 let drawing = false;
 
-// Whether the visible image is the card back (RoseLilyRed.jpg) or a face-up
-// card. A tap on the back draws; a tap on a face-up card sets it down.
+// Whether the visible image is the card back or a face-up card. A tap on
+// the back draws; a tap on a face-up card sets it down.
 let showingBack = true;
 
-const BACK_SRC = "RoseLilyRed.jpg";
+// --- Deck model -------------------------------------------------------
+// The app ships two decks: the default Rider-Waite ("rw") and the Crowley
+// Thoth ("thoth"). RW is the canonical experience and behaves exactly as
+// before. Thoth is reached by a two-finger zigzag-down gesture (see the
+// gesture section below) and adds a three-step zoom (artfill/fullart/big).
+//
+// Both decks share the SAME internal card keys (maj00..pents14) so the
+// draw mechanics, reversal roll, and Major-Arcana signature dispatch are
+// deck-agnostic — only image resolution and meaning-text lookup differ.
+
+// Canonical key order, matching the original allCards array order:
+// 22 majors, then wands, cups, swords, pents (14 each) = 78.
+const CARD_KEYS = [].concat(
+  Array.from({ length: 22 }, (_, i) => "maj" + String(i).padStart(2, "0")),
+  ["wands", "cups", "swords", "pents"].flatMap((suit) =>
+    Array.from({ length: 14 }, (_, i) => suit + String(i + 1).padStart(2, "0"))
+  )
+);
+
+const DECKS = {
+  rw: {
+    back: "RoseLilyRed.jpg",
+    hasZoom: false,
+    // RW art is remote (learntarot.com), one image per card, no zoom.
+    cardSrc: (key) => "https://www.learntarot.com/bigjpgs/" + key + ".jpg",
+    upright:  () => (typeof CARD_ACTIONS !== "undefined" ? CARD_ACTIONS : null),
+    reversed: () => (typeof CARD_ACTIONS_REVERSED !== "undefined" ? CARD_ACTIONS_REVERSED : null),
+  },
+  thoth: {
+    back: "thoth/back.jpg",
+    hasZoom: true,
+    // Thoth art is local, three crops per card keyed by zoom mode.
+    cardSrc: (key, zoom) => "thoth/" + (zoom || "artfill") + "/" + key + ".jpg",
+    upright:  () => (typeof CARD_ACTIONS_THOTH !== "undefined" ? CARD_ACTIONS_THOTH : null),
+    reversed: () => (typeof CARD_ACTIONS_REVERSED_THOTH !== "undefined" ? CARD_ACTIONS_REVERSED_THOTH : null),
+  },
+};
+
+let currentDeck = "rw";          // active deck id
+const ZOOM_ORDER = ["artfill", "fullart", "big"];  // index 0 = most zoomed-in
+let zoomMode = "artfill";        // current Thoth zoom; always reset to artfill on a new draw
+
+function deckModel() { return DECKS[currentDeck]; }
+function backSrc() { return deckModel().back; }
+// Resolve the on-screen image URL for a card key in the current deck/zoom.
+function cardSrcFor(key) { return deckModel().cardSrc(key, zoomMode); }
 
 // --- Reversal config --------------------------------------------------
 // Percentage chance that any given draw resolves to a reversed card.
@@ -192,88 +237,6 @@ async function newPage(event) {
   // fires before or after `touchend` on a given browser.
   if (performance.now() < suppressClicksUntil) return;
 
-  // 78 external card images from learntarot.com:
-  const allCards = [
-    "https://www.learntarot.com/bigjpgs/maj00.jpg",
-    "https://www.learntarot.com/bigjpgs/maj01.jpg",
-    "https://www.learntarot.com/bigjpgs/maj02.jpg",
-    "https://www.learntarot.com/bigjpgs/maj03.jpg",
-    "https://www.learntarot.com/bigjpgs/maj04.jpg",
-    "https://www.learntarot.com/bigjpgs/maj05.jpg",
-    "https://www.learntarot.com/bigjpgs/maj06.jpg",
-    "https://www.learntarot.com/bigjpgs/maj07.jpg",
-    "https://www.learntarot.com/bigjpgs/maj08.jpg",
-    "https://www.learntarot.com/bigjpgs/maj09.jpg",
-    "https://www.learntarot.com/bigjpgs/maj10.jpg",
-    "https://www.learntarot.com/bigjpgs/maj11.jpg",
-    "https://www.learntarot.com/bigjpgs/maj12.jpg",
-    "https://www.learntarot.com/bigjpgs/maj13.jpg",
-    "https://www.learntarot.com/bigjpgs/maj14.jpg",
-    "https://www.learntarot.com/bigjpgs/maj15.jpg",
-    "https://www.learntarot.com/bigjpgs/maj16.jpg",
-    "https://www.learntarot.com/bigjpgs/maj17.jpg",
-    "https://www.learntarot.com/bigjpgs/maj18.jpg",
-    "https://www.learntarot.com/bigjpgs/maj19.jpg",
-    "https://www.learntarot.com/bigjpgs/maj20.jpg",
-    "https://www.learntarot.com/bigjpgs/maj21.jpg",
-    "https://www.learntarot.com/bigjpgs/wands01.jpg",
-    "https://www.learntarot.com/bigjpgs/wands02.jpg",
-    "https://www.learntarot.com/bigjpgs/wands03.jpg",
-    "https://www.learntarot.com/bigjpgs/wands04.jpg",
-    "https://www.learntarot.com/bigjpgs/wands05.jpg",
-    "https://www.learntarot.com/bigjpgs/wands06.jpg",
-    "https://www.learntarot.com/bigjpgs/wands07.jpg",
-    "https://www.learntarot.com/bigjpgs/wands08.jpg",
-    "https://www.learntarot.com/bigjpgs/wands09.jpg",
-    "https://www.learntarot.com/bigjpgs/wands10.jpg",
-    "https://www.learntarot.com/bigjpgs/wands11.jpg",
-    "https://www.learntarot.com/bigjpgs/wands12.jpg",
-    "https://www.learntarot.com/bigjpgs/wands13.jpg",
-    "https://www.learntarot.com/bigjpgs/wands14.jpg",
-    "https://www.learntarot.com/bigjpgs/cups01.jpg",
-    "https://www.learntarot.com/bigjpgs/cups02.jpg",
-    "https://www.learntarot.com/bigjpgs/cups03.jpg",
-    "https://www.learntarot.com/bigjpgs/cups04.jpg",
-    "https://www.learntarot.com/bigjpgs/cups05.jpg",
-    "https://www.learntarot.com/bigjpgs/cups06.jpg",
-    "https://www.learntarot.com/bigjpgs/cups07.jpg",
-    "https://www.learntarot.com/bigjpgs/cups08.jpg",
-    "https://www.learntarot.com/bigjpgs/cups09.jpg",
-    "https://www.learntarot.com/bigjpgs/cups10.jpg",
-    "https://www.learntarot.com/bigjpgs/cups11.jpg",
-    "https://www.learntarot.com/bigjpgs/cups12.jpg",
-    "https://www.learntarot.com/bigjpgs/cups13.jpg",
-    "https://www.learntarot.com/bigjpgs/cups14.jpg",
-    "https://www.learntarot.com/bigjpgs/swords01.jpg",
-    "https://www.learntarot.com/bigjpgs/swords02.jpg",
-    "https://www.learntarot.com/bigjpgs/swords03.jpg",
-    "https://www.learntarot.com/bigjpgs/swords04.jpg",
-    "https://www.learntarot.com/bigjpgs/swords05.jpg",
-    "https://www.learntarot.com/bigjpgs/swords06.jpg",
-    "https://www.learntarot.com/bigjpgs/swords07.jpg",
-    "https://www.learntarot.com/bigjpgs/swords08.jpg",
-    "https://www.learntarot.com/bigjpgs/swords09.jpg",
-    "https://www.learntarot.com/bigjpgs/swords10.jpg",
-    "https://www.learntarot.com/bigjpgs/swords11.jpg",
-    "https://www.learntarot.com/bigjpgs/swords12.jpg",
-    "https://www.learntarot.com/bigjpgs/swords13.jpg",
-    "https://www.learntarot.com/bigjpgs/swords14.jpg",
-    "https://www.learntarot.com/bigjpgs/pents01.jpg",
-    "https://www.learntarot.com/bigjpgs/pents02.jpg",
-    "https://www.learntarot.com/bigjpgs/pents03.jpg",
-    "https://www.learntarot.com/bigjpgs/pents04.jpg",
-    "https://www.learntarot.com/bigjpgs/pents05.jpg",
-    "https://www.learntarot.com/bigjpgs/pents06.jpg",
-    "https://www.learntarot.com/bigjpgs/pents07.jpg",
-    "https://www.learntarot.com/bigjpgs/pents08.jpg",
-    "https://www.learntarot.com/bigjpgs/pents09.jpg",
-    "https://www.learntarot.com/bigjpgs/pents10.jpg",
-    "https://www.learntarot.com/bigjpgs/pents11.jpg",
-    "https://www.learntarot.com/bigjpgs/pents12.jpg",
-    "https://www.learntarot.com/bigjpgs/pents13.jpg",
-    "https://www.learntarot.com/bigjpgs/pents14.jpg"
-  ];
-
   const imgEl = document.querySelector("img");
 
   // Ignore a click while a draw or reset is mid-flight.
@@ -281,14 +244,14 @@ async function newPage(event) {
   drawing = true;
 
   if (showingBack) {
-    await drawCard(imgEl, event, allCards);
+    await drawCard(imgEl, event);
   } else {
     await setDownToBack(imgEl);
   }
 }
 
 // "Breath": dim + recede, fetch entropy, swap to the chosen card, fade up.
-async function drawCard(imgEl, event, allCards) {
+async function drawCard(imgEl, event) {
   // If the deck is exhausted, honor the moment with a settle animation
   // before drawing the first card of the new shuffle.
   if (deck.length === 0) {
@@ -303,7 +266,13 @@ async function drawCard(imgEl, event, allCards) {
   // the chosen index so it can't repeat until the next reshuffle.
   const pickAt = await pickRandomIndex(deck.length, event);
   const cardIdx = deck.splice(pickAt, 1)[0];
-  const chosenUrl = allCards[cardIdx];
+  const chosenKey = CARD_KEYS[cardIdx];
+
+  // Every new draw resolves at the canonical ARTFILL zoom. (The zoom
+  // state is intentionally NOT preserved across draws for now — the card
+  // always "comes up" filling the frame; the querent can re-zoom after.)
+  zoomMode = "artfill";
+  const chosenUrl = cardSrcFor(chosenKey);
 
   // INDEPENDENT reversal roll — fresh entropy fetch, own hashing stream,
   // can't perturb the deck pick (which already happened). See rollReversal.
@@ -320,8 +289,8 @@ async function drawCard(imgEl, event, allCards) {
   // Swap the source while still dimmed (any flash is masked by low opacity),
   // then on the next frame release the dim — the card fades up into focus.
   imgEl.src = chosenUrl;
-  // Stash the filename key so the info overlay can look it up on long-press.
-  currentCardName = cardNameFromUrl(chosenUrl);
+  // Stash the card key so the info overlay can look it up on long-press.
+  currentCardName = chosenKey;
   requestAnimationFrame(() => {
     imgEl.classList.remove("dimmed");
     haptic(10); // a contemplative beat — the card has arrived
@@ -349,13 +318,6 @@ async function drawCard(imgEl, event, allCards) {
   });
 }
 
-// Extract the filename key (e.g. "maj19", "swords10") from a card URL,
-// matching the keys in CARD_ACTIONS.
-function cardNameFromUrl(url) {
-  const m = url.match(/\/([a-z]+\d+)\.jpg$/i);
-  return m ? m[1].toLowerCase() : null;
-}
-
 // "Set down": face-up card drifts down + fades out, then is replaced by
 // the back, which fades in crisply. Qualitatively different from the draw
 // (vertical, not depth; firmer easing; no scale).
@@ -364,9 +326,15 @@ async function setDownToBack(imgEl) {
   // can't keep painting over a card that's no longer on screen.
   if (window.MajorArcanaSignature) window.MajorArcanaSignature.cancel();
 
+  // Clear any Thoth zoom transform left on the card before setting it
+  // down. The set-down can begin from BIG or FULLART directly (no need
+  // to bounce through ARTFILL first) — the existing translate/fade
+  // "drop" carries it to the back regardless of which crop was showing.
+  clearZoomTransform(imgEl);
+
   // Make sure the back is in cache before we start the motion, so the
   // swap is instant and the fade-in is smooth.
-  await preloadImage(BACK_SRC);
+  await preloadImage(backSrc());
 
   // Add .resetting WITHOUT pre-clearing .reversed. The combo CSS rule
   // (img.reversed.resetting) keeps the rotation pinned at 180° while
@@ -385,7 +353,7 @@ async function setDownToBack(imgEl) {
     void imgEl.offsetHeight;
     imgEl.classList.remove("glitching");
   }
-  imgEl.src = BACK_SRC;
+  imgEl.src = backSrc();
 
   // Next frame: drop the .resetting class, letting the back fade back in
   // from opacity 0 / translateY(6px) → 1 / 0 via the same transition.
@@ -440,7 +408,26 @@ function clearPressTimers() {
   if (commitTimer) { clearTimeout(commitTimer); commitTimer = null; }
 }
 
-function pressStart() {
+// Fully abort an in-flight long-press (used when a second finger lands,
+// turning the interaction into a two-finger gesture instead).
+function cancelPress() {
+  clearPressTimers();
+  if (pulseStarted) {
+    const imgEl = document.querySelector("img");
+    if (imgEl) imgEl.classList.remove("charging");
+  }
+  pulseStarted = false;
+  pressCommitted = false;
+}
+
+function pressStart(event) {
+  // Multi-touch is reserved for the two-finger gestures (deck zigzag,
+  // zoom pinch/spread). If a second finger is already down, abort any
+  // single-finger long-press so the gestures don't collide.
+  if (event && event.touches && event.touches.length >= 2) {
+    cancelPress();
+    return;
+  }
   // Idempotent: if any timer/flag is already active for this gesture,
   // a duplicate start event (e.g. pointerdown after touchstart) is a no-op.
   if (pulseTimer || commitTimer || pulseStarted || pressCommitted) return;
@@ -521,9 +508,394 @@ function pressEnd() {
   // fire `newPage` and draw a card as usual.
 }
 
+// --- Two-finger gestures: deck zigzag + zoom pinch/spread -------------
+// Both are tracked from the same touch stream. We watch the two-touch
+// midpoint path and the inter-finger distance/angle:
+//   - ZIGZAG (midpoint oscillates left/right while travelling down, with
+//     the fingers staying roughly the same distance/angle apart) toggles
+//     the deck. The zigzag is mandatory — a straight two-finger drag does
+//     nothing. "If you know, you know."
+//   - PINCH / SPREAD (inter-finger distance shrinks/grows, few midpoint
+//     reversals) steps the Thoth zoom (artfill ⇄ fullart ⇄ big). Pinch =
+//     zoom out toward BIG, spread = zoom in toward ARTFILL.
+// These are mutually exclusive per gesture: on release we classify which
+// one happened and act on exactly one.
+
+let tfActive = false;       // a two-finger gesture is in progress
+let tfStart = null;         // {dist, angle, midX, midY, time}
+let tfMidPath = [];         // sampled midpoints for zigzag analysis
+let tfZoomLive = false;     // whether we're showing a live zoom preview
+
+const ZIGZAG_MIN_REVERSALS = 3;     // X-direction reversals required
+const ZIGZAG_MIN_DOWN = 60;         // px of net downward midpoint travel
+const ZIGZAG_MIN_AMP = 26;          // px lateral amplitude
+const ZIGZAG_MAX_DIST_DRIFT = 0.28; // fingers must stay ~together
+const ZIGZAG_MAX_ANGLE_DRIFT = 0.45;// rad (~26°)
+const ZOOM_STEP_RATIO = 0.16;       // |ratio-1| past this commits a zoom step
+
+function tfDist(a, b) { return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY); }
+function tfAngle(a, b) { return Math.atan2(b.clientY - a.clientY, b.clientX - a.clientX); }
+function tfMid(a, b) { return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 }; }
+
+function twoFingerStart(e) {
+  if (!e.touches || e.touches.length !== 2) return;
+  cancelPress(); // a long-press can't coexist with a two-finger gesture
+  const [t0, t1] = e.touches;
+  tfActive = true;
+  tfStart = {
+    dist: tfDist(t0, t1),
+    angle: tfAngle(t0, t1),
+    midX: (t0.clientX + t1.clientX) / 2,
+    midY: (t0.clientY + t1.clientY) / 2,
+    time: e.timeStamp
+  };
+  tfMidPath = [{ x: tfStart.midX, y: tfStart.midY }];
+  tfZoomLive = false;
+  if (e.cancelable) e.preventDefault(); // suppress native page pinch-zoom
+}
+
+function twoFingerMove(e) {
+  if (!tfActive || !e.touches || e.touches.length !== 2) return;
+  if (e.cancelable) e.preventDefault();
+  const [t0, t1] = e.touches;
+  tfMidPath.push(tfMid(t0, t1));
+
+  // Live zoom preview: only on a face-up Thoth card, and only once the
+  // pinch has clearly diverged from a zigzag (distance is changing more
+  // than the midpoint is wandering laterally). Gives finger-tracked
+  // responsiveness during the gesture; the discrete commit lands on
+  // release.
+  if (currentDeck === "thoth" && !showingBack && !drawing) {
+    const d = tfDist(t0, t1);
+    const ratio = d / tfStart.dist;
+    const lateral = Math.abs(tfMid(t0, t1).x - tfStart.midX);
+    if (Math.abs(ratio - 1) > 0.06 && Math.abs(ratio - 1) * 240 > lateral) {
+      tfZoomLive = true;
+      applyLiveZoom(ratio);
+    }
+  }
+}
+
+function twoFingerEnd(e) {
+  if (!tfActive) return;
+  // Wait until fewer than two fingers remain.
+  if (e.touches && e.touches.length >= 2) return;
+  tfActive = false;
+
+  // Suppress the trailing synthetic click finger-release can fire, so a
+  // gesture is never chased by an unwanted draw / set-down.
+  suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
+
+  const result = classifyTwoFinger();
+  if (result === "zigzag") {
+    if (tfZoomLive) cancelLiveZoom();   // a zigzag wins over any stray zoom
+    toggleDeck();
+  } else if (result === "pinch" || result === "spread") {
+    commitZoom(result);
+  } else {
+    if (tfZoomLive) cancelLiveZoom();    // ambiguous — revert preview
+  }
+  tfStart = null;
+  tfMidPath = [];
+  tfZoomLive = false;
+}
+
+// Decide what the just-finished two-finger gesture was.
+function classifyTwoFinger() {
+  if (!tfStart || tfMidPath.length < 6) return null;
+
+  // Zigzag test first (it's the gated, deliberate one).
+  const first = tfMidPath[0];
+  const last = tfMidPath[tfMidPath.length - 1];
+  const netDown = last.y - first.y;
+  let reversals = 0, lastSign = 0, minX = Infinity, maxX = -Infinity;
+  for (let i = 1; i < tfMidPath.length; i++) {
+    const dx = tfMidPath[i].x - tfMidPath[i - 1].x;
+    if (tfMidPath[i].x < minX) minX = tfMidPath[i].x;
+    if (tfMidPath[i].x > maxX) maxX = tfMidPath[i].x;
+    if (Math.abs(dx) < 2) continue;
+    const sign = Math.sign(dx);
+    if (lastSign !== 0 && sign !== lastSign) reversals++;
+    lastSign = sign;
+  }
+  const amp = maxX - minX;
+
+  // Finger geometry over the gesture: we only have start; approximate
+  // drift from the final distance/angle if a fresh pair were available.
+  // (We captured only midpoints during move; distance constancy is
+  // enforced implicitly because a pinch produces few reversals.)
+  if (reversals >= ZIGZAG_MIN_REVERSALS &&
+      netDown >= ZIGZAG_MIN_DOWN &&
+      amp >= ZIGZAG_MIN_AMP) {
+    return "zigzag";
+  }
+
+  // Otherwise treat it as a zoom if the live preview engaged (which only
+  // happens when distance changed meaningfully and reversals were few).
+  if (tfZoomLive) {
+    return liveZoomRatio < 1 ? "pinch" : "spread";
+  }
+  return null;
+}
+
+// --- Live zoom preview + commit ---------------------------------------
+// During a pinch/spread we scale the current card image with the fingers
+// for tactile feedback. On release we snap to the next discrete zoom
+// mode with a brief crossfade between the two crops (same artwork,
+// different framing — the crossfade reads as a continuous zoom).
+
+let liveZoomRatio = 1;
+
+function applyLiveZoom(ratio) {
+  const imgEl = document.querySelector("img");
+  if (!imgEl) return;
+  // Clamp so the preview never gets absurd; ease past the clamp softly.
+  liveZoomRatio = Math.max(0.55, Math.min(1.8, ratio));
+  imgEl.style.transition = "none";
+  imgEl.style.transform = "scale(" + liveZoomRatio.toFixed(4) + ")";
+}
+
+function cancelLiveZoom() {
+  const imgEl = document.querySelector("img");
+  if (!imgEl) return;
+  imgEl.style.transition = "transform 220ms cubic-bezier(0.2,0,0,1)";
+  imgEl.style.transform = "scale(1)";
+  setTimeout(() => clearZoomTransform(imgEl), 240);
+}
+
+function clearZoomTransform(imgEl) {
+  if (!imgEl) return;
+  imgEl.style.transition = "";
+  imgEl.style.transform = "";
+}
+
+// Step the zoom mode and crossfade to the new crop.
+function commitZoom(dir) {
+  if (currentDeck !== "thoth" || showingBack || drawing) { cancelLiveZoom(); return; }
+  const idx = ZOOM_ORDER.indexOf(zoomMode);
+  // pinch = zoom OUT = move toward BIG (higher index); spread = zoom IN.
+  const nextIdx = dir === "pinch"
+    ? Math.min(ZOOM_ORDER.length - 1, idx + 1)
+    : Math.max(0, idx - 1);
+  if (nextIdx === idx) { cancelLiveZoom(); return; }   // already at an end
+  const nextMode = ZOOM_ORDER[nextIdx];
+  zoomMode = nextMode;
+  crossfadeToZoom(nextMode);
+}
+
+// Crossfade the visible card from its current crop to the target crop.
+// A temporary overlay <img> holds the new crop; we fade it in (and fade
+// the live-scaled current image out) over a short eased window, then
+// promote it to the main image.
+function crossfadeToZoom(mode) {
+  const imgEl = document.querySelector("img");
+  if (!imgEl || !currentCardName) return;
+  const targetUrl = deckModel().cardSrc(currentCardName, mode);
+
+  const ghost = document.createElement("img");
+  ghost.src = targetUrl;
+  ghost.className = "zoom-ghost";
+  // Match the host img's box exactly.
+  ghost.style.cssText =
+    "position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;" +
+    "object-fit:contain;pointer-events:none;z-index:30;opacity:0;" +
+    "transform:scale(" + (liveZoomRatio || 1).toFixed(3) + ");" +
+    "transition:opacity 240ms ease, transform 260ms cubic-bezier(0.2,0,0,1);";
+  document.body.appendChild(ghost);
+
+  // Fade the (live-scaled) current image out and ease it slightly past
+  // the pinch direction; fade the target in and settle it to scale 1.
+  imgEl.style.transition = "opacity 220ms ease, transform 260ms cubic-bezier(0.2,0,0,1)";
+  void ghost.offsetHeight;
+  requestAnimationFrame(() => {
+    ghost.style.opacity = "1";
+    ghost.style.transform = "scale(1)";
+    imgEl.style.opacity = "0";
+  });
+
+  setTimeout(() => {
+    // Promote: swap the real img to the target crop, drop the ghost.
+    imgEl.src = targetUrl;
+    clearZoomTransform(imgEl);
+    imgEl.style.transition = "";
+    imgEl.style.opacity = "";
+    if (ghost.parentNode) ghost.parentNode.removeChild(ghost);
+    haptic(4);
+  }, 270);
+}
+
+// --- Deck toggle + Scooby-Doo alternate-reality transition ------------
+// Switching decks warps the current card (back OR face-up) through a
+// brief "other reality" distortion, swaps to the equivalent card in the
+// other deck at the apex, then resolves. The warp is built from several
+// time-offset ghost copies of the current image, each riding its own
+// vertical sine displacement and horizontal jitter, with a chromatic
+// red/cyan split — pure CSS transforms + opacity, so it runs on every
+// browser. The swap happens immediately (even mid-reading): a face-up
+// RW Three of Cups becomes the Thoth Three of Cups, in ARTFILL.
+
+let deckSwitching = false;
+
+function toggleDeck() {
+  if (deckSwitching) return;
+  deckSwitching = true;
+
+  const imgEl = document.querySelector("img");
+  if (!imgEl) { deckSwitching = false; return; }
+
+  // Cancel any in-flight signature/zoom so they don't fight the warp.
+  if (window.MajorArcanaSignature) window.MajorArcanaSignature.cancel();
+  clearZoomTransform(imgEl);
+
+  const wasBack = showingBack;
+  const fromUrl = imgEl.src;
+
+  // Flip the active deck. Zoom resets to artfill for the new deck.
+  currentDeck = (currentDeck === "rw") ? "thoth" : "rw";
+  zoomMode = "artfill";
+  // Tell the signature module which deck is active so art-location-
+  // dependent effects (the Sun) use the right coordinates.
+  if (window.MajorArcanaSignature && window.MajorArcanaSignature.setDeck) {
+    window.MajorArcanaSignature.setDeck(currentDeck);
+  }
+
+  // Determine the target image: the equivalent card (or the new back).
+  const toUrl = wasBack
+    ? backSrc()
+    : (currentCardName ? deckModel().cardSrc(currentCardName, "artfill") : backSrc());
+
+  haptic(14);
+  playRealityWarp(imgEl, fromUrl, toUrl).then(() => {
+    deckSwitching = false;
+    // Kick off background preload of the now-inactive deck's assets so a
+    // toggle back is instant.
+    preloadDeckInBackground();
+  });
+}
+
+// The warp itself. ~900ms. Returns a promise that resolves when the new
+// card has settled and the overlays are cleaned up.
+function playRealityWarp(imgEl, fromUrl, toUrl) {
+  return new Promise((resolve) => {
+    const reduce = window.matchMedia &&
+                   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Preload the target so the mid-warp swap is instant.
+    const pre = new Image();
+    pre.src = toUrl;
+
+    if (reduce) {
+      // Reduced motion: a quick crossfade, no distortion.
+      imgEl.style.transition = "opacity 200ms ease";
+      imgEl.style.opacity = "0";
+      setTimeout(() => {
+        imgEl.src = toUrl;
+        requestAnimationFrame(() => {
+          imgEl.style.opacity = "1";
+          setTimeout(() => { imgEl.style.transition = ""; resolve(); }, 220);
+        });
+      }, 210);
+      return;
+    }
+
+    // Build N ghost copies of the CURRENT image, stacked over the card.
+    const N = 5;
+    const ghosts = [];
+    for (let i = 0; i < N; i++) {
+      const g = document.createElement("img");
+      g.src = fromUrl;
+      g.className = "warp-ghost";
+      g.style.cssText =
+        "position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;" +
+        "object-fit:contain;pointer-events:none;z-index:" + (45 + i) + ";" +
+        "will-change:transform,opacity,filter;opacity:0;";
+      // Chromatic personality: outer ghosts tinted warm / cool via filter.
+      if (i === 0) g.style.filter = "hue-rotate(-22deg) saturate(1.7)";
+      if (i === N - 1) g.style.filter = "hue-rotate(22deg) saturate(1.7)";
+      document.body.appendChild(g);
+      ghosts.push(g);
+    }
+    // Hide the real image while the ghosts perform.
+    imgEl.style.transition = "none";
+    imgEl.style.opacity = "0";
+
+    const DUR = 900;
+    const SWAP_AT = 0.5;          // swap the real img to target at midpoint
+    const start = performance.now();
+    let swapped = false;
+
+    function frame(now) {
+      const t = Math.min(1, (now - start) / DUR);
+      // Envelope: distortion swells to a peak at the middle, eases out.
+      const env = Math.sin(Math.PI * t);            // 0→1→0
+      for (let i = 0; i < ghosts.length; i++) {
+        const g = ghosts[i];
+        const phase = (i / ghosts.length) * Math.PI * 2;
+        // Vertical sine "scooby" wobble + horizontal jitter, scaled by env.
+        const wobble = Math.sin(t * Math.PI * 6 + phase);
+        const tx = wobble * 26 * env * (i - (ghosts.length - 1) / 2) * 0.6;
+        const sy = 1 + 0.04 * Math.sin(t * Math.PI * 8 + phase) * env;
+        const skew = wobble * 6 * env;               // deg
+        g.style.transform =
+          "translateX(" + tx.toFixed(1) + "px) scaleY(" + sy.toFixed(3) +
+          ") skewX(" + skew.toFixed(2) + "deg)";
+        // Ghosts fade in on the rise, out on the fall; the middle ghost
+        // is the most solid so the image stays legible through the warp.
+        const central = 1 - Math.abs(i - (ghosts.length - 1) / 2) / ((ghosts.length - 1) / 2 || 1);
+        g.style.opacity = (env * (0.35 + 0.55 * central)).toFixed(3);
+      }
+      // At the apex, swap every ghost's source to the target image — the
+      // reality has flipped underneath the distortion.
+      if (!swapped && t >= SWAP_AT) {
+        swapped = true;
+        imgEl.src = toUrl;
+        for (const g of ghosts) g.src = toUrl;
+      }
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        // Resolve: reveal the (already-swapped) real image, drop ghosts.
+        imgEl.style.opacity = "1";
+        imgEl.style.transition = "";
+        for (const g of ghosts) { if (g.parentNode) g.parentNode.removeChild(g); }
+        resolve();
+      }
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+// --- Background preload of the inactive deck --------------------------
+// After the active card has loaded, quietly fetch the OTHER deck's back
+// and (for Thoth) the artfill crops, so the first toggle is instant.
+let preloadStarted = false;
+function preloadDeckInBackground() {
+  if (preloadStarted) return;
+  preloadStarted = true;
+  const run = () => {
+    // The back of whichever deck isn't active right now.
+    const other = (currentDeck === "rw") ? "thoth" : "rw";
+    new Image().src = DECKS[other].back;
+    // Thoth artfill crops are local and small; warm them all. (RW art is
+    // remote and large — we don't aggressively prefetch all 78 of those.)
+    if (other === "thoth" || currentDeck === "thoth") {
+      for (const key of CARD_KEYS) new Image().src = "thoth/artfill/" + key + ".jpg";
+    }
+  };
+  if ("requestIdleCallback" in window) requestIdleCallback(run, { timeout: 4000 });
+  else setTimeout(run, 1500);
+}
+
 function wireLongPress() {
   const imgEl = document.querySelector("img");
   if (!imgEl) return;
+
+  // Two-finger gesture listeners. Non-passive so we can preventDefault
+  // the browser's native pinch-zoom while a gesture is in progress.
+  imgEl.addEventListener("touchstart",  twoFingerStart, { passive: false });
+  imgEl.addEventListener("touchmove",   twoFingerMove,  { passive: false });
+  imgEl.addEventListener("touchend",    twoFingerEnd,   { passive: false });
+  imgEl.addEventListener("touchcancel", twoFingerEnd,   { passive: false });
 
   // Touch (most native on mobile WebKit, including iOS Safari).
   imgEl.addEventListener("touchstart",  pressStart, { passive: true });
@@ -545,10 +917,17 @@ function wireLongPress() {
   imgEl.addEventListener("contextmenu", (e) => e.preventDefault());
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", wireLongPress);
-} else {
+function init() {
   wireLongPress();
+  // Quietly warm the alternate deck's assets so the first zigzag toggle
+  // is instant. Runs on idle so it never competes with the first paint.
+  preloadDeckInBackground();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
 }
 
 // --- Info overlay -----------------------------------------------------
@@ -579,11 +958,10 @@ function openInfoOverlay(imgEl) {
   // Inverted / Negative / Delayed, holistic takes from those angles on
   // the card's classic meaning). Falls back to upright data if the
   // reversed file failed to load. Skeleton placeholder if neither.
+  // Pull from the ACTIVE deck's data (RW or Thoth), upright or reversed.
   const isReversed = imgEl.classList.contains("reversed");
-  const reversedData = (typeof CARD_ACTIONS_REVERSED !== "undefined")
-    ? CARD_ACTIONS_REVERSED : null;
-  const uprightData  = (typeof CARD_ACTIONS !== "undefined")
-    ? CARD_ACTIONS : null;
+  const reversedData = deckModel().reversed();
+  const uprightData  = deckModel().upright();
   const dataSource = (isReversed && reversedData) ? reversedData : uprightData;
   const actions = (dataSource && currentCardName)
     ? dataSource[currentCardName]

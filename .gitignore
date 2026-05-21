@@ -1,3 +1,6 @@
 
 # Local editor / agent workspace artifacts
 .claude/
+
+# Thoth source originals (re-downloadable via thoth/_build.py)
+thoth/_src/
