@@ -29,8 +29,15 @@ LOREM = ("lorem ipsum dolor sit amet consectetur adipiscing elit sed do "
 
 
 def phrase(nwords):
+    # Short lorem fragment, capped at 40 chars so it stays in the
+    # renderer's "flow" mode (middot-separated flowing line, not a
+    # block list). Matches the RW data: median ~4 words / ~25 chars.
     start = random.randint(0, len(LOREM) - nwords)
-    return " ".join(LOREM[start:start + nwords])
+    out = " ".join(LOREM[start:start + nwords])
+    while len(out) > 40 and nwords > 1:
+        nwords -= 1
+        out = " ".join(LOREM[start:start + nwords])
+    return out
 
 
 def word():
@@ -44,9 +51,12 @@ def js_array(items, indent):
 
 
 def upright_card():
+    # Match RW distribution: 2-4 stanzas, 4-7 subs each, short subs.
     stanzas = []
-    for _ in range(4):
-        subs = [phrase(random.randint(3, 6)) for _ in range(5)]
+    n_stanzas = random.randint(2, 4)
+    for _ in range(n_stanzas):
+        n_subs = random.randint(4, 7)
+        subs = [phrase(random.randint(2, 6)) for _ in range(n_subs)]
         stanzas.append((word(), word(), subs))
     return stanzas
 
@@ -55,9 +65,11 @@ REV_LEADS = ["Weakened", "Inverted", "Negative", "Delayed"]
 
 
 def reversed_card():
+    # Weakened / Inverted / Negative / Delayed, each with 4-6 short subs.
     stanzas = []
     for lead in REV_LEADS:
-        subs = [phrase(random.randint(3, 6)) for _ in range(4)]
+        n_subs = random.randint(4, 6)
+        subs = [phrase(random.randint(2, 6)) for _ in range(n_subs)]
         stanzas.append((lead, word(), subs))
     return stanzas
 

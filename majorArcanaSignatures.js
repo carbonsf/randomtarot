@@ -1499,6 +1499,249 @@
     await sleep(520);
   }
 
+  // =====================================================================
+  // THOTH-DECK-ONLY signature effects. Four trumps differ from their
+  // Rider-Waite counterparts in name and meaning, so they get their own
+  // effects, derived from the Thoth meaning. They fire only when the
+  // active deck is Thoth (see THOTH_OVERRIDES + play()), at the same
+  // 1200ms-after-reveal timing as every other signature. The RW effects
+  // for these keys are untouched.
+  // =====================================================================
+
+  // ---- VIII Adjustment (Thoth, vs RW Strength) ----------------------
+  // Maat in living equilibrium — poised on a single point, the sword
+  // hanging plumb. Not the flat left/right sway of RW Justice: the card
+  // balances on its bottom-centre point with a damped poise-settle to
+  // perfect vertical, while a plumb sword-line of light descends through
+  // the centre — dynamic balance finding its centre.
+  async function adjustmentPoise(imgEl) {
+    const cr = getContentRect(imgEl);
+    const totalMs = 1500;
+    imgEl.style.transformOrigin = 'bottom center';
+    trackAnim(imgEl.animate([
+      { transform: 'rotate(0deg)' },
+      { transform: 'rotate(2.7deg)',  offset: 0.20 },
+      { transform: 'rotate(-2.0deg)', offset: 0.42 },
+      { transform: 'rotate(1.25deg)', offset: 0.62 },
+      { transform: 'rotate(-0.65deg)', offset: 0.80 },
+      { transform: 'rotate(0deg)' }
+    ], { duration: totalMs, easing: 'cubic-bezier(0.36, 0, 0.2, 1)', fill: 'none' }));
+
+    const sword = newOverlayDiv(
+      `left:${cr.left + cr.width / 2 - 1.5}px;top:${cr.top}px;` +
+      `width:3px;height:${cr.height}px;` +
+      `background:linear-gradient(to bottom, rgba(220,230,255,0) 0%,` +
+        `rgba(232,240,255,0.92) 34%, rgba(255,255,255,0.96) 60%,` +
+        `rgba(220,230,255,0) 100%);` +
+      `box-shadow:0 0 11px rgba(200,220,255,0.8);` +
+      `transform-origin:top center;transform:scaleY(0);mix-blend-mode:screen;`
+    );
+    trackAnim(sword.animate([
+      { transform: 'scaleY(0)', opacity: 0 },
+      { transform: 'scaleY(1)', opacity: 1, offset: 0.40 },
+      { transform: 'scaleY(1)', opacity: 1, offset: 0.72 },
+      { transform: 'scaleY(1)', opacity: 0 }
+    ], { duration: totalMs, easing: 'cubic-bezier(0.3, 0, 0.3, 1)', fill: 'forwards' }));
+    await sleep(totalMs);
+    imgEl.style.removeProperty('transform-origin');
+  }
+
+  // ---- XI Lust (Thoth, vs RW Strength) ------------------------------
+  // The rapture of vital life-force — Babalon astride the Beast, the
+  // Grail raised. A serpent-flame of light writhes up the centre,
+  // undulating with ecstatic energy, while the card surges warm and
+  // saturated. Sinuous and rapturous, not the contained ember-halo of
+  // RW Strength.
+  async function lustFlame(imgEl) {
+    const cr = getContentRect(imgEl);
+    const totalMs = 1500;
+
+    trackAnim(imgEl.animate([
+      { filter: 'brightness(1) saturate(1) hue-rotate(0deg)' },
+      { filter: 'brightness(1.16) saturate(1.5) hue-rotate(-8deg)', offset: 0.45 },
+      { filter: 'brightness(1.07) saturate(1.24) hue-rotate(-3deg)', offset: 0.7 },
+      { filter: 'brightness(1) saturate(1) hue-rotate(0deg)' }
+    ], { duration: totalMs, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'none' }));
+
+    const svg = svgEl('svg');
+    svg.setAttribute('viewBox', `0 0 ${cr.width} ${cr.height}`);
+    svg.style.cssText =
+      `position:fixed;left:${cr.left}px;top:${cr.top}px;` +
+      `width:${cr.width}px;height:${cr.height}px;` +
+      `pointer-events:none;z-index:40;overflow:visible;mix-blend-mode:screen;`;
+    const defs = svgEl('defs');
+    const grad = svgEl('linearGradient', { id: 'lustG', x1: '0', y1: '1', x2: '0', y2: '0' });
+    grad.appendChild(svgEl('stop', { offset: '0%',   'stop-color': 'rgba(255,110,40,0)' }));
+    grad.appendChild(svgEl('stop', { offset: '28%',  'stop-color': 'rgba(255,140,50,0.9)' }));
+    grad.appendChild(svgEl('stop', { offset: '68%',  'stop-color': 'rgba(255,205,90,0.95)' }));
+    grad.appendChild(svgEl('stop', { offset: '100%', 'stop-color': 'rgba(255,240,170,0)' }));
+    defs.appendChild(grad); svg.appendChild(defs);
+    const path = svgEl('path', {
+      fill: 'none', stroke: 'url(#lustG)', 'stroke-width': 11, 'stroke-linecap': 'round'
+    });
+    path.style.filter = 'drop-shadow(0 0 10px rgba(255,150,60,0.85))';
+    svg.appendChild(path);
+    trackEl(svg); document.body.appendChild(svg);
+
+    const cx = cr.width / 2;
+    const startT = performance.now();
+    function frame(now) {
+      if (!svg.parentNode) return;             // cancelled
+      const t = Math.min(1, (now - startT) / totalMs);
+      const env = Math.sin(Math.PI * t);
+      let d = ''; const N = 26;
+      for (let i = 0; i <= N; i++) {
+        const yy = cr.height * (1 - i / N);                       // bottom→top
+        const amp = cr.width * 0.14 * env * (0.35 + 0.65 * (i / N)); // wider up high
+        const xx = cx + amp * Math.sin(i * 0.85 + t * Math.PI * 5);
+        d += (i ? 'L' : 'M') + xx.toFixed(1) + ',' + yy.toFixed(1) + ' ';
+      }
+      path.setAttribute('d', d);
+      path.style.opacity = (0.25 + 0.75 * env).toFixed(3);
+      if (t < 1) requestAnimationFrame(frame);
+      else if (svg.parentNode) svg.parentNode.removeChild(svg);
+    }
+    requestAnimationFrame(frame);
+    await sleep(totalMs);
+  }
+
+  // ---- XIV Art (Thoth, vs RW Temperance) ----------------------------
+  // The alchemical conjunction — solve et coagula. A fire stream pours
+  // in from the upper-left, a water stream from the upper-right; they
+  // meet at the centre and a gold transmutation bloom erupts, briefly
+  // gilding the card. The mixing-into-gold is the heart of it, where RW
+  // Temperance just crosses warm and cool.
+  async function artAlchemy(imgEl) {
+    const cr = getContentRect(imgEl);
+    const totalMs = 1600;
+    const cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+    const base = `left:${cr.left}px;top:${cr.top}px;width:${cr.width}px;height:${cr.height}px;mix-blend-mode:screen;opacity:0;`;
+
+    const fire = newOverlayDiv(base +
+      'background:linear-gradient(135deg, rgba(232,60,40,0.82) 0%, rgba(232,95,45,0.34) 32%, transparent 62%);');
+    const water = newOverlayDiv(base +
+      'background:linear-gradient(225deg, rgba(55,130,232,0.82) 0%, rgba(50,155,222,0.34) 32%, transparent 62%);');
+    const ease = 'cubic-bezier(0.4, 0, 0.3, 1)';
+    trackAnim(fire.animate([
+      { opacity: 0,    transform: 'translate(-42px,-42px)' },
+      { opacity: 0.95, transform: 'translate(0,0)',          offset: 0.45 },
+      { opacity: 0.5,  transform: 'translate(18px,18px)',    offset: 0.7  },
+      { opacity: 0,    transform: 'translate(30px,30px)' }
+    ], { duration: totalMs, easing: ease, fill: 'forwards' }));
+    trackAnim(water.animate([
+      { opacity: 0,    transform: 'translate(42px,-42px)' },
+      { opacity: 0.95, transform: 'translate(0,0)',           offset: 0.45 },
+      { opacity: 0.5,  transform: 'translate(-18px,18px)',    offset: 0.7  },
+      { opacity: 0,    transform: 'translate(-30px,30px)' }
+    ], { duration: totalMs, easing: ease, fill: 'forwards' }));
+
+    await sleep(totalMs * 0.42);
+
+    const size = Math.max(cr.width, cr.height) * 1.15;
+    const gold = newOverlayDiv(
+      `left:${cx}px;top:${cy}px;width:${size}px;height:${size}px;` +
+      `margin:${-size / 2}px 0 0 ${-size / 2}px;border-radius:50%;` +
+      `background:radial-gradient(circle, rgba(255,228,135,0.92) 0%,` +
+        `rgba(255,198,82,0.5) 22%, rgba(255,170,50,0.2) 42%, transparent 65%);` +
+      `mix-blend-mode:screen;`
+    );
+    trackAnim(gold.animate([
+      { transform: 'scale(0.1)',  opacity: 0 },
+      { transform: 'scale(0.72)', opacity: 1, offset: 0.4 },
+      { transform: 'scale(1.18)', opacity: 0 }
+    ], { duration: 920, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }));
+    trackAnim(imgEl.animate([
+      { filter: 'brightness(1) saturate(1) sepia(0)' },
+      { filter: 'brightness(1.14) saturate(1.3) sepia(0.22)', offset: 0.4 },
+      { filter: 'brightness(1) saturate(1) sepia(0)' }
+    ], { duration: 920, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'none' }));
+    await sleep(920);
+  }
+
+  // ---- XX The Aeon (Thoth, vs RW Judgement) -------------------------
+  // The dawn of a new age — the arched body of Nuit across the sky, a
+  // dawn-wash rising from below, and the child-star of Horus igniting
+  // at the centre and lifting with a brief sunburst. A cosmic
+  // awakening, not the bell-tone hum of RW Judgement.
+  async function aeonDawn(imgEl) {
+    const cr = getContentRect(imgEl);
+    const totalMs = 1700;
+    const cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+
+    // Dawn wash rising from the bottom.
+    const wash = newOverlayDiv(
+      `left:${cr.left}px;top:${cr.top}px;width:${cr.width}px;height:${cr.height}px;` +
+      `background:linear-gradient(0deg, rgba(255,200,95,0.5) 0%,` +
+        `rgba(180,120,205,0.3) 35%, transparent 70%);` +
+      `mix-blend-mode:screen;opacity:0;`
+    );
+    trackAnim(wash.animate([
+      { opacity: 0,   transform: 'translateY(38%)' },
+      { opacity: 1,   transform: 'translateY(0)',   offset: 0.5 },
+      { opacity: 0.6, transform: 'translateY(-6%)', offset: 0.8 },
+      { opacity: 0,   transform: 'translateY(-10%)' }
+    ], { duration: totalMs, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }));
+
+    // Arc of Nuit across the top.
+    const svg = svgEl('svg');
+    svg.setAttribute('viewBox', `0 0 ${cr.width} ${cr.height}`);
+    svg.style.cssText =
+      `position:fixed;left:${cr.left}px;top:${cr.top}px;` +
+      `width:${cr.width}px;height:${cr.height}px;` +
+      `pointer-events:none;z-index:40;overflow:visible;`;
+    const arc = svgEl('path', {
+      d: `M ${cr.width * 0.05} ${cr.height * 0.44} ` +
+         `Q ${cr.width * 0.5} ${-cr.height * 0.03} ${cr.width * 0.95} ${cr.height * 0.44}`,
+      fill: 'none', stroke: 'rgba(255,235,180,0.95)', 'stroke-width': 3
+    });
+    arc.style.filter = 'drop-shadow(0 0 8px rgba(255,225,150,0.85))';
+    svg.appendChild(arc);
+    trackEl(svg); document.body.appendChild(svg);
+    const len = arc.getTotalLength();
+    arc.style.strokeDasharray = len;
+    arc.style.strokeDashoffset = len;
+    trackAnim(arc.animate(
+      [{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+      { duration: 760, easing: 'cubic-bezier(0.45, 0, 0.3, 1)', fill: 'forwards' }
+    ));
+
+    // Child-star ignites at centre and rises, with a brief ray-burst.
+    await sleep(520);
+    const star = newOverlayDiv(
+      `left:${cx}px;top:${cy}px;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;` +
+      `background:radial-gradient(circle, rgba(255,250,220,1) 0%, rgba(255,225,140,0.6) 40%, transparent 75%);` +
+      `box-shadow:0 0 26px 8px rgba(255,230,150,0.7);mix-blend-mode:screen;opacity:0;`
+    );
+    trackAnim(star.animate([
+      { opacity: 0, transform: 'translateY(8px) scale(0.2)' },
+      { opacity: 1, transform: 'translateY(-4px) scale(1.25)', offset: 0.4 },
+      { opacity: 0.85, transform: 'translateY(-' + (cr.height * 0.06).toFixed(0) + 'px) scale(1.05)', offset: 0.7 },
+      { opacity: 0, transform: 'translateY(-' + (cr.height * 0.12).toFixed(0) + 'px) scale(0.6)' }
+    ], { duration: 900, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }));
+    // Ray-burst from the star.
+    const rays = svgEl('svg');
+    rays.style.cssText =
+      `position:fixed;left:${cx}px;top:${cy}px;width:1px;height:1px;overflow:visible;` +
+      `pointer-events:none;z-index:40;`;
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * 360;
+      const ray = svgEl('line', {
+        x1: 0, y1: -16, x2: 0, y2: -(16 + cr.width * 0.34),
+        stroke: 'rgba(255,235,165,0.85)', 'stroke-width': 2, 'stroke-linecap': 'round',
+        transform: `rotate(${a})`
+      });
+      ray.style.filter = 'drop-shadow(0 0 6px rgba(255,220,120,0.85))';
+      rays.appendChild(ray);
+    }
+    trackEl(rays); document.body.appendChild(rays);
+    trackAnim(rays.animate([
+      { transform: 'scale(0.2) rotate(0deg)', opacity: 0 },
+      { transform: 'scale(1) rotate(14deg)',  opacity: 1, offset: 0.4 },
+      { transform: 'scale(1.4) rotate(26deg)', opacity: 0 }
+    ], { duration: 760, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }));
+    await sleep(900);
+  }
+
   // ---- dispatch -----------------------------------------------------
   const EFFECTS = {
     maj00: foolSpark,            maj01: magicianLemniscate,
@@ -1514,11 +1757,30 @@
     maj20: judgementHum,         maj21: worldRing
   };
 
+  // Thoth-deck overrides. Four trumps differ from RW at the same key:
+  //   maj08  Adjustment (RW Strength here)
+  //   maj11  Lust       (RW Justice here)
+  //   maj14  Art        (RW Temperance)
+  //   maj20  Aeon       (RW Judgement)
+  // When the active deck is Thoth, these keys use the Thoth effect; RW
+  // keeps its own. All other keys share the same effect across decks.
+  const THOTH_OVERRIDES = {
+    maj08: adjustmentPoise,
+    maj11: lustFlame,
+    maj14: artAlchemy,
+    maj20: aeonDawn
+  };
+
   function isMajor(name) { return /^maj\d{2}$/.test(name || ''); }
+
+  function effectFor(cardName) {
+    if (activeDeck === "thoth" && THOTH_OVERRIDES[cardName]) return THOTH_OVERRIDES[cardName];
+    return EFFECTS[cardName];
+  }
 
   async function play(imgEl, cardName) {
     clearAll();
-    const fn = EFFECTS[cardName];
+    const fn = effectFor(cardName);
     if (!fn || !imgEl) return;
     try { await fn(imgEl); }
     catch (_e) { /* never let an effect crash the card flow */ }

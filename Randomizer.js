@@ -868,11 +868,30 @@ function playRealityWarp(imgEl, fromUrl, toUrl) {
         imgEl.src = toUrl;
         for (const g of ghosts) g.src = toUrl;
       }
+
+      // Back half: bring the CLEAN real image up underneath the ghosts so
+      // that as the distortion fades out, the resolved card is already
+      // there — no moment where everything is invisible (that was the
+      // tacky end-flash). The real image also eases from a slight scale
+      // (1.035 → 1.0) so it "resolves into focus": a deliberate, smooth
+      // punctuation rather than a pop. Opacity uses a smoothstep over
+      // t∈[0.5, 0.88] so it's fully solid before the ghosts vanish.
+      if (swapped) {
+        const u = Math.max(0, Math.min(1, (t - SWAP_AT) / 0.38));
+        const ease = u * u * (3 - 2 * u);            // smoothstep
+        const rs = 1.035 - 0.035 * ease;             // 1.035 → 1.0
+        imgEl.style.opacity = ease.toFixed(3);
+        imgEl.style.transform = "scale(" + rs.toFixed(4) + ")";
+      }
+
       if (t < 1) {
         requestAnimationFrame(frame);
       } else {
-        // Resolve: reveal the (already-swapped) real image, drop ghosts.
+        // The real image is already fully up (opacity 1, scale 1) from the
+        // back-half ramp; the ghosts are at ~0 opacity. Just finalize and
+        // remove them — no visible change, so no flash.
         imgEl.style.opacity = "1";
+        imgEl.style.transform = "";
         imgEl.style.transition = "";
         for (const g of ghosts) { if (g.parentNode) g.parentNode.removeChild(g); }
         resolve();
