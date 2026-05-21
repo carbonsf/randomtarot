@@ -717,6 +717,10 @@ function beginZoom(ratio) {
   const nextIdx = out ? Math.min(ZOOM_ORDER.length - 1, idx + 1)
                       : Math.max(0, idx - 1);
   if (nextIdx === idx) return;                        // already at an end
+  // A deliberate zoom means the user has engaged — cancel any pending
+  // Major-Arcana signature so it can never fire onto a mid-zoom (and
+  // possibly transform-scaled) card.
+  if (window.MajorArcanaSignature) window.MajorArcanaSignature.cancel();
   const fromMode = zoomMode, toMode = ZOOM_ORDER[nextIdx];
   const za = artfillScale();
   const continuous = (fromMode !== "big" && toMode !== "big");
@@ -768,40 +772,59 @@ async function endZoom() {
   const imgEl = z.imgEl;
   const za = artfillScale();
 
+  // The FULLART file is the continuous-zoom medium; the underlying <img>
+  // is made to show the EXACT SAME file + scale as the ghost at the end,
+  // so dropping the ghost is pixel-for-pixel invisible (this is what kills
+  // the settle flash — previously ARTFILL landed on a *different* file).
+  const fullUrl = deckModel().cardSrc(currentCardName, "fullart");
+
   if (z.kind === "continuous") {
     const landScale = (land === "artfill") ? za : 1;
     z.ghost.style.transition = "transform 200ms cubic-bezier(0.2,0,0,1)";
     z.ghost.style.transform = "scale(" + landScale.toFixed(4) + ")";
-    await sleep(210);
+    await sleep(215);
     zoomMode = land;
-    imgEl.src = deckModel().cardSrc(currentCardName, land);
+    // imgEl := fullart file at the landing scale = identical to the ghost.
+    imgEl.style.transition = "none";
+    imgEl.src = fullUrl;
     try { await imgEl.decode(); } catch (_e) { /* cached */ }
-    imgEl.style.transform = ""; imgEl.style.transition = ""; imgEl.style.opacity = "";
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (z.ghost.parentNode) z.ghost.remove();
-    }));
+    imgEl.style.transform = (landScale === 1) ? "" : ("scale(" + landScale.toFixed(4) + ")");
+    imgEl.style.opacity = "";
+    void imgEl.offsetHeight;                       // commit to a paint
+    await settleGhost(z.ghost);
+    imgEl.style.transition = "";
   } else {
+    const targetUrl = deckModel().cardSrc(currentCardName, land);
     z.ghost.style.transition = "opacity 220ms ease, filter 220ms ease";
-    if (commit) {
-      z.ghost.style.opacity = "1";
-      z.ghost.style.filter = "blur(0px)";
-      await sleep(230);
-      zoomMode = z.toMode;
-      imgEl.src = deckModel().cardSrc(currentCardName, z.toMode);
-      try { await imgEl.decode(); } catch (_e) { /* cached */ }
-      imgEl.style.opacity = ""; imgEl.style.transform = "";
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (z.ghost.parentNode) z.ghost.remove();
-      }));
-    } else {
-      z.ghost.style.opacity = "0";
-      z.ghost.style.filter = "blur(7px)";
-      await sleep(230);
-      if (z.ghost.parentNode) z.ghost.remove();
-      imgEl.style.opacity = "";
-    }
+    z.ghost.style.opacity = commit ? "1" : "0";
+    z.ghost.style.filter  = commit ? "blur(0px)" : "blur(7px)";
+    await sleep(230);
+    zoomMode = land;
+    // imgEl := the landed file (== the ghost's file) at scale 1.
+    imgEl.style.transition = "none";
+    imgEl.src = targetUrl;
+    try { await imgEl.decode(); } catch (_e) { /* cached */ }
+    imgEl.style.transform = ""; imgEl.style.opacity = "";
+    void imgEl.offsetHeight;
+    await settleGhost(z.ghost);
+    imgEl.style.transition = "";
   }
   haptic(4);
+}
+
+// Drop the ghost only after the underlying <img> has surely painted the
+// matching frame. Because imgEl now holds the EXACT same file + scale as
+// the ghost, this is invisible; the extra rAFs + tiny hold are paint
+// insurance for engines (Safari) that lag a frame behind decode().
+function settleGhost(ghost) {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (ghost.parentNode) ghost.remove();
+        resolve();
+      }, 32);
+    }));
+  });
 }
 
 // Abort an open session (e.g. the gesture turned out to be a zigzag),

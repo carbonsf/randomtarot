@@ -160,82 +160,75 @@ REF_T = 94 / 1024
 REF_R = 600 / 684
 REF_B = 901 / 1024
 
-# How far (fraction of the dimension) to search outward from just-inside
-# the art for the true frame edge, and the minimum color-gradient that
-# counts as the boundary. Scanning OUTWARD FROM INSIDE the art means we
-# stop at the art's own edge before we could ever reach the title band
-# (which sits ~35px below the bottom edge / ~4px above the top edge).
-EDGE_WIN_FRAC = 0.022
-GRAD_MIN = 13
-INSET = 5   # start the scan this many px inside the reference edge
+# Center-out detection tuning. We flood OUTWARD from the card centre
+# (which is always art) until the per-line variance drops and stays low —
+# that's the art's own edge. Because we stop at the first low-variance gap,
+# we never reach the title bands beyond it (they're separated from the art
+# by that gap), and we correctly skip light inner-margin bands that sit
+# between the frame and the art on some cards (e.g. the Queen of Wands).
+ART_LEVEL_FRACTION = 0.20   # a line is "still art" if its variance >= this * central level
+ART_LEVEL_FLOOR = 240       # absolute floor so flat-ish art doesn't end early
+EDGE_CONSEC = 6             # consecutive low lines required to call the edge
 
 
-def _row_mean(px, w, y):
-    n = r = g = b = 0
-    for x in range(0, w, 4):
-        p = px[x, y]; r += p[0]; g += p[1]; b += p[2]; n += 1
-    return (r / n, g / n, b / n)
-
-
-def _col_mean(px, h, x):
-    n = r = g = b = 0
-    for y in range(0, h, 4):
-        p = px[x, y]; r += p[0]; g += p[1]; b += p[2]; n += 1
-    return (r / n, g / n, b / n)
-
-
-def _grad(a, b):
-    return abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[2] - b[2])
+def _central_level(px, w, h):
+    """Median per-line variance across the central art region — the
+    reference for 'this is definitely art'."""
+    rows = [line_variance([px[x, y] for x in range(0, w, STRIDE)])
+            for y in range(int(h * 0.40), int(h * 0.60), 6)]
+    cols = [line_variance([px[x, y] for y in range(0, h, STRIDE)])
+            for x in range(int(w * 0.40), int(w * 0.60), 6)]
+    vals = sorted(rows + cols)
+    return vals[len(vals) // 2] if vals else 1.0
 
 
 def refined_art_box(im):
-    """Anchor on the reference window, then refine each edge to the first
-    strong color-gradient found scanning outward from just inside the art.
-    Falls back to the reference edge if no clear boundary is nearby."""
+    """Find the art's bounding box by scanning outward from the centre
+    until the variance drops below a threshold (entering the gap/margin),
+    requiring a sustained low run so brief flat patches inside the art
+    don't end the scan early. Falls back to the reference window if the
+    result is degenerate."""
     im_rgb = im.convert("RGB")
     w, h = im_rgb.size
     px = im_rgb.load()
-    ref_l = round(w * REF_L); ref_t = round(h * REF_T)
-    ref_r = round(w * REF_R); ref_b = round(h * REF_B)
-    wx = max(8, round(w * EDGE_WIN_FRAC))
-    wy = max(8, round(h * EDGE_WIN_FRAC))
+    cx, cy = w // 2, h // 2
 
-    # Scan rows outward from `start` in `direction` (+1 down, -1 up) for up
-    # to `reach` steps; return the first row whose local gradient >= GRAD_MIN.
-    def scan_row(start, direction, reach):
-        for step in range(reach):
-            y = start + step * direction
-            if y < 3 or y > h - 3:
-                break
-            if _grad(_row_mean(px, w, y - 2), _row_mean(px, w, y + 2)) >= GRAD_MIN:
-                return y
-        return None
+    level = _central_level(px, w, h)
+    threshold = max(level * ART_LEVEL_FRACTION, ART_LEVEL_FLOOR)
 
-    def scan_col(start, direction, reach):
-        for step in range(reach):
-            x = start + step * direction
-            if x < 3 or x > w - 3:
-                break
-            if _grad(_col_mean(px, h, x - 2), _col_mean(px, h, x + 2)) >= GRAD_MIN:
-                return x
-        return None
+    def hv(y):
+        return line_variance([px[x, y] for x in range(0, w, STRIDE)])
 
-    reach_y = wy + INSET + 4
-    reach_x = wx + INSET + 4
-    top    = scan_row(ref_t + INSET, -1, reach_y)
-    bottom = scan_row(ref_b - INSET, +1, reach_y)
-    left   = scan_col(ref_l + INSET, -1, reach_x)
-    right  = scan_col(ref_r - INSET, +1, reach_x)
+    def vv(x):
+        return line_variance([px[x, y] for y in range(0, h, STRIDE)])
 
-    # Fall back to the reference for any edge that didn't find a boundary.
-    top    = ref_t if top    is None else top
-    bottom = (ref_b if bottom is None else bottom) + 1
-    left   = ref_l if left   is None else left
-    right  = (ref_r if right  is None else right) + 1
+    # Scan a 1-D variance profile outward from `start` in `direction`.
+    # Returns the last index that was "art" before EDGE_CONSEC sustained
+    # low lines (the art edge).
+    def scan(f, start, direction, lo, hi):
+        last_art = start
+        low_run = 0
+        i = start
+        while lo <= i <= hi:
+            if f(i) >= threshold:
+                last_art = i
+                low_run = 0
+            else:
+                low_run += 1
+                if low_run >= EDGE_CONSEC:
+                    break
+            i += direction
+        return last_art
 
-    # Sanity: a degenerate box means detection went wrong — use reference.
+    top    = scan(hv, cy, -1, 0, h - 1)
+    bottom = scan(hv, cy, +1, 0, h - 1) + 1
+    left   = scan(vv, cx, -1, 0, w - 1)
+    right  = scan(vv, cx, +1, 0, w - 1) + 1
+
+    # Sanity: degenerate result -> reference window.
+    ref = (round(w * REF_L), round(h * REF_T), round(w * REF_R), round(h * REF_B))
     if right - left < w * 0.4 or bottom - top < h * 0.4:
-        return (ref_l, ref_t, ref_r, ref_b)
+        return ref
     return (left, top, right, bottom)
 
 
