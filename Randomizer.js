@@ -535,9 +535,20 @@ let tfZoomLive = false;     // whether we're showing a live zoom preview
 const ZIGZAG_MIN_REVERSALS = 3;     // X-direction reversals required
 const ZIGZAG_MIN_DOWN = 60;         // px of net downward midpoint travel
 const ZIGZAG_MIN_AMP = 26;          // px lateral amplitude
-const ZIGZAG_MAX_DIST_DRIFT = 0.28; // fingers must stay ~together
-const ZIGZAG_MAX_ANGLE_DRIFT = 0.45;// rad (~26°)
 const ZOOM_STEP_RATIO = 0.16;       // |ratio-1| past this commits a zoom step
+
+// Spatial separation between the two two-finger gestures, so they never
+// clash and each stays true to itself:
+//   - The TOP band of the screen is the DECK zone: a two-finger zigzag
+//     STARTING here switches decks. Zoom is disabled up here (you'd never
+//     pinch the card from its top edge anyway). "If you know, you know."
+//   - Everywhere below is the ZOOM zone: pinch/spread zooms; zigzag is
+//     ignored there.
+// Deterministic by where the gesture begins — no fuzzy motion guessing.
+const DECK_ZONE_FRAC = 0.25;        // top quarter of the viewport
+function startedInDeckZone() {
+  return !!tfStart && tfStart.midY < window.innerHeight * DECK_ZONE_FRAC;
+}
 
 function tfDist(a, b) { return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY); }
 function tfAngle(a, b) { return Math.atan2(b.clientY - a.clientY, b.clientX - a.clientX); }
@@ -570,7 +581,9 @@ function twoFingerMove(e) {
   // clearly diverged from a zigzag (distance changing more than the
   // midpoint wanders laterally). The first qualifying frame opens a zoom
   // session; subsequent frames drive it continuously with the fingers.
-  if (currentDeck === "thoth" && !showingBack && !drawing) {
+  // Zoom only in the ZOOM zone (gesture started below the top deck band),
+  // on a face-up Thoth card.
+  if (currentDeck === "thoth" && !showingBack && !drawing && !startedInDeckZone()) {
     const ratio = tfDist(t0, t1) / tfStart.dist;
     const lateral = Math.abs(tfMid(t0, t1).x - tfStart.midX);
     if (Math.abs(ratio - 1) > 0.06 && Math.abs(ratio - 1) * 240 > lateral) {
@@ -605,8 +618,11 @@ function twoFingerEnd(e) {
 }
 
 // Is the just-finished two-finger gesture the (gated, deliberate) zigzag?
+// Must START in the top deck zone — that's what keeps it from clashing
+// with a pinch/zoom done on the card body.
 function isZigzag() {
   if (!tfStart || tfMidPath.length < 6) return false;
+  if (!startedInDeckZone()) return false;
   const first = tfMidPath[0];
   const last = tfMidPath[tfMidPath.length - 1];
   const netDown = last.y - first.y;
