@@ -3,28 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Random Tarot Card</title>
-  <!-- viewport-fit=cover lets env(safe-area-inset-*) report real values on
-       notched iPhones so the info overlay can dodge the notch / home
-       indicator in standalone. On non-notched devices and in normal
-       browsers the insets are 0px, so this is a visual no-op there. -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-
-  <!-- iOS standalone (Add to Home Screen) hints. These are read ONLY when
-       the app is launched from the home screen — they have no effect in
-       Safari, Chrome, or on desktop. black-translucent lets the all-black
-       page bleed up behind the status bar for the chromeless look. -->
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Tarot" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#000000" />
-
-  <!-- Home-screen icon (the Rider-Waite Fool on the app's black) + web app
-       manifest for proper name/icon/splash. iOS uses apple-touch-icon;
-       both are inert in a normal browser tab. -->
-  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <link rel="icon" type="image/png" href="icon-192.png" />
-  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Headline face for the card-info overlay. Cormorant Garamond italic
        (400 + 500) gives the meanings a literary, slightly contemplative
@@ -46,14 +25,6 @@
       padding: 0;
       height: 100%;
       overflow: hidden;
-    }
-
-    /* Standalone (home-screen app) only: kill the rubber-band overscroll so
-       a stray drag can't reveal a flash of nothing behind the chromeless
-       view. Scoped to display-mode:standalone so mobile-browser behavior
-       (incl. pull-to-refresh) is completely untouched. */
-    @media (display-mode: standalone) {
-      html, body { overscroll-behavior: none; }
     }
 
     /* The card image fills the viewport; object-fit: contain scales the
@@ -247,15 +218,7 @@
       inset: 0;
       z-index: 100;
       box-sizing: border-box;
-      /* Base padding, but never less than the device safe-area inset, so
-         meaning text never slides under the notch or home indicator in
-         standalone. env() falls back to 0px elsewhere → unchanged in the
-         browser and on non-notched devices. */
-      padding:
-        max(clamp(28px, 7vh, 72px), env(safe-area-inset-top, 0px))
-        max(clamp(22px, 6vw, 80px), env(safe-area-inset-right, 0px))
-        max(clamp(28px, 7vh, 72px), env(safe-area-inset-bottom, 0px))
-        max(clamp(22px, 6vw, 80px), env(safe-area-inset-left, 0px));
+      padding: clamp(28px, 7vh, 72px) clamp(22px, 6vw, 80px);
       background: rgba(0, 0, 0, 0.78);
       opacity: 0;
       pointer-events: none;

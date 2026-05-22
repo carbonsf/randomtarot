@@ -696,36 +696,16 @@ function makeZoomGhost(url, scale, z) {
   return g;
 }
 
-// Remove EVERY zoom ghost in the DOM (not just the current session's).
-// This is the safety net for iOS standalone (PWA) mode, where the OS can
-// suspend timers / rAF / img.decode() mid-landing and orphan a ghost that
-// the session reference (zoom.ghost) can no longer reach. Querying the DOM
-// by class guarantees no orphan can survive a state change.
-function removeAllZoomGhosts() {
-  const ghosts = document.querySelectorAll(".zoom-ghost");
-  for (let i = 0; i < ghosts.length; i++) {
-    if (ghosts[i].parentNode) ghosts[i].remove();
-  }
-}
-
-// Restore the underlying <img> to a normal, visible, interactive state.
-// Called by every teardown so a stalled zoom can never leave the card
-// stuck at opacity:0 / mid-transform.
-function restoreCardImage(imgEl) {
-  const el = imgEl || document.querySelector("img");
-  if (el) { el.style.transition = ""; el.style.transform = ""; el.style.opacity = ""; }
-}
-
 // Remove any zoom ghost immediately and clear the session (used by state
 // changes — set-down, deck toggle, new draw).
 function teardownZoom() {
-  removeAllZoomGhosts();
+  if (zoom && zoom.ghost && zoom.ghost.parentNode) zoom.ghost.remove();
   zoom = null;
 }
 
 function clearZoomTransform(imgEl) {
   teardownZoom();
-  restoreCardImage(imgEl);
+  if (imgEl) { imgEl.style.transition = ""; imgEl.style.transform = ""; imgEl.style.opacity = ""; }
 }
 
 // Open a zoom session when a pinch/spread is recognized mid-gesture.
@@ -798,69 +778,38 @@ async function endZoom() {
   // the settle flash — previously ARTFILL landed on a *different* file).
   const fullUrl = deckModel().cardSrc(currentCardName, "fullart");
 
-  // Wrapped in try/finally: whatever happens to the async landing chain
-  // (iOS standalone can suspend timers / rAF / decode mid-flight), we ALWAYS
-  // end with the ghost gone and the <img> visible + interactive. Otherwise a
-  // dropped frame leaves the card frozen at opacity:0 with a stuck overlay.
-  try {
-    if (z.kind === "continuous") {
-      const landScale = (land === "artfill") ? za : 1;
-      z.ghost.style.transition = "transform 200ms cubic-bezier(0.2,0,0,1)";
-      z.ghost.style.transform = "scale(" + landScale.toFixed(4) + ")";
-      await sleep(215);
-      zoomMode = land;
-      // imgEl := fullart file at the landing scale = identical to the ghost.
-      imgEl.style.transition = "none";
-      imgEl.src = fullUrl;
-      await decodeWithTimeout(imgEl, 600);
-      imgEl.style.transform = (landScale === 1) ? "" : ("scale(" + landScale.toFixed(4) + ")");
-      imgEl.style.opacity = "";
-      void imgEl.offsetHeight;                       // commit to a paint
-      await settleGhost(z.ghost);
-      imgEl.style.transition = "";
-    } else {
-      const targetUrl = deckModel().cardSrc(currentCardName, land);
-      z.ghost.style.transition = "opacity 220ms ease, filter 220ms ease";
-      z.ghost.style.opacity = commit ? "1" : "0";
-      z.ghost.style.filter  = commit ? "blur(0px)" : "blur(7px)";
-      await sleep(230);
-      zoomMode = land;
-      // imgEl := the landed file (== the ghost's file) at scale 1.
-      imgEl.style.transition = "none";
-      imgEl.src = targetUrl;
-      await decodeWithTimeout(imgEl, 600);
-      imgEl.style.transform = ""; imgEl.style.opacity = "";
-      void imgEl.offsetHeight;
-      await settleGhost(z.ghost);
-      imgEl.style.transition = "";
-    }
-    haptic(4);
-  } finally {
-    // Guarantee no orphan ghost and a visible, interactive card — even if
-    // the chain above threw or was suspended partway through.
-    if (z.ghost && z.ghost.parentNode) z.ghost.remove();
-    removeAllZoomGhosts();
-    if (imgEl) {
-      imgEl.style.transition = "";
-      imgEl.style.opacity = "";
-      // Keep only the legitimate landed transform (artfill scale); clear any
-      // stray transform left from a partway-suspended landing.
-      const za2 = artfillScale();
-      imgEl.style.transform = (zoomMode === "artfill" && za2 !== 1)
-        ? ("scale(" + za2.toFixed(4) + ")") : "";
-    }
+  if (z.kind === "continuous") {
+    const landScale = (land === "artfill") ? za : 1;
+    z.ghost.style.transition = "transform 200ms cubic-bezier(0.2,0,0,1)";
+    z.ghost.style.transform = "scale(" + landScale.toFixed(4) + ")";
+    await sleep(215);
+    zoomMode = land;
+    // imgEl := fullart file at the landing scale = identical to the ghost.
+    imgEl.style.transition = "none";
+    imgEl.src = fullUrl;
+    try { await imgEl.decode(); } catch (_e) { /* cached */ }
+    imgEl.style.transform = (landScale === 1) ? "" : ("scale(" + landScale.toFixed(4) + ")");
+    imgEl.style.opacity = "";
+    void imgEl.offsetHeight;                       // commit to a paint
+    await settleGhost(z.ghost);
+    imgEl.style.transition = "";
+  } else {
+    const targetUrl = deckModel().cardSrc(currentCardName, land);
+    z.ghost.style.transition = "opacity 220ms ease, filter 220ms ease";
+    z.ghost.style.opacity = commit ? "1" : "0";
+    z.ghost.style.filter  = commit ? "blur(0px)" : "blur(7px)";
+    await sleep(230);
+    zoomMode = land;
+    // imgEl := the landed file (== the ghost's file) at scale 1.
+    imgEl.style.transition = "none";
+    imgEl.src = targetUrl;
+    try { await imgEl.decode(); } catch (_e) { /* cached */ }
+    imgEl.style.transform = ""; imgEl.style.opacity = "";
+    void imgEl.offsetHeight;
+    await settleGhost(z.ghost);
+    imgEl.style.transition = "";
   }
-}
-
-// img.decode() can hang indefinitely in some WebKit/standalone states.
-// Race it against a timeout so the landing chain never blocks forever.
-function decodeWithTimeout(imgEl, ms) {
-  let timer;
-  const timeout = new Promise((resolve) => { timer = setTimeout(resolve, ms); });
-  const decode = (imgEl.decode ? imgEl.decode() : Promise.resolve())
-    .catch(() => {})            // cached / unsupported / decode error
-    .finally(() => clearTimeout(timer));
-  return Promise.race([decode, timeout]);
+  haptic(4);
 }
 
 // Drop the ghost only after the underlying <img> has surely painted the
@@ -1118,30 +1067,6 @@ function wireLongPress() {
 
   // Belt-and-suspenders next to the CSS callout suppression.
   imgEl.addEventListener("contextmenu", (e) => e.preventDefault());
-
-  // iOS standalone (home-screen "app") aggressively suspends JS when the
-  // app is backgrounded or the screen locks. If that happens mid-zoom, the
-  // landing chain (timers / rAF / decode) can be dropped, orphaning a ghost
-  // and leaving the card frozen at opacity:0. On hide, proactively abort any
-  // in-flight gesture and tear the zoom down so resume is always clean.
-  const bailOut = () => {
-    cancelPress();
-    tfActive = false; tfStart = null; tfMidPath = []; tfZoomLive = false;
-    zoom = null;                 // drop the session; ghost removed below
-    removeAllZoomGhosts();
-    restoreCardImage(imgEl);
-    // If suspended mid-zoom on a face-up Thoth card, the <img> may hold the
-    // FULLART file at a stray scale. Reset to the default ARTFILL view so
-    // resume is consistent (and re-pinchable from a known state).
-    if (currentDeck === "thoth" && !showingBack && currentCardName && zoomMode !== "artfill") {
-      zoomMode = "artfill";
-      imgEl.src = cardSrcFor(currentCardName);
-    }
-  };
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) bailOut();
-  });
-  window.addEventListener("pagehide", bailOut);
 }
 
 function init() {
