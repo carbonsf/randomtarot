@@ -663,6 +663,7 @@ function isZigzag() {
 const TARGET_ASPECT = 825 / 1427;        // 0.5781 — the artfill/display aspect
 let currentFullAspect = 0.644;           // FULLART file aspect for the current card
 let zoom = null;                         // active zoom session, or null
+let zoomBusy = false;                    // a crossfade is animating (no overlap)
 
 // Scale that makes the FULLART-file ghost fill the frame like ARTFILL.
 function artfillScale() {
@@ -700,6 +701,7 @@ function makeZoomGhost(url, scale, z) {
 // changes — set-down, deck toggle, new draw).
 function teardownZoom() {
   zoom = null;
+  zoomBusy = false;
   // Remove any ghost (including one orphaned by a mid-crossfade state change).
   document.querySelectorAll(".zoom-ghost").forEach((g) => g.remove());
 }
@@ -724,6 +726,7 @@ const ZOOM_COMMIT_DEADZONE = 0.10;                // |ratio-1| past this = a ste
 // Open a live-zoom session: record it; the visible <img> is scaled directly
 // for tactile feedback while the fingers move.
 function beginZoom(ratio) {
+  if (zoomBusy) return;                    // a crossfade is mid-flight; ignore
   const imgEl = document.querySelector("img");
   if (!imgEl || !currentCardName) return;
   // A deliberate zoom means the user has engaged — cancel any pending
@@ -765,6 +768,10 @@ function endZoom() {
 // easing to scale 1), then swap the real <img> underneath and drop the ghost
 // only once it has decoded the same file — an invisible handoff.
 async function crossfadeZoom(imgEl, mode, startScale) {
+  zoomBusy = true;
+  // Safety: never strand the busy flag if the async chain is suspended
+  // (e.g. iOS standalone backgrounding mid-crossfade).
+  const safety = setTimeout(() => { zoomBusy = false; }, 1500);
   const targetUrl = deckModel().cardSrc(currentCardName, mode);
   const s0 = Math.max(ZOOM_LIVE_MIN, Math.min(ZOOM_LIVE_MAX, startScale || 1));
 
@@ -790,10 +797,14 @@ async function crossfadeZoom(imgEl, mode, startScale) {
   try { await imgEl.decode(); } catch (_e) { /* ignore */ }
   imgEl.style.transform = ""; imgEl.style.opacity = "";
   void imgEl.offsetHeight;
-  // One painted frame with the real img up before dropping the ghost.
+  // One painted frame with the real img up, then drop EVERY ghost (this one
+  // plus any orphaned by a fast back-and-forth) so none can stack in the
+  // letterbox bars. The busy guard already prevents overlapping crossfades.
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    if (ghost.parentNode) ghost.remove();
+    document.querySelectorAll(".zoom-ghost").forEach((g) => g.remove());
     imgEl.style.transition = "";
+    clearTimeout(safety);
+    zoomBusy = false;
   }));
 }
 
