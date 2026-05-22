@@ -699,8 +699,9 @@ function makeZoomGhost(url, scale, z) {
 // Remove any zoom ghost immediately and clear the session (used by state
 // changes — set-down, deck toggle, new draw).
 function teardownZoom() {
-  if (zoom && zoom.ghost && zoom.ghost.parentNode) zoom.ghost.remove();
   zoom = null;
+  // Remove any ghost (including one orphaned by a mid-crossfade state change).
+  document.querySelectorAll(".zoom-ghost").forEach((g) => g.remove());
 }
 
 function clearZoomTransform(imgEl) {
@@ -708,142 +709,106 @@ function clearZoomTransform(imgEl) {
   if (imgEl) { imgEl.style.transition = ""; imgEl.style.transform = ""; imgEl.style.opacity = ""; }
 }
 
-// Open a zoom session when a pinch/spread is recognized mid-gesture.
+// --- Discrete crossfade zoom (artfill <-> fullart <-> big) -------------
+// Each zoom state is its OWN file: artfill fills the frame, fullart is the
+// letterboxed art, big is the whole bordered card. During the pinch we give
+// light live feedback by scaling the visible card with the fingers; on
+// release we commit ONE step in the pinch DIRECTION (not by how hard you
+// pinched) and crossfade to that state's file. Committing by direction —
+// rather than by a steep magnitude threshold on the near-invisible ~12%
+// artfill/fullart scale — is what makes every step, including leaving
+// FULLART, reliably transition.
+const ZOOM_LIVE_MIN = 0.6, ZOOM_LIVE_MAX = 1.7;   // clamp the live-preview scale
+const ZOOM_COMMIT_DEADZONE = 0.10;                // |ratio-1| past this = a step
+
+// Open a live-zoom session: record it; the visible <img> is scaled directly
+// for tactile feedback while the fingers move.
 function beginZoom(ratio) {
   const imgEl = document.querySelector("img");
   if (!imgEl || !currentCardName) return;
-  const idx = ZOOM_ORDER.indexOf(zoomMode);
-  const out = ratio < 1;                              // pinch (together) = zoom OUT
-  const nextIdx = out ? Math.min(ZOOM_ORDER.length - 1, idx + 1)
-                      : Math.max(0, idx - 1);
-  if (nextIdx === idx) return;                        // already at an end
   // A deliberate zoom means the user has engaged — cancel any pending
-  // Major-Arcana signature so it can never fire onto a mid-zoom (and
-  // possibly transform-scaled) card.
+  // Major-Arcana signature so it can never fire onto a mid-zoom card.
   if (window.MajorArcanaSignature) window.MajorArcanaSignature.cancel();
-  const fromMode = zoomMode, toMode = ZOOM_ORDER[nextIdx];
-  const za = artfillScale();
-  const continuous = (fromMode !== "big" && toMode !== "big");
-
-  if (continuous) {
-    // ARTFILL <-> FULLART on the single FULLART file. Ghost starts
-    // matching the current static view; the static <img> hides behind it.
-    const fullUrl = deckModel().cardSrc(currentCardName, "fullart");
-    const fromScale = (fromMode === "artfill") ? za : 1;
-    const toScale   = (toMode   === "artfill") ? za : 1;
-    const ghost = makeZoomGhost(fullUrl, fromScale, 30);
-    imgEl.style.opacity = "0";
-    zoom = { kind: "continuous", fromMode, toMode, fromScale, toScale, ghost, imgEl, progress: 0 };
-  } else {
-    // FULLART <-> BIG content reveal: ghost = target file, fades in over
-    // the opaque current image, with a blur that resolves as it commits.
-    const targetUrl = deckModel().cardSrc(currentCardName, toMode);
-    const ghost = makeZoomGhost(targetUrl, 1, 30);
-    ghost.style.opacity = "0";
-    ghost.style.filter = "blur(7px)";
-    zoom = { kind: "crossfade", fromMode, toMode, ghost, imgEl, progress: 0 };
-  }
+  imgEl.style.transition = "none";
+  zoom = { imgEl, ratio: 1 };
 }
 
-// Drive the open session with the live finger ratio.
+// Drive the live preview with the finger ratio.
 function updateZoom(ratio) {
   if (!zoom) return;
-  const out = ratio < 1;
-  const mag = out ? (1 - ratio) : (ratio - 1);
-  const p = Math.max(0, Math.min(1, mag / 0.45));     // ~0.45 ratio change = full step
-  zoom.progress = p;
-  if (zoom.kind === "continuous") {
-    const s = zoom.fromScale + (zoom.toScale - zoom.fromScale) * p;
-    zoom.ghost.style.transform = "scale(" + s.toFixed(4) + ")";
-  } else {
-    zoom.ghost.style.opacity = p.toFixed(3);
-    zoom.ghost.style.filter = "blur(" + (7 * (1 - p)).toFixed(1) + "px)";
-  }
+  zoom.ratio = ratio;
+  const s = Math.max(ZOOM_LIVE_MIN, Math.min(ZOOM_LIVE_MAX, ratio));
+  zoom.imgEl.style.transform = "scale(" + s.toFixed(4) + ")";
 }
 
-// Land the session: commit to the target mode if the user moved far
-// enough, else settle back to the start mode. Always resolves to the
-// landed mode's own file at scale 1 on the underlying <img>, seamlessly.
-async function endZoom() {
+// Land the session: step one zoom state in the pinch direction (if past the
+// deadzone and not already at an end), else ease the preview back.
+function endZoom() {
   if (!zoom) return;
   const z = zoom; zoom = null;
-  const commit = z.progress >= 0.45;
-  const land = commit ? z.toMode : z.fromMode;
   const imgEl = z.imgEl;
-  const za = artfillScale();
-
-  // The FULLART file is the continuous-zoom medium; the underlying <img>
-  // is made to show the EXACT SAME file + scale as the ghost at the end,
-  // so dropping the ghost is pixel-for-pixel invisible (this is what kills
-  // the settle flash — previously ARTFILL landed on a *different* file).
-  const fullUrl = deckModel().cardSrc(currentCardName, "fullart");
-
-  if (z.kind === "continuous") {
-    const landScale = (land === "artfill") ? za : 1;
-    z.ghost.style.transition = "transform 200ms cubic-bezier(0.2,0,0,1)";
-    z.ghost.style.transform = "scale(" + landScale.toFixed(4) + ")";
-    await sleep(215);
-    zoomMode = land;
-    // imgEl := fullart file at the landing scale = identical to the ghost.
-    imgEl.style.transition = "none";
-    imgEl.src = fullUrl;
-    try { await imgEl.decode(); } catch (_e) { /* cached */ }
-    imgEl.style.transform = (landScale === 1) ? "" : ("scale(" + landScale.toFixed(4) + ")");
-    imgEl.style.opacity = "";
-    void imgEl.offsetHeight;                       // commit to a paint
-    await settleGhost(z.ghost);
-    imgEl.style.transition = "";
-  } else {
-    const targetUrl = deckModel().cardSrc(currentCardName, land);
-    z.ghost.style.transition = "opacity 220ms ease, filter 220ms ease";
-    z.ghost.style.opacity = commit ? "1" : "0";
-    z.ghost.style.filter  = commit ? "blur(0px)" : "blur(7px)";
-    await sleep(230);
-    zoomMode = land;
-    // imgEl := the landed file (== the ghost's file) at scale 1.
-    imgEl.style.transition = "none";
-    imgEl.src = targetUrl;
-    try { await imgEl.decode(); } catch (_e) { /* cached */ }
-    imgEl.style.transform = ""; imgEl.style.opacity = "";
-    void imgEl.offsetHeight;
-    await settleGhost(z.ghost);
-    imgEl.style.transition = "";
+  const out = z.ratio < 1;                            // fingers together = zoom OUT
+  const idx = ZOOM_ORDER.indexOf(zoomMode);
+  const nextIdx = out ? Math.min(ZOOM_ORDER.length - 1, idx + 1)
+                      : Math.max(0, idx - 1);
+  if (Math.abs(z.ratio - 1) < ZOOM_COMMIT_DEADZONE || nextIdx === idx) {
+    easeBackZoom(imgEl);                              // below deadzone or at an end
+    return;
   }
+  zoomMode = ZOOM_ORDER[nextIdx];
+  crossfadeZoom(imgEl, zoomMode, z.ratio);
   haptic(4);
 }
 
-// Drop the ghost only after the underlying <img> has surely painted the
-// matching frame. Because imgEl now holds the EXACT same file + scale as
-// the ghost, this is invisible; the extra rAFs + tiny hold are paint
-// insurance for engines (Safari) that lag a frame behind decode().
-function settleGhost(ghost) {
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      setTimeout(() => {
-        if (ghost.parentNode) ghost.remove();
-        resolve();
-      }, 32);
-    }));
+// Flash-free crossfade from the live-scaled current image to `mode`'s file:
+// decode the target first, fade a ghost of it in over the live image (both
+// easing to scale 1), then swap the real <img> underneath and drop the ghost
+// only once it has decoded the same file — an invisible handoff.
+async function crossfadeZoom(imgEl, mode, startScale) {
+  const targetUrl = deckModel().cardSrc(currentCardName, mode);
+  const s0 = Math.max(ZOOM_LIVE_MIN, Math.min(ZOOM_LIVE_MAX, startScale || 1));
+
+  const pre = new Image();
+  pre.src = targetUrl;
+  try { await pre.decode(); } catch (_e) { /* cached / paints below */ }
+
+  const ghost = makeZoomGhost(targetUrl, s0, 30);
+  ghost.style.opacity = "0";
+  ghost.style.transition = "opacity 260ms ease, transform 280ms cubic-bezier(0.2,0,0,1)";
+  imgEl.style.transition = "opacity 240ms ease, transform 280ms cubic-bezier(0.2,0,0,1)";
+  void ghost.offsetHeight;
+  requestAnimationFrame(() => {
+    ghost.style.opacity = "1";
+    ghost.style.transform = "scale(1)";
+    imgEl.style.opacity = "0";
+    imgEl.style.transform = "scale(1)";
   });
+
+  await sleep(300);
+  imgEl.style.transition = "none";
+  imgEl.src = targetUrl;
+  try { await imgEl.decode(); } catch (_e) { /* ignore */ }
+  imgEl.style.transform = ""; imgEl.style.opacity = "";
+  void imgEl.offsetHeight;
+  // One painted frame with the real img up before dropping the ghost.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (ghost.parentNode) ghost.remove();
+    imgEl.style.transition = "";
+  }));
 }
 
-// Abort an open session (e.g. the gesture turned out to be a zigzag),
-// reverting to the start mode with a quick ease.
+// Ease the live preview back to neutral (no state change).
+function easeBackZoom(imgEl) {
+  imgEl.style.transition = "transform 200ms cubic-bezier(0.2,0,0,1)";
+  imgEl.style.transform = "scale(1)";
+  setTimeout(() => { imgEl.style.transition = ""; imgEl.style.transform = ""; }, 210);
+}
+
+// Abort an open session (e.g. the gesture turned out to be a zigzag).
 function cancelZoom() {
   if (!zoom) return;
   const z = zoom; zoom = null;
-  const imgEl = z.imgEl;
-  if (z.kind === "continuous") {
-    z.ghost.style.transition = "transform 180ms ease, opacity 180ms ease";
-    z.ghost.style.transform = "scale(" + z.fromScale.toFixed(4) + ")";
-  } else {
-    z.ghost.style.transition = "opacity 180ms ease";
-    z.ghost.style.opacity = "0";
-  }
-  setTimeout(() => {
-    imgEl.style.opacity = ""; imgEl.style.transform = "";
-    if (z.ghost.parentNode) z.ghost.remove();
-  }, 190);
+  easeBackZoom(z.imgEl);
 }
 
 // --- Deck toggle + Scooby-Doo alternate-reality transition ------------
