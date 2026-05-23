@@ -49,7 +49,27 @@ const DECKS = {
 
 let currentDeck = "rw";          // active deck id
 const ZOOM_ORDER = ["artfill", "fullart", "big"];  // index 0 = most zoomed-in
-let zoomMode = "artfill";        // current Thoth zoom; always reset to artfill on a new draw
+let zoomMode = "artfill";        // current Thoth zoom (live; can be any of the three)
+
+// Remembered Thoth zoom for the session. The deck "comes up" at this zoom on
+// every new draw and whenever we switch back into Thoth — so the querent's
+// in/out preference persists across draws and deck toggles (no localStorage;
+// a reload starts fresh at ARTFILL). Only TWO states are remembered: fully
+// zoomed IN (artfill) or fully zoomed OUT (big). All three remain reachable
+// live by pinching, but the MIDDLE crop (fullart) is deliberately NOT a
+// remembered resting state — if the querent leaves the card on fullart we
+// fall back to artfill, which sits better with the card mechanics and look.
+let thothZoomPref = "artfill";   // "artfill" | "big"
+function rememberZoom(mode) { thothZoomPref = (mode === "big") ? "big" : "artfill"; }
+// The zoom a fresh draw / deck-switch should land on for the active deck.
+function defaultZoomForDraw() { return (currentDeck === "thoth") ? thothZoomPref : "artfill"; }
+// Keep the signature module's crop in sync so art-anchored effects (the Sun
+// punch-out) use the coordinates matching the crop actually on screen.
+function syncSignatureCrop() {
+  if (window.MajorArcanaSignature && window.MajorArcanaSignature.setCrop) {
+    window.MajorArcanaSignature.setCrop(zoomMode);
+  }
+}
 
 function deckModel() { return DECKS[currentDeck]; }
 function backSrc() { return deckModel().back; }
@@ -276,10 +296,12 @@ async function drawCard(imgEl, event) {
   const cardIdx = deck.splice(pickAt, 1)[0];
   const chosenKey = CARD_KEYS[cardIdx];
 
-  // Every new draw resolves at the canonical ARTFILL zoom. (The zoom
-  // state is intentionally NOT preserved across draws for now — the card
-  // always "comes up" filling the frame; the querent can re-zoom after.)
-  zoomMode = "artfill";
+  // The card "comes up" at the remembered zoom for this deck: fully in
+  // (artfill) or fully out (big) for Thoth, always artfill for RW (which
+  // has no zoom). This persists the querent's in/out preference across
+  // draws within the session.
+  zoomMode = defaultZoomForDraw();
+  syncSignatureCrop();   // so a Major's signature uses the matching crop
   const chosenUrl = cardSrcFor(chosenKey);
 
   // For Thoth, warm the zoom assets (FULLART = the continuous-zoom medium,
@@ -767,6 +789,10 @@ function endZoom() {
     return;
   }
   zoomMode = ZOOM_ORDER[nextIdx];
+  // Update the remembered in/out preference. Landing on the middle crop
+  // (fullart) collapses to artfill, so only the two end states persist.
+  rememberZoom(zoomMode);
+  syncSignatureCrop();
   crossfadeZoom(imgEl, zoomMode, z.ratio);
   haptic(4);
 }
@@ -872,19 +898,22 @@ function toggleDeck() {
   const wasBack = showingBack;
   const fromUrl = imgEl.src;
 
-  // Flip the active deck. Zoom resets to artfill for the new deck.
+  // Flip the active deck. The new deck "arrives" at its remembered zoom:
+  // the querent's in/out Thoth preference (artfill always for RW).
   currentDeck = (currentDeck === "rw") ? "thoth" : "rw";
-  zoomMode = "artfill";
-  // Tell the signature module which deck is active so art-location-
-  // dependent effects (the Sun) use the right coordinates.
+  zoomMode = defaultZoomForDraw();
+  // Tell the signature module which deck + crop is active so art-location-
+  // dependent effects (the Sun) use the matching coordinates.
   if (window.MajorArcanaSignature && window.MajorArcanaSignature.setDeck) {
     window.MajorArcanaSignature.setDeck(currentDeck);
   }
+  syncSignatureCrop();
 
-  // Determine the target image: the equivalent card (or the new back).
+  // Determine the target image: the equivalent card at the remembered zoom
+  // (or the new back).
   const toUrl = wasBack
     ? backSrc()
-    : (currentCardName ? deckModel().cardSrc(currentCardName, "artfill") : backSrc());
+    : (currentCardName ? deckModel().cardSrc(currentCardName, zoomMode) : backSrc());
 
   haptic(14);
   playRealityWarp(imgEl, fromUrl, toUrl).then(() => {

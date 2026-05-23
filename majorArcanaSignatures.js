@@ -25,6 +25,13 @@
   // this to pick per-deck coordinates. Set via the public setDeck().
   let activeDeck = "rw";
 
+  // Which Thoth crop is on screen ("artfill" | "fullart" | "big"). A
+  // depicted feature like the Sun's disc sits at a different fraction of
+  // the frame in the zoomed-in (artfill) vs zoomed-out (big) crop, so the
+  // Sun punch-out reads the crop to pick matching coordinates. Set via the
+  // public setCrop(). (RW has no zoom, so this stays "artfill" for RW.)
+  let activeCrop = "artfill";
+
   // ---- helpers ------------------------------------------------------
   const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -1286,12 +1293,21 @@
     const src = imgEl.src;
     const totalMs = 1900;
 
-    // Where the sun disc sits on the card, per deck. RW (Rider-Waite)
-    // has it upper-centre; the Thoth Sun's disc is larger and a touch
-    // lower-centre in the ARTFILL crop. (User will fine-tune Thoth.)
-    var coords = (activeDeck === "thoth")
-      ? { cx: 0.50, cy: 0.36, r: 0.27 }
-      : { cx: 0.50, cy: 0.25, r: 0.24 };
+    // Where the sun disc sits on the card, per deck AND per Thoth crop.
+    // RW (Rider-Waite) has it upper-centre and never zooms. The Thoth Sun
+    // sits at one physical point that maps to different frame fractions in
+    // the zoomed-in (artfill) vs zoomed-out (big) crop. The "big" values
+    // are the same physical point as the artfill ones, mapped through the
+    // known crop geometry (art box + center-crops), so the punch-out lands
+    // on the sun whether the card came up zoomed in or out.
+    var coords;
+    if (activeDeck === "thoth") {
+      coords = (activeCrop === "big")
+        ? { cx: 0.494, cy: 0.378, r: 0.213 }   // whole bordered card
+        : { cx: 0.50,  cy: 0.36,  r: 0.27 };   // art fills the frame (artfill/fullart)
+    } else {
+      coords = { cx: 0.50, cy: 0.25, r: 0.24 };
+    }
     const sunCxFrac = coords.cx;
     const sunCyFrac = coords.cy;
     const sunRFrac  = coords.r;
@@ -1806,12 +1822,16 @@
     window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function setDeck(id) { activeDeck = (id === "thoth") ? "thoth" : "rw"; }
+  function setCrop(id) {
+    activeCrop = (id === "big" || id === "fullart") ? id : "artfill";
+  }
 
   window.MajorArcanaSignature = {
     isMajor: isMajor,
     play:    reduceMotion ? function () {} : play,
     cancel:  clearAll,
     schedule: reduceMotion ? function () {} : schedule,
-    setDeck: setDeck
+    setDeck: setDeck,
+    setCrop: setCrop
   };
 })();
