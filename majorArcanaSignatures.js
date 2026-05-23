@@ -1331,22 +1331,25 @@
     for (let i = 0; i <= N; i++) {
       const t   = i / N;
       const tau = t * totalMs / 1000;
-      // Soft drift on x/y (single frequency each, low amplitude).
-      const dx = 1.6 * Math.sin(2 * Math.PI * 0.65 * tau);
-      const dy = 1.3 * Math.sin(2 * Math.PI * 0.50 * tau + 0.5);
-      // Gentle scale breathing.
-      const sc = 1 + 0.048 * Math.sin(2 * Math.PI * 0.45 * tau);
-      // Brightness / saturation pulse slowly.
-      const brightness = 1.28 + 0.16 *
+      // Soft drift on x/y (single frequency each). Same rhythm, bigger
+      // amplitude so the sun visibly stirs rather than barely breathing.
+      const dx = 3.0 * Math.sin(2 * Math.PI * 0.65 * tau);
+      const dy = 2.4 * Math.sin(2 * Math.PI * 0.50 * tau + 0.5);
+      // Scale breathing — roughly doubled so the disc clearly swells.
+      const sc = 1 + 0.10 * Math.sin(2 * Math.PI * 0.45 * tau);
+      // Brightness / saturation pulse — lifted base + wider swing so the
+      // sun unmistakably blooms and warms on mobile.
+      const brightness = 1.50 + 0.30 *
                                 (0.5 + 0.5 * Math.sin(2 * Math.PI * 0.75 * tau + 0.5));
-      const saturate   = 1.22 + 0.14 *
+      const saturate   = 1.40 + 0.24 *
                                 (0.5 + 0.5 * Math.sin(2 * Math.PI * 0.60 * tau + 1.0));
       // Three layered halos, each on its own slow rhythm so they
       // expand and contract independently — the warmth feels alive,
       // not metronomic. Progressively warmer as the radius grows.
-      const innerR  = 30  + 12 * Math.sin(2 * Math.PI * 0.85 * tau);
-      const middleR = 72  + 22 * Math.sin(2 * Math.PI * 0.62 * tau + 0.9);
-      const outerR  = 132 + 38 * Math.sin(2 * Math.PI * 0.45 * tau + 1.6);
+      // Radii enlarged ~1.6x so the bloom reads clearly.
+      const innerR  = 48  + 20 * Math.sin(2 * Math.PI * 0.85 * tau);
+      const middleR = 116 + 36 * Math.sin(2 * Math.PI * 0.62 * tau + 0.9);
+      const outerR  = 210 + 62 * Math.sin(2 * Math.PI * 0.45 * tau + 1.6);
       let env = 1;
       if      (t < 0.14) env = t / 0.14;
       else if (t > 0.82) env = (1 - t) / 0.18;
@@ -1355,9 +1358,9 @@
         filter:    `blur(3px) ` +
                    `brightness(${(1 + (brightness - 1) * env).toFixed(3)}) ` +
                    `saturate(${(1 + (saturate - 1) * env).toFixed(3)}) ` +
-                   `drop-shadow(0 0 ${innerR.toFixed(1)}px rgba(255,225,140,${(0.85 * env).toFixed(3)})) ` +
-                   `drop-shadow(0 0 ${middleR.toFixed(1)}px rgba(255,200,100,${(0.58 * env).toFixed(3)})) ` +
-                   `drop-shadow(0 0 ${outerR.toFixed(1)}px rgba(255,175,75,${(0.34 * env).toFixed(3)}))`,
+                   `drop-shadow(0 0 ${innerR.toFixed(1)}px rgba(255,225,140,${(1.00 * env).toFixed(3)})) ` +
+                   `drop-shadow(0 0 ${middleR.toFixed(1)}px rgba(255,200,100,${(0.78 * env).toFixed(3)})) ` +
+                   `drop-shadow(0 0 ${outerR.toFixed(1)}px rgba(255,175,75,${(0.52 * env).toFixed(3)}))`,
         opacity:   env.toFixed(4),
         offset:    parseFloat(t.toFixed(6))
       });
@@ -1369,7 +1372,7 @@
     // punched-out shape.
     trackAnim(imgEl.animate([
       { filter: 'brightness(1)    saturate(1)' },
-      { filter: 'brightness(1.10) saturate(1.16)', offset: 0.5 },
+      { filter: 'brightness(1.20) saturate(1.30)', offset: 0.5 },
       { filter: 'brightness(1)    saturate(1)' }
     ], { duration: totalMs, easing: 'cubic-bezier(0.42, 0, 0.58, 1)', fill: 'none' }));
 
@@ -1377,17 +1380,17 @@
     // Round warm dots (no star points), each on a slow outward drift
     // with a slight upward bias as if rising on warm air. Long
     // lifetimes and ease-out so they linger rather than zip.
-    const numEmbers = 14;
+    const numEmbers = 22;
     for (let i = 0; i < numEmbers; i++) {
       const angle     = Math.random() * Math.PI * 2;
       const startDist = sunR * (0.86 + Math.random() * 0.16);
-      const endDist   = sunR * (1.20 + Math.random() * 0.55);
+      const endDist   = sunR * (1.35 + Math.random() * 0.70);
       const sx = sunCx + Math.cos(angle) * startDist;
       const sy = sunCy + Math.sin(angle) * startDist;
       // Outward drift + upward bias (warm air rising).
       const dx = (endDist - startDist) * Math.cos(angle);
-      const dy = (endDist - startDist) * Math.sin(angle) - 10;
-      const size = 5 + Math.random() * 5;
+      const dy = (endDist - startDist) * Math.sin(angle) - 14;
+      const size = 7 + Math.random() * 6;
 
       const ember = newOverlayDiv(
         `left:${sx}px;top:${sy}px;` +
@@ -1397,8 +1400,8 @@
           `rgba(255,235,170,1) 0%,` +
           `rgba(255,210,120,0.65) 40%,` +
           `transparent 80%);` +
-        `box-shadow:0 0 14px 3px rgba(255,215,130,0.72),` +
-                  `0 0 28px 7px rgba(255,180,90,0.34);` +
+        `box-shadow:0 0 18px 4px rgba(255,215,130,0.9),` +
+                  `0 0 36px 9px rgba(255,180,90,0.46);` +
         `opacity:0;`
       );
 
