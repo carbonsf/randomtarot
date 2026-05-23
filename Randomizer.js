@@ -124,6 +124,14 @@ function preloadImage(url) {
   });
 }
 
+// Small promise-based delay used by the zoom crossfade. (Previously this
+// was referenced but never defined, so every crossfade threw a
+// ReferenceError mid-flight — stranding the ghost and locking the busy
+// guard for ~1.5s. Defining it lets the crossfade actually complete.)
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // --- Entropy sources ----------------------------------------------------
 // The draw is composed of (a) a strong cosmic source and (b) the querent's
 // gesture — when and where they reached for the card. The two are mixed
@@ -769,43 +777,59 @@ function endZoom() {
 // only once it has decoded the same file — an invisible handoff.
 async function crossfadeZoom(imgEl, mode, startScale) {
   zoomBusy = true;
-  // Safety: never strand the busy flag if the async chain is suspended
-  // (e.g. iOS standalone backgrounding mid-crossfade).
-  const safety = setTimeout(() => { zoomBusy = false; }, 1500);
-  const targetUrl = deckModel().cardSrc(currentCardName, mode);
-  const s0 = Math.max(ZOOM_LIVE_MIN, Math.min(ZOOM_LIVE_MAX, startScale || 1));
-
-  const pre = new Image();
-  pre.src = targetUrl;
-  try { await pre.decode(); } catch (_e) { /* cached / paints below */ }
-
-  const ghost = makeZoomGhost(targetUrl, s0, 30);
-  ghost.style.opacity = "0";
-  ghost.style.transition = "opacity 260ms ease, transform 280ms cubic-bezier(0.2,0,0,1)";
-  imgEl.style.transition = "opacity 240ms ease, transform 280ms cubic-bezier(0.2,0,0,1)";
-  void ghost.offsetHeight;
-  requestAnimationFrame(() => {
-    ghost.style.opacity = "1";
-    ghost.style.transform = "scale(1)";
-    imgEl.style.opacity = "0";
-    imgEl.style.transform = "scale(1)";
-  });
-
-  await sleep(300);
-  imgEl.style.transition = "none";
-  imgEl.src = targetUrl;
-  try { await imgEl.decode(); } catch (_e) { /* ignore */ }
-  imgEl.style.transform = ""; imgEl.style.opacity = "";
-  void imgEl.offsetHeight;
-  // One painted frame with the real img up, then drop EVERY ghost (this one
-  // plus any orphaned by a fast back-and-forth) so none can stack in the
-  // letterbox bars. The busy guard already prevents overlapping crossfades.
-  requestAnimationFrame(() => requestAnimationFrame(() => {
+  // Safety net: whatever happens in the async body below — a rejected
+  // decode, a suspended tab on iOS standalone, an unexpected throw — this
+  // guarantees the ghost is swept, the img is left visible, and the busy
+  // flag is released. A stranded ghost or a stuck flag is exactly what
+  // produced the "pile of ghosts" + "have to retry several times" bug.
+  let settled = false;
+  const finish = () => {
+    if (settled) return;
+    settled = true;
     document.querySelectorAll(".zoom-ghost").forEach((g) => g.remove());
     imgEl.style.transition = "";
-    clearTimeout(safety);
+    imgEl.style.transform = "";
+    imgEl.style.opacity = "";
     zoomBusy = false;
-  }));
+  };
+  const safety = setTimeout(finish, 1200);
+
+  try {
+    const targetUrl = deckModel().cardSrc(currentCardName, mode);
+    const s0 = Math.max(ZOOM_LIVE_MIN, Math.min(ZOOM_LIVE_MAX, startScale || 1));
+
+    const pre = new Image();
+    pre.src = targetUrl;
+    try { await pre.decode(); } catch (_e) { /* cached / paints below */ }
+
+    const ghost = makeZoomGhost(targetUrl, s0, 30);
+    ghost.style.opacity = "0";
+    ghost.style.transition = "opacity 200ms ease, transform 220ms cubic-bezier(0.2,0,0,1)";
+    imgEl.style.transition = "opacity 180ms ease, transform 220ms cubic-bezier(0.2,0,0,1)";
+    void ghost.offsetHeight;
+    requestAnimationFrame(() => {
+      ghost.style.opacity = "1";
+      ghost.style.transform = "scale(1)";
+      imgEl.style.opacity = "0";
+      imgEl.style.transform = "scale(1)";
+    });
+
+    await sleep(230);
+    imgEl.style.transition = "none";
+    imgEl.src = targetUrl;
+    try { await imgEl.decode(); } catch (_e) { /* ignore */ }
+    imgEl.style.transform = ""; imgEl.style.opacity = "";
+    void imgEl.offsetHeight;
+    // One painted frame with the real img up, then sweep EVERY ghost (this
+    // one plus any orphaned by a fast back-and-forth) so none can stack in
+    // the letterbox bars.
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  } catch (_e) {
+    /* fall through to finish() — never leave the zoom half-applied */
+  } finally {
+    clearTimeout(safety);
+    finish();
+  }
 }
 
 // Ease the live preview back to neutral (no state change).
