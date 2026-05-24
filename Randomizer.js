@@ -975,12 +975,21 @@ function playRealityWarp(imgEl, fromUrl, toUrl) {
       toGhosts.push(buildGhost(toUrl, 45 + N + i, true)); // 'to' set on top
     }
 
-    // Hide the real image while the ghosts perform.
+    // Paint the leaving reality as a SOLID, undistorted stand-in for the
+    // current card right now — before the real <img> is hidden — so there
+    // is never a frame where neither the card nor the ghosts are visible
+    // (that gap was the "flash"/"sudden dim" at the start). The fromUrl is
+    // the on-screen image, already decoded, so these paint immediately.
+    for (let i = 0; i < N; i++) {
+      const central0 = 1 - Math.abs(i - (N - 1) / 2) / ((N - 1) / 2 || 1);
+      fromGhosts[i].style.transform = "none";
+      fromGhosts[i].style.filter = "none";
+      fromGhosts[i].style.opacity = (0.4 + 0.6 * central0).toFixed(3);
+    }
     imgEl.style.transition = "none";
-    imgEl.style.opacity = "0";
 
     const DUR = 950;
-    const start = performance.now();
+    let start = 0;            // set on the first animation frame
     let swapped = false;
 
     function smoothstep(a, b, x) {
@@ -989,6 +998,7 @@ function playRealityWarp(imgEl, fromUrl, toUrl) {
     }
 
     function frame(now) {
+      if (!start) start = now;
       const t = Math.min(1, (now - start) / DUR);
       const env = Math.sin(Math.PI * t);              // distortion amplitude 0→1→0
       const xfade = smoothstep(0.30, 0.70, t);        // from→to crossover
@@ -1004,12 +1014,16 @@ function playRealityWarp(imgEl, fromUrl, toUrl) {
                       ") skewX(" + skew.toFixed(2) + "deg)";
         const central = 1 - Math.abs(i - (N - 1) / 2) / ((N - 1) / 2 || 1);
 
-        // Leaving reality: solid early, dissolving through the apex; a
-        // gentle per-ghost hue split gives the de-tuning shimmer.
+        // Leaving reality: starts fully solid (so the warp grows OUT of the
+        // current card, no flash), wobbles via `env`, and dissolves only as
+        // the crossover (`xfade`) rises through the apex. The chromatic hue
+        // split + saturation are ramped by `env` so they fade IN from
+        // neutral instead of popping on at the first frame.
         const fg = fromGhosts[i];
         fg.style.transform = xform;
-        fg.style.opacity = (env * (0.4 + 0.6 * central) * (1 - xfade)).toFixed(3);
-        fg.style.filter = "hue-rotate(" + ((i - (N - 1) / 2) * 14).toFixed(0) + "deg) saturate(1.5)";
+        fg.style.opacity = ((0.4 + 0.6 * central) * (1 - xfade)).toFixed(3);
+        fg.style.filter = "hue-rotate(" + ((i - (N - 1) / 2) * 14 * env).toFixed(1) +
+                          "deg) saturate(" + (1 + 0.5 * env).toFixed(3) + ")";
 
         // Arriving reality: blooms in around the apex (screen blend), most
         // blurred at the crossover and sharpening as it settles, then
@@ -1042,7 +1056,12 @@ function playRealityWarp(imgEl, fromUrl, toUrl) {
         resolve();
       }
     }
-    requestAnimationFrame(frame);
+    // Let the solid leaving-reality ghosts paint for one frame, THEN hide
+    // the real image (seamless handoff — no blank gap) and begin the warp.
+    requestAnimationFrame(() => {
+      imgEl.style.opacity = "0";
+      requestAnimationFrame(frame);
+    });
   });
 }
 
