@@ -1167,10 +1167,10 @@ const CARD_ACTIONS = {
       "key": "disagreeing",
       "subs": [
         "feeling everyone is at cross-purposes",
-        "being torn by dissension",
+        "feeling torn by dissension",
         "quarreling, arguing and bickering",
         "becoming embroiled in a debate",
-        "being at odds with others",
+        "feeling at odds with others",
         "quibbling over details"
       ]
     },
@@ -1772,7 +1772,7 @@ const CARD_ACTIONS = {
         "letting go of a hope",
         "giving up the win",
         "experiencing a setback",
-        "being defeated",
+        "feeling defeated",
         "having a possession taken away",
         "saying good-bye"
       ]
@@ -1792,7 +1792,7 @@ const CARD_ACTIONS = {
       "lead": "feeling",
       "key": "regret",
       "subs": [
-        "being disappointed by events",
+        "feeling disappointed by events",
         "crying over spilt milk",
         "wanting to turn back the clock",
         "wishing for what might have been",
@@ -3006,13 +3006,13 @@ const CARD_ACTIONS = {
       ]
     },
     {
-      "lead": "being",
+      "lead": "feeling",
       "key": "rejected",
       "subs": [
         "lacking support",
         "having the door slammed in your face",
         "taking an unpopular position",
-        "being ostracized",
+        "feeling ostracized",
         "feeling excluded",
         "standing alone",
         "receiving disapproval"
