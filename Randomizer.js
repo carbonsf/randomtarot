@@ -32,8 +32,19 @@ const DECKS = {
   rw: {
     back: "RoseLilyRed.jpg",
     hasZoom: false,
-    // RW art is remote (learntarot.com), one image per card, no zoom.
-    cardSrc: (key) => "https://www.learntarot.com/bigjpgs/" + key + ".jpg",
+    // RW art is now SELF-HOSTED: the 78 card faces live in the repo under
+    // rw/<key>.jpg (one image per card, no zoom). They were previously
+    // hotlinked from learntarot.com — see the note below.
+    //
+    // NOTE (image hosting): As of this change BOTH decks are served from
+    // this repo — RW under rw/, Thoth under thoth/{artfill,fullart,big}/,
+    // and both backs at the repo root / thoth/. The RW faces used to load
+    // remotely from "https://www.learntarot.com/bigjpgs/<key>.jpg", which
+    // meant the RW deck depended on a third-party server (could break,
+    // block hotlinking, never work offline). Pulling them local makes both
+    // decks consistent and self-contained. If you ever re-source the RW
+    // art, this single line is the only place the location is defined.
+    cardSrc: (key) => "rw/" + key + ".jpg",
     upright:  () => (typeof CARD_ACTIONS !== "undefined" ? CARD_ACTIONS : null),
     reversed: () => (typeof CARD_ACTIONS_REVERSED !== "undefined" ? CARD_ACTIONS_REVERSED : null),
   },
@@ -1076,11 +1087,11 @@ function preloadDeckInBackground() {
     // The back of whichever deck isn't active right now.
     const other = (currentDeck === "rw") ? "thoth" : "rw";
     new Image().src = DECKS[other].back;
-    // Thoth artfill crops are local and small; warm them all. (RW art is
-    // remote and large — we don't aggressively prefetch all 78 of those.)
-    if (other === "thoth" || currentDeck === "thoth") {
-      for (const key of CARD_KEYS) new Image().src = "thoth/artfill/" + key + ".jpg";
-    }
+    // Both decks are now self-hosted and small (RW faces ~100KB each under
+    // rw/, Thoth artfill crops likewise under thoth/artfill/), so warm the
+    // whole inactive deck's faces — a toggle in either direction is then
+    // instant. cardSrc() resolves rw/<key>.jpg or thoth/artfill/<key>.jpg.
+    for (const key of CARD_KEYS) new Image().src = DECKS[other].cardSrc(key);
   };
   if ("requestIdleCallback" in window) requestIdleCallback(run, { timeout: 4000 });
   else setTimeout(run, 1500);
