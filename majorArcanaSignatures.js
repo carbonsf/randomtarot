@@ -652,7 +652,13 @@
   async function hermitLantern(imgEl) {
     const cr = getContentRect(imgEl);
     const cx = cr.left + cr.width  / 2;
-    const cy = cr.top  + cr.height / 2;
+    // The Hermit holds the lantern high — anchor the search arc near the
+    // top of the card (where the light source actually is) rather than at
+    // the card centre. The Lissajous x/y amplitudes are unchanged, so the
+    // upper part of the sweep may briefly drift above the card / off the
+    // top of the screen, which reads as the lantern's beam glancing past
+    // the frame (intentional, like a searching light).
+    const cy = cr.top  + cr.height * 0.22;
     const totalMs = 2400;
     const N = 60;
 
