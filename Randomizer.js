@@ -711,21 +711,59 @@ function threeFingerEnd(e) {
 // Hand the current displayed crop to the platform share sheet. Prefers
 // sharing the actual image file (rich previews, save-to-photos, etc.)
 // and falls back to sharing the URL if the platform won't take files.
+// Reversal is CSS-only (transform: rotate(180deg)), so for a reversed
+// card we render the rotated view into a canvas and share THAT — the
+// querent gets the upside-down version they're actually looking at.
 async function shareCurrentCard() {
   const imgEl = document.querySelector("img");
   if (!imgEl || !navigator.share) return;
   const url = imgEl.src;
+  const reversed = imgEl.classList.contains("reversed");
   try {
     const resp = await fetch(url);
-    const blob = await resp.blob();
-    const name = (currentCardName || "card") + ".jpg";
-    const file = new File([blob], name, { type: blob.type || "image/jpeg" });
+    let blob = await resp.blob();
+    let type = blob.type || "image/jpeg";
+    if (reversed) {
+      const r = await renderReversedBlob(url, type);
+      blob = r.blob; type = r.type;
+    }
+    const name = (currentCardName || "card") + (reversed ? "-reversed" : "") + ".jpg";
+    const file = new File([blob], name, { type });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: "Tarot" });
       return;
     }
   } catch (_e) { /* fall through to URL share */ }
+  // URL fallback can only share the upright file (the reversed view is a
+  // local CSS transform, no separate URL exists). Better than nothing.
   try { await navigator.share({ url, title: "Tarot" }); } catch (_e) { /* ignore */ }
+}
+
+// Draw the card image rotated 180° onto a canvas and return a blob, so the
+// share sheet receives the same orientation the querent sees on screen.
+// Both decks are same-origin now, so the canvas isn't tainted by CORS.
+function renderReversedBlob(url, sourceType) {
+  return new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = im.naturalWidth;
+      c.height = im.naturalHeight;
+      const ctx = c.getContext("2d");
+      ctx.translate(c.width / 2, c.height / 2);
+      ctx.rotate(Math.PI);
+      ctx.drawImage(im, -c.width / 2, -c.height / 2);
+      // Preserve PNG if the source was PNG; otherwise emit JPEG to keep
+      // share payloads small (these are photos of paintings, not line art).
+      const outType = sourceType === "image/png" ? "image/png" : "image/jpeg";
+      c.toBlob(
+        (b) => b ? resolve({ blob: b, type: outType }) : reject(new Error("toBlob failed")),
+        outType, 0.92
+      );
+    };
+    im.onerror = () => reject(new Error("image load failed"));
+    im.src = url;
+  });
 }
 
 // Is the just-finished two-finger gesture the (gated, deliberate) zigzag?
