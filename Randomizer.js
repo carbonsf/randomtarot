@@ -658,6 +658,76 @@ function twoFingerEnd(e) {
   tfZoomLive = false;
 }
 
+// --- Three-finger swipe-up: native share of the current card ----------
+// A three-finger swipe from bottom to top while on a face-up card hands
+// the current crop to the device's native share sheet (Web Share API).
+// Mobile-only by nature (touch event source). Sits alongside the two-
+// finger and long-press gestures: each handler bails on the wrong touch
+// count, so they never collide. No share UI is added — this is just the
+// gesture wired to navigator.share.
+let threeFingerActive = false;
+let threeFingerStartY = 0;
+let threeFingerFired  = false;
+function avgY(touches) {
+  let s = 0;
+  for (let i = 0; i < touches.length; i++) s += touches[i].clientY;
+  return s / touches.length;
+}
+function threeFingerStart(e) {
+  if (!e.touches || e.touches.length !== 3) return;
+  if (showingBack || drawing) return;   // only share face-up cards
+  // A three-finger touch can't coexist with a long-press or two-finger
+  // gesture; those handlers already bail on >=2 touches. Reset our state.
+  threeFingerActive = true;
+  threeFingerFired  = false;
+  threeFingerStartY = avgY(e.touches);
+  if (e.cancelable) e.preventDefault();
+}
+function threeFingerMove(e) {
+  if (!threeFingerActive || threeFingerFired) return;
+  if (!e.touches || e.touches.length !== 3) return;
+  if (e.cancelable) e.preventDefault();
+  const y = avgY(e.touches);
+  // Threshold: must travel up at least ~18% of the viewport (min 120px)
+  // so an accidental nudge can't fire the share sheet.
+  const minPx = Math.max(120, window.innerHeight * 0.18);
+  if (threeFingerStartY - y >= minPx) {
+    threeFingerFired = true;
+    haptic(12);
+    shareCurrentCard().catch(() => { /* user-canceled / unsupported */ });
+  }
+}
+function threeFingerEnd(e) {
+  if (!threeFingerActive) return;
+  // Wait until fewer than three fingers remain so a brief lift doesn't
+  // end the gesture mid-swipe.
+  if (e.touches && e.touches.length >= 3) return;
+  threeFingerActive = false;
+  threeFingerFired  = false;
+  // Suppress the trailing synthetic click that finger-release can produce.
+  suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
+}
+
+// Hand the current displayed crop to the platform share sheet. Prefers
+// sharing the actual image file (rich previews, save-to-photos, etc.)
+// and falls back to sharing the URL if the platform won't take files.
+async function shareCurrentCard() {
+  const imgEl = document.querySelector("img");
+  if (!imgEl || !navigator.share) return;
+  const url = imgEl.src;
+  try {
+    const resp = await fetch(url);
+    const blob = await resp.blob();
+    const name = (currentCardName || "card") + ".jpg";
+    const file = new File([blob], name, { type: blob.type || "image/jpeg" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Tarot" });
+      return;
+    }
+  } catch (_e) { /* fall through to URL share */ }
+  try { await navigator.share({ url, title: "Tarot" }); } catch (_e) { /* ignore */ }
+}
+
 // Is the just-finished two-finger gesture the (gated, deliberate) zigzag?
 // Must START in the top deck zone — that's what keeps it from clashing
 // with a pinch/zoom done on the card body.
@@ -1107,6 +1177,14 @@ function wireLongPress() {
   imgEl.addEventListener("touchmove",   twoFingerMove,  { passive: false });
   imgEl.addEventListener("touchend",    twoFingerEnd,   { passive: false });
   imgEl.addEventListener("touchcancel", twoFingerEnd,   { passive: false });
+
+  // Three-finger swipe-up: hand the current card to the native share sheet.
+  // Each handler is no-op unless exactly three touches are present, so it
+  // never collides with the one- or two-finger gestures above.
+  imgEl.addEventListener("touchstart",  threeFingerStart, { passive: false });
+  imgEl.addEventListener("touchmove",   threeFingerMove,  { passive: false });
+  imgEl.addEventListener("touchend",    threeFingerEnd,   { passive: false });
+  imgEl.addEventListener("touchcancel", threeFingerEnd,   { passive: false });
 
   // Touch (most native on mobile WebKit, including iOS Safari).
   imgEl.addEventListener("touchstart",  pressStart, { passive: true });
