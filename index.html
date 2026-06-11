@@ -244,61 +244,32 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
 
-      /* Default (normal) density. Overridden by .density-* below.
-         Headline sizes are calibrated for Cormorant Garamond (a serif
-         whose optical size runs ~10% smaller than the system sans at
-         the same nominal px) — they'd want trimming if the head face
-         were ever swapped back to sans. */
-      --head-size:   clamp(24px, 3.0vw, 30px);
-      --sub-size:    clamp(13px, 1.55vw, 16px);
-      --stanza-gap:  clamp(28px, 4.6vh, 48px);
-      --line-height: 1.55;
+      /* ONE consistent type scale for every card — the generous, centered
+         look. (Cards used to shrink the font and switch to a top-aligned
+         multi-column block when content got dense, which read as an
+         inconsistent layout. Now every card uses this same large scale and
+         the same vertically-centered single column; tall cards simply
+         scroll, top-aligned, via `justify-content: safe center` on the
+         stage.) Headline sizes are calibrated for Cormorant Garamond (a
+         serif whose optical size runs ~10% smaller than the system sans at
+         the same nominal px). */
+      --head-size:   clamp(25px, 3.4vw, 34px);
+      --sub-size:    clamp(14.5px, 1.7vw, 18px);
+      --stanza-gap:  clamp(28px, 4.8vh, 52px);
+      --line-height: 1.6;
       --columns:     1;
       --col-gap:     clamp(40px, 6vw, 72px);
-      --measure:     58ch;
+      --measure:     54ch;
     }
     #info-overlay.open {
       opacity: 1;
       pointer-events: auto;
     }
 
-    /* Density tiers. Picked at open time from total content volume.
-       sparse: short cards — type breathes large, lots of air.
-       normal: the common case.
-       dense:  packed cards — type tightens, columns may split on wide.
-       overflow: extreme cards — smallest type, two columns earlier. */
-    #info-overlay.density-sparse {
-      --head-size:   clamp(28px, 3.8vw, 40px);
-      --sub-size:    clamp(15px, 1.8vw, 19px);
-      --stanza-gap:  clamp(40px, 7vh, 72px);
-      --line-height: 1.65;
-      --measure:     50ch;
-    }
-    #info-overlay.density-dense {
-      --head-size:   clamp(21px, 2.5vw, 26px);
-      --sub-size:    clamp(12.5px, 1.4vw, 14.5px);
-      --stanza-gap:  clamp(20px, 3.4vh, 32px);
-      --line-height: 1.5;
-      --measure:     46ch;
-    }
-    #info-overlay.density-overflow {
-      --head-size:   clamp(19px, 2.2vw, 23px);
-      --sub-size:    clamp(11.5px, 1.25vw, 13.5px);
-      --stanza-gap:  clamp(14px, 2.4vh, 22px);
-      --line-height: 1.45;
-      --measure:     42ch;
-    }
-
-    /* Wide-viewport multi-column for the denser tiers. The stanzas flow
-       across columns naturally; break-inside keeps each stanza intact.
-       On narrow viewports (or sparse content) it stays single-column. */
-    @media (min-width: 760px) {
-      #info-overlay.density-dense    { --columns: 2; }
-      #info-overlay.density-overflow { --columns: 2; }
-    }
-    @media (min-width: 1180px) {
-      #info-overlay.density-overflow { --columns: 3; }
-    }
+    /* Density classes are still applied by the renderer, but they no longer
+       change the type scale or the layout — every card uses the one large,
+       centered look defined on #info-overlay above. (Kept as hooks in case
+       per-density tuning is ever wanted again.) */
 
     .info-stage {
       max-width: var(--measure);
@@ -306,20 +277,10 @@
       min-height: 100%;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      column-count: var(--columns);
-      column-gap: var(--col-gap);
-      column-fill: balance;
-      /* When in multi-column mode, the flex centering above is ignored
-         (the container is laid out by the column algorithm) — that's
-         what we want: top-aligned packed columns when dense, vertically
-         centered single column when sparse. */
-    }
-    /* In multi-column mode, widen the stage so the columns have room. */
-    #info-overlay.density-dense    .info-stage,
-    #info-overlay.density-overflow .info-stage {
-      max-width: min(96vw, 1280px);
-      display: block;
+      /* Vertically center when the content fits; when it's taller than the
+         viewport, `safe` falls back to top alignment so the first stanza is
+         never clipped above the scroll area — the overlay just scrolls. */
+      justify-content: safe center;
     }
 
     .info-stanza {
@@ -456,17 +417,11 @@
       .info-stanza.pending .info-flow { animation: none; }
     }
 
-    /* Portrait phones: always single column, tighter padding, slightly
-       smaller measure. The density tier still drives the type sizes. */
+    /* Portrait phones: tighter padding, full-width measure. */
     @media (max-width: 520px) and (orientation: portrait) {
       #info-overlay {
         padding: clamp(20px, 5vh, 36px) 18px;
-        --columns: 1 !important;
         --measure: 100%;
-      }
-      #info-overlay.density-dense    .info-stage,
-      #info-overlay.density-overflow .info-stage {
-        max-width: 100%;
       }
     }
   </style>

@@ -660,14 +660,29 @@ function twoFingerEnd(e) {
 
 // --- Three-finger swipe-up: native share of the current card ----------
 // A three-finger swipe from bottom to top while on a face-up card hands
-// the current crop to the device's native share sheet (Web Share API).
-// Mobile-only by nature (touch event source). Sits alongside the two-
-// finger and long-press gestures: each handler bails on the wrong touch
-// count, so they never collide. No share UI is added — this is just the
-// gesture wired to navigator.share.
+// the displayed image to the device's native share sheet (Web Share API).
+// Works for BOTH decks, EVERY zoom crop, and reversed cards (the rotated
+// view is rendered to a canvas so the shared image matches the screen).
+//
+// Robustness (this is what makes it fire reliably, and twice in a row):
+//   * The share File is PREPARED on touchstart (async fetch/canvas) so it
+//     is ready by the time the finger lifts. iOS requires transient user
+//     activation for navigator.share(), and ANY `await` before the call
+//     consumes it — so we never await inside the firing path.
+//   * navigator.share() is invoked from touchEND (a genuine activation
+//     event), not from touchmove (which carries no activation at all —
+//     the old cause of the gesture working only sometimes).
+//   * A `shareInFlight` guard keeps a second swipe from colliding with an
+//     open sheet; it clears when the sheet resolves or is canceled, so the
+//     very next swipe works.
+//   * Only the image file is shared — no title/text — so nothing but the
+//     card is handed off.
 let threeFingerActive = false;
 let threeFingerStartY = 0;
-let threeFingerFired  = false;
+let threeFingerArmed  = false;
+let shareFileReady    = null;   // File prepared for THIS gesture, or null
+let sharePrepPromise  = null;   // in-flight preparation for THIS gesture
+let shareInFlight     = false;  // a share sheet is currently open
 function avgY(touches) {
   let s = 0;
   for (let i = 0; i < touches.length; i++) s += touches[i].clientY;
@@ -675,68 +690,84 @@ function avgY(touches) {
 }
 function threeFingerStart(e) {
   if (!e.touches || e.touches.length !== 3) return;
-  if (showingBack || drawing) return;   // only share face-up cards
+  if (showingBack || drawing) return;   // only share a face-up card
   // A three-finger touch can't coexist with a long-press or two-finger
-  // gesture; those handlers already bail on >=2 touches. Reset our state.
+  // gesture; those handlers already bail on >=2 touches.
   threeFingerActive = true;
-  threeFingerFired  = false;
+  threeFingerArmed  = false;
   threeFingerStartY = avgY(e.touches);
+  prepareShareFile();                   // build the File now, ahead of touchend
   if (e.cancelable) e.preventDefault();
 }
 function threeFingerMove(e) {
-  if (!threeFingerActive || threeFingerFired) return;
+  if (!threeFingerActive) return;
   if (!e.touches || e.touches.length !== 3) return;
   if (e.cancelable) e.preventDefault();
-  const y = avgY(e.touches);
-  // Threshold: must travel up at least ~18% of the viewport (min 120px)
-  // so an accidental nudge can't fire the share sheet.
-  const minPx = Math.max(120, window.innerHeight * 0.18);
-  if (threeFingerStartY - y >= minPx) {
-    threeFingerFired = true;
-    haptic(12);
-    shareCurrentCard().catch(() => { /* user-canceled / unsupported */ });
-  }
+  // Must travel up at least ~16% of the viewport (min 110px) so a casual
+  // multi-finger touch can't trip the share. Arm here; FIRE on touchend.
+  const up = threeFingerStartY - avgY(e.touches);
+  if (up >= Math.max(110, window.innerHeight * 0.16)) threeFingerArmed = true;
 }
 function threeFingerEnd(e) {
   if (!threeFingerActive) return;
-  // Wait until fewer than three fingers remain so a brief lift doesn't
-  // end the gesture mid-swipe.
+  // Wait until fewer than three fingers remain so a brief lift mid-swipe
+  // doesn't end the gesture early.
   if (e.touches && e.touches.length >= 3) return;
   threeFingerActive = false;
-  threeFingerFired  = false;
   // Suppress the trailing synthetic click that finger-release can produce.
   suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
+  if (threeFingerArmed) {
+    threeFingerArmed = false;
+    haptic(12);
+    fireShare();                        // synchronous within this touchend
+  }
 }
 
-// Hand the current displayed crop to the platform share sheet. Prefers
-// sharing the actual image file (rich previews, save-to-photos, etc.)
-// and falls back to sharing the URL if the platform won't take files.
-// Reversal is CSS-only (transform: rotate(180deg)), so for a reversed
-// card we render the rotated view into a canvas and share THAT — the
-// querent gets the upside-down version they're actually looking at.
-async function shareCurrentCard() {
+// Build the shareable File for the currently displayed card (deck, zoom
+// crop, and reversed orientation are all reflected in imgEl). Stores the
+// result in shareFileReady so touchend can share without awaiting.
+function prepareShareFile() {
+  shareFileReady = null;
+  sharePrepPromise = null;
   const imgEl = document.querySelector("img");
-  if (!imgEl || !navigator.share) return;
+  if (!imgEl) return;
   const url = imgEl.src;
   const reversed = imgEl.classList.contains("reversed");
-  try {
-    const resp = await fetch(url);
-    let blob = await resp.blob();
-    let type = blob.type || "image/jpeg";
-    if (reversed) {
-      const r = await renderReversedBlob(url, type);
-      blob = r.blob; type = r.type;
-    }
-    const name = (currentCardName || "card") + (reversed ? "-reversed" : "") + ".jpg";
-    const file = new File([blob], name, { type });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: "Tarot" });
-      return;
-    }
-  } catch (_e) { /* fall through to URL share */ }
-  // URL fallback can only share the upright file (the reversed view is a
-  // local CSS transform, no separate URL exists). Better than nothing.
-  try { await navigator.share({ url, title: "Tarot" }); } catch (_e) { /* ignore */ }
+  sharePrepPromise = buildShareFile(url, reversed)
+    .then((f) => { shareFileReady = f; return f; })
+    .catch(() => { shareFileReady = null; return null; });
+}
+
+async function buildShareFile(url, reversed) {
+  const resp = await fetch(url);
+  let blob = await resp.blob();
+  let type = blob.type || "image/jpeg";
+  if (reversed) {
+    // Reversal is CSS-only (transform: rotate(180deg)); render the rotated
+    // view so the shared image matches what's on screen.
+    const r = await renderReversedBlob(url, type);
+    blob = r.blob; type = r.type;
+  }
+  const ext  = type === "image/png" ? "png" : "jpg";
+  const name = (currentCardName || "card") + (reversed ? "-reversed" : "") + "." + ext;
+  return new File([blob], name, { type });
+}
+
+// Fire the native share sheet. Called from touchend so transient
+// activation is present; shares the prepared File synchronously when it's
+// ready (the reliable path), else waits on the prep promise as a fallback.
+function fireShare() {
+  if (shareInFlight || !navigator.share) return;
+  const share = (file) => {
+    if (!file) return;
+    if (navigator.canShare && !navigator.canShare({ files: [file] })) return;
+    shareInFlight = true;
+    navigator.share({ files: [file] })
+      .catch(() => { /* user canceled or platform refused */ })
+      .finally(() => { shareInFlight = false; });
+  };
+  if (shareFileReady) share(shareFileReady);
+  else if (sharePrepPromise) sharePrepPromise.then(share);
 }
 
 // Draw the card image rotated 180° onto a canvas and return a blob, so the
