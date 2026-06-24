@@ -664,78 +664,121 @@ function twoFingerEnd(e) {
 // Works for BOTH decks, EVERY zoom crop, and reversed cards (the rotated
 // view is rendered to a canvas so the shared image matches the screen).
 //
-// Robustness (this is what makes it fire reliably, and twice in a row):
-//   * The share File is PREPARED on touchstart (async fetch/canvas) so it
-//     is ready by the time the finger lifts. iOS requires transient user
-//     activation for navigator.share(), and ANY `await` before the call
-//     consumes it — so we never await inside the firing path.
-//   * navigator.share() is invoked from touchEND (a genuine activation
-//     event), not from touchmove (which carries no activation at all —
-//     the old cause of the gesture working only sometimes).
-//   * A `shareInFlight` guard keeps a second swipe from colliding with an
-//     open sheet; it clears when the sheet resolves or is canceled, so the
-//     very next swipe works.
-//   * Only the image file is shared — no title/text — so nothing but the
-//     card is handed off.
+// This is engineered hard for iOS Safari, where naive implementations
+// fire only "sometimes" and never twice. The defenses, and the iOS quirk
+// each one answers:
+//
+//   1. EAGER FILE CACHE. The shareable File for whatever card is on screen
+//      is built ahead of time (a MutationObserver rebuilds it whenever the
+//      <img> src/orientation changes — draw, zoom, deck toggle, reversal).
+//      So at gesture time we NEVER await — navigator.share() is called
+//      synchronously inside the touch handler. iOS requires transient user
+//      activation for share(), and ANY await before it consumes that
+//      activation; the old "prepare on touchstart" race is gone.
+//
+//   2. FIRE FROM touchend OR touchcancel. touchmove carries no activation;
+//      and iOS commonly sends touchcancel (not touchend) when a multi-touch
+//      drifts near a system gesture / the home-indicator edge. We fire on
+//      whichever terminator arrives once the swipe is armed.
+//
+//   3. shareInFlight CAN'T STICK. The iOS share promise frequently never
+//      settles (canceling the sheet, and in standalone PWAs), which would
+//      leave a naive in-flight flag true forever and block every later
+//      share — the classic "works once, never again". We reset the flag at
+//      the start of every gesture, on visibilitychange (returning from the
+//      sheet), AND via a watchdog timeout. It can never permanently latch.
+//
+//   4. Only the image file is shared — no title/text.
 let threeFingerActive = false;
 let threeFingerStartY = 0;
+let threeFingerPeakUp = 0;      // largest upward travel seen this gesture
 let threeFingerArmed  = false;
-let shareFileReady    = null;   // File prepared for THIS gesture, or null
-let sharePrepPromise  = null;   // in-flight preparation for THIS gesture
-let shareInFlight     = false;  // a share sheet is currently open
+let threeFingerFired  = false;  // already fired this gesture (anti-double)
+let currentShareFile  = null;   // eagerly-built File for the on-screen card
+let currentShareKey   = "";     // the src(+orientation) currentShareFile was built from
+let shareFileToken    = 0;      // guards against stale async builds
+function shareKeyFor(imgEl) {
+  return imgEl.src + (imgEl.classList.contains("reversed") ? "|r" : "");
+}
+let shareInFlight     = false;  // a share sheet is (believed) open
+let shareWatchdog     = null;
+
 function avgY(touches) {
   let s = 0;
   for (let i = 0; i < touches.length; i++) s += touches[i].clientY;
   return s / touches.length;
 }
+
+// Rebuild the cached share File for whatever card is currently displayed.
+// Debounced + token-guarded so the frequent class flips during the glitch
+// animation don't thrash, and a stale build can't overwrite a newer one.
+let shareRefreshTimer = null;
+function scheduleShareRefresh() {
+  if (shareRefreshTimer) clearTimeout(shareRefreshTimer);
+  shareRefreshTimer = setTimeout(refreshShareFile, 120);
+}
+function refreshShareFile() {
+  const imgEl = document.querySelector("img");
+  const token = ++shareFileToken;
+  // Nothing shareable while the back is up or a draw is mid-flight.
+  if (!imgEl || showingBack || drawing) { currentShareFile = null; currentShareKey = ""; return; }
+  const url = imgEl.src;
+  const reversed = imgEl.classList.contains("reversed");
+  const key = shareKeyFor(imgEl);
+  buildShareFile(url, reversed)
+    .then((f) => { if (token === shareFileToken) { currentShareFile = f; currentShareKey = key; } })
+    .catch(() => { if (token === shareFileToken) { currentShareFile = null; currentShareKey = ""; } });
+}
+
 function threeFingerStart(e) {
   if (!e.touches || e.touches.length !== 3) return;
-  if (showingBack || drawing) return;   // only share a face-up card
-  // A three-finger touch can't coexist with a long-press or two-finger
-  // gesture; those handlers already bail on >=2 touches.
+  if (showingBack || drawing || infoOverlayOpen) return; // only a face-up card
+  // Defensive: a brand-new deliberate gesture means any previous share is
+  // done (its sheet, if open, would be intercepting touches — so we'd never
+  // get here). Clear a possibly-stuck flag so this share isn't blocked.
+  clearShareInFlight();
   threeFingerActive = true;
   threeFingerArmed  = false;
+  threeFingerFired  = false;
   threeFingerStartY = avgY(e.touches);
-  prepareShareFile();                   // build the File now, ahead of touchend
+  threeFingerPeakUp = 0;
+  // Ensure the cache matches the card on screen. The observer normally keeps
+  // it current; this re-syncs if the user zoomed/flipped just before swiping
+  // (the async build then has the whole swipe to finish before touchend).
+  const imgEl = document.querySelector("img");
+  if (!currentShareFile || (imgEl && currentShareKey !== shareKeyFor(imgEl))) {
+    refreshShareFile();
+  }
   if (e.cancelable) e.preventDefault();
 }
+
 function threeFingerMove(e) {
-  if (!threeFingerActive) return;
+  if (!threeFingerActive || threeFingerFired) return;
   if (!e.touches || e.touches.length !== 3) return;
   if (e.cancelable) e.preventDefault();
-  // Must travel up at least ~16% of the viewport (min 110px) so a casual
-  // multi-finger touch can't trip the share. Arm here; FIRE on touchend.
+  // Track the largest upward travel; arm once it passes a modest threshold
+  // (~12% of viewport, min 80px) so a real swipe-up qualifies even if iOS
+  // is about to cancel the touch.
   const up = threeFingerStartY - avgY(e.touches);
-  if (up >= Math.max(110, window.innerHeight * 0.16)) threeFingerArmed = true;
-}
-function threeFingerEnd(e) {
-  if (!threeFingerActive) return;
-  // Wait until fewer than three fingers remain so a brief lift mid-swipe
-  // doesn't end the gesture early.
-  if (e.touches && e.touches.length >= 3) return;
-  threeFingerActive = false;
-  // Suppress the trailing synthetic click that finger-release can produce.
-  suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
-  if (threeFingerArmed) {
-    threeFingerArmed = false;
-    haptic(12);
-    fireShare();                        // synchronous within this touchend
+  if (up > threeFingerPeakUp) threeFingerPeakUp = up;
+  if (threeFingerPeakUp >= Math.max(80, window.innerHeight * 0.12)) {
+    threeFingerArmed = true;
   }
 }
 
-// Build the shareable File for the currently displayed card (deck, zoom
-// crop, and reversed orientation are all reflected in imgEl). Stores the
-// result in shareFileReady so touchend can share without awaiting.
-function prepareShareFile() {
-  shareFileReady = null;
-  sharePrepPromise = null;
-  const imgEl = document.querySelector("img");
-  if (!imgEl) return;
-  const url = imgEl.src;
-  const reversed = imgEl.classList.contains("reversed");
-  sharePrepPromise = buildShareFile(url, reversed)
-    .then((f) => { shareFileReady = f; return f; })
-    .catch(() => { shareFileReady = null; return null; });
+// Terminator for the gesture — bound to BOTH touchend and touchcancel.
+function threeFingerEnd(e) {
+  if (!threeFingerActive) return;
+  // On touchend, wait until fewer than three remain so a brief lift mid-
+  // swipe doesn't end it early. touchcancel always terminates immediately.
+  if (e && e.type === "touchend" && e.touches && e.touches.length >= 3) return;
+  threeFingerActive = false;
+  suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
+  if (threeFingerArmed && !threeFingerFired) {
+    threeFingerFired = true;
+    haptic(12);
+    fireShare();   // synchronous within this terminator → activation intact
+  }
 }
 
 async function buildShareFile(url, reversed) {
@@ -753,21 +796,35 @@ async function buildShareFile(url, reversed) {
   return new File([blob], name, { type });
 }
 
-// Fire the native share sheet. Called from touchend so transient
-// activation is present; shares the prepared File synchronously when it's
-// ready (the reliable path), else waits on the prep promise as a fallback.
+function clearShareInFlight() {
+  shareInFlight = false;
+  if (shareWatchdog) { clearTimeout(shareWatchdog); shareWatchdog = null; }
+}
+
+// Fire the native share sheet. Must be called synchronously from a touch
+// terminator so iOS still sees transient activation. Shares ONLY the
+// eagerly-cached image File.
 function fireShare() {
   if (shareInFlight || !navigator.share) return;
-  const share = (file) => {
-    if (!file) return;
-    if (navigator.canShare && !navigator.canShare({ files: [file] })) return;
-    shareInFlight = true;
-    navigator.share({ files: [file] })
-      .catch(() => { /* user canceled or platform refused */ })
-      .finally(() => { shareInFlight = false; });
-  };
-  if (shareFileReady) share(shareFileReady);
-  else if (sharePrepPromise) sharePrepPromise.then(share);
+  const file = currentShareFile;
+  if (!file) return;
+  // canShare, when present, is authoritative; when absent (older iOS),
+  // attempt the file share anyway rather than refusing.
+  if (navigator.canShare && !navigator.canShare({ files: [file] })) return;
+  shareInFlight = true;
+  // Watchdog: if the promise never settles (a real iOS bug), free the flag
+  // so future shares aren't blocked.
+  shareWatchdog = setTimeout(clearShareInFlight, 8000);
+  let p;
+  try {
+    p = navigator.share({ files: [file] });
+  } catch (_e) { clearShareInFlight(); return; }   // synchronous throw
+  if (p && typeof p.finally === "function") {
+    p.catch(() => { /* user canceled / platform refused */ })
+     .finally(clearShareInFlight);
+  } else {
+    clearShareInFlight();
+  }
 }
 
 // Draw the card image rotated 180° onto a canvas and return a blob, so the
@@ -1249,11 +1306,33 @@ function wireLongPress() {
 
   // Three-finger swipe-up: hand the current card to the native share sheet.
   // Each handler is no-op unless exactly three touches are present, so it
-  // never collides with the one- or two-finger gestures above.
+  // never collides with the one- or two-finger gestures above. Bound to
+  // BOTH touchend and touchcancel because iOS often terminates a multi-
+  // touch with cancel rather than end (see threeFingerEnd).
   imgEl.addEventListener("touchstart",  threeFingerStart, { passive: false });
   imgEl.addEventListener("touchmove",   threeFingerMove,  { passive: false });
   imgEl.addEventListener("touchend",    threeFingerEnd,   { passive: false });
   imgEl.addEventListener("touchcancel", threeFingerEnd,   { passive: false });
+
+  // Keep the eager share-File cache in sync with whatever card is on screen:
+  // every draw, zoom crossfade, deck toggle, or reversal changes the <img>
+  // src and/or class, so the share fire path is always synchronous.
+  if ("MutationObserver" in window) {
+    const mo = new MutationObserver(scheduleShareRefresh);
+    mo.observe(imgEl, { attributes: true, attributeFilter: ["src", "class"] });
+  }
+  refreshShareFile();   // build for the initial state (no-op while on the back)
+
+  // Returning from the native share sheet fires visibilitychange/pageshow;
+  // clear any in-flight flag then so a never-settling iOS share promise can
+  // never block the next swipe. Also refresh the cached file.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      clearShareInFlight();
+      scheduleShareRefresh();
+    }
+  });
+  window.addEventListener("pageshow", clearShareInFlight);
 
   // Touch (most native on mobile WebKit, including iOS Safari).
   imgEl.addEventListener("touchstart",  pressStart, { passive: true });
