@@ -801,6 +801,19 @@ function clearShareInFlight() {
   if (shareWatchdog) { clearTimeout(shareWatchdog); shareWatchdog = null; }
 }
 
+// A File handed to navigator.share is SINGLE-USE on iOS: a successful share
+// consumes its underlying blob, so the same File object can't be shared a
+// second time (it silently fails — the "works once, then never until I open
+// the meaning and come back" bug; reopening the overlay only "fixed" it
+// because closeInfoOverlay toggles an <img> class, tripping the observer
+// rebuild). So after every share we drop the spent File and immediately
+// build a fresh one for the next swipe.
+function invalidateShareFile() {
+  currentShareFile = null;
+  currentShareKey = "";
+  refreshShareFile();
+}
+
 // Fire the native share sheet. Must be called synchronously from a touch
 // terminator so iOS still sees transient activation. Shares ONLY the
 // eagerly-cached image File.
@@ -818,7 +831,10 @@ function fireShare() {
   let p;
   try {
     p = navigator.share({ files: [file] });
-  } catch (_e) { clearShareInFlight(); return; }   // synchronous throw
+  } catch (_e) { clearShareInFlight(); invalidateShareFile(); return; } // sync throw
+  // The File is now spent (iOS consumes it on a successful share). Drop it
+  // and rebuild a fresh one so the very next swipe can share again.
+  invalidateShareFile();
   if (p && typeof p.finally === "function") {
     p.catch(() => { /* user canceled / platform refused */ })
      .finally(clearShareInFlight);
