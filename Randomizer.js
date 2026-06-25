@@ -730,25 +730,56 @@ function refreshShareFile() {
     .catch(() => { if (token === shareFileToken) { currentShareFile = null; currentShareKey = ""; } });
 }
 
+// --- TEMP on-screen share diagnostics (remove once iOS share is solved) -
+// Shows where the three-finger share path gets to on each gesture, so a
+// device that misbehaves can be read directly. Toggle with a 4-finger tap.
+let _shareDbgEl = null;
+let _shareDbgOn = true;
+let _shareFireCount = 0;
+function shareDbg(stage, extra) {
+  if (!_shareDbgOn) return;
+  if (!_shareDbgEl) {
+    _shareDbgEl = document.createElement("div");
+    _shareDbgEl.style.cssText =
+      "position:fixed;top:0;left:0;right:0;z-index:99999;" +
+      "padding:calc(env(safe-area-inset-top,0px) + 4px) 6px 4px;" +
+      "font:11px/1.4 ui-monospace,Menlo,monospace;color:#8f8;" +
+      "background:rgba(0,0,0,0.6);white-space:pre-wrap;pointer-events:none;";
+    document.body.appendChild(_shareDbgEl);
+  }
+  const imgEl = document.querySelector("img");
+  _shareDbgEl.textContent =
+    "SHARE " + stage + (extra ? " " + extra : "") +
+    "\nfires=" + _shareFireCount +
+    " share=" + (!!navigator.share) + " canShare=" + (!!navigator.canShare) +
+    " file=" + (currentShareFile ? Math.round(currentShareFile.size / 1024) + "k" : "null") +
+    "\ninFlight=" + shareInFlight + " back=" + showingBack +
+    " drawing=" + drawing + " overlay=" + infoOverlayOpen +
+    "\ntfActive=" + threeFingerActive + " armed=" + threeFingerArmed +
+    " fired=" + threeFingerFired + " vis=" + document.visibilityState +
+    " src=" + (imgEl ? imgEl.src.split("/").slice(-2).join("/") : "?");
+}
+
 function threeFingerStart(e) {
   if (!e.touches || e.touches.length !== 3) return;
-  if (showingBack || drawing || infoOverlayOpen) return; // only a face-up card
-  // Defensive: a brand-new deliberate gesture means any previous share is
-  // done (its sheet, if open, would be intercepting touches — so we'd never
-  // get here). Clear a possibly-stuck flag so this share isn't blocked.
+  // Reset gesture + share state FIRST, before any guard, so nothing can be
+  // left stuck from a prior gesture / share. (A stuck flag was a suspect in
+  // the "works once then never" iOS report.)
   clearShareInFlight();
   threeFingerActive = true;
   threeFingerArmed  = false;
   threeFingerFired  = false;
   threeFingerStartY = avgY(e.touches);
   threeFingerPeakUp = 0;
-  // Ensure the cache matches the card on screen. The observer normally keeps
-  // it current; this re-syncs if the user zoomed/flipped just before swiping
-  // (the async build then has the whole swipe to finish before touchend).
-  const imgEl = document.querySelector("img");
-  if (!currentShareFile || (imgEl && currentShareKey !== shareKeyFor(imgEl))) {
-    refreshShareFile();
-  }
+  // Only the face-up card is shareable. We deliberately DON'T gate on
+  // drawing/infoOverlayOpen here: when the overlay is genuinely open it
+  // sits above the <img> and eats the touches anyway, so gating on a flag
+  // that could desync only risks wedging the gesture.
+  if (showingBack) { threeFingerActive = false; shareDbg("start-back"); return; }
+  // Always rebuild a fresh File for this gesture (the previous one may be a
+  // spent/stale object). The swipe gives the async build time to finish.
+  refreshShareFile();
+  shareDbg("start");
   if (e.cancelable) e.preventDefault();
 }
 
@@ -761,8 +792,9 @@ function threeFingerMove(e) {
   // is about to cancel the touch.
   const up = threeFingerStartY - avgY(e.touches);
   if (up > threeFingerPeakUp) threeFingerPeakUp = up;
-  if (threeFingerPeakUp >= Math.max(80, window.innerHeight * 0.12)) {
+  if (!threeFingerArmed && threeFingerPeakUp >= Math.max(80, window.innerHeight * 0.12)) {
     threeFingerArmed = true;
+    shareDbg("armed", "up=" + Math.round(threeFingerPeakUp));
   }
 }
 
@@ -774,6 +806,7 @@ function threeFingerEnd(e) {
   if (e && e.type === "touchend" && e.touches && e.touches.length >= 3) return;
   threeFingerActive = false;
   suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
+  shareDbg("end", e ? e.type : "?");
   if (threeFingerArmed && !threeFingerFired) {
     threeFingerFired = true;
     haptic(12);
@@ -818,27 +851,36 @@ function invalidateShareFile() {
 // terminator so iOS still sees transient activation. Shares ONLY the
 // eagerly-cached image File.
 function fireShare() {
-  if (shareInFlight || !navigator.share) return;
+  // NOTE: deliberately NOT gating on shareInFlight here. iOS serializes the
+  // share sheet itself, and a never-settling promise used to leave that flag
+  // stuck → every later swipe blocked ("works once, then never"). Intra-
+  // gesture double-fire is already prevented by threeFingerFired.
+  if (!navigator.share) { shareDbg("no-share-api"); return; }
   const file = currentShareFile;
-  if (!file) return;
+  if (!file) { shareDbg("blocked-no-file"); return; }
   // canShare, when present, is authoritative; when absent (older iOS),
   // attempt the file share anyway rather than refusing.
-  if (navigator.canShare && !navigator.canShare({ files: [file] })) return;
+  if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+    shareDbg("blocked-canShare-false");
+    return;
+  }
   shareInFlight = true;
-  // Watchdog: if the promise never settles (a real iOS bug), free the flag
-  // so future shares aren't blocked.
   shareWatchdog = setTimeout(clearShareInFlight, 8000);
+  _shareFireCount++;
+  shareDbg("share-called");
   let p;
   try {
     p = navigator.share({ files: [file] });
-  } catch (_e) { clearShareInFlight(); invalidateShareFile(); return; } // sync throw
+  } catch (err) { shareDbg("share-threw", String(err)); clearShareInFlight(); invalidateShareFile(); return; }
   // The File is now spent (iOS consumes it on a successful share). Drop it
   // and rebuild a fresh one so the very next swipe can share again.
   invalidateShareFile();
-  if (p && typeof p.finally === "function") {
-    p.catch(() => { /* user canceled / platform refused */ })
+  if (p && typeof p.then === "function") {
+    p.then(() => shareDbg("share-resolved"))
+     .catch((err) => shareDbg("share-rejected", String(err)))
      .finally(clearShareInFlight);
   } else {
+    shareDbg("share-no-promise");
     clearShareInFlight();
   }
 }
@@ -1329,6 +1371,15 @@ function wireLongPress() {
   imgEl.addEventListener("touchmove",   threeFingerMove,  { passive: false });
   imgEl.addEventListener("touchend",    threeFingerEnd,   { passive: false });
   imgEl.addEventListener("touchcancel", threeFingerEnd,   { passive: false });
+
+  // TEMP: 4-finger tap toggles the share-diagnostics readout.
+  imgEl.addEventListener("touchstart", (e) => {
+    if (e.touches && e.touches.length === 4) {
+      _shareDbgOn = !_shareDbgOn;
+      if (_shareDbgEl) _shareDbgEl.style.display = _shareDbgOn ? "block" : "none";
+      if (_shareDbgOn) shareDbg("hud-on");
+    }
+  }, { passive: true });
 
   // Keep the eager share-File cache in sync with whatever card is on screen:
   // every draw, zoom crossfade, deck toggle, or reversal changes the <img>
