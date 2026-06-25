@@ -730,6 +730,11 @@ function refreshShareFile() {
     .catch(() => { if (token === shareFileToken) { currentShareFile = null; currentShareKey = ""; } });
 }
 
+// Build marker — keep in sync with the ?v= query on the script tags in
+// index.html. Shown in the diagnostics readout so you can confirm the PWA
+// is actually running the latest deploy and not a cached copy.
+const BUILD_TAG = "20260625-2";
+
 // --- TEMP on-screen share diagnostics (remove once iOS share is solved) -
 // Shows where the three-finger share path gets to on each gesture, so a
 // device that misbehaves can be read directly. Toggle with a 4-finger tap.
@@ -749,7 +754,7 @@ function shareDbg(stage, extra) {
   }
   const imgEl = document.querySelector("img");
   _shareDbgEl.textContent =
-    "SHARE " + stage + (extra ? " " + extra : "") +
+    "build " + BUILD_TAG + " — SHARE " + stage + (extra ? " " + extra : "") +
     "\nfires=" + _shareFireCount +
     " share=" + (!!navigator.share) + " canShare=" + (!!navigator.canShare) +
     " file=" + (currentShareFile ? Math.round(currentShareFile.size / 1024) + "k" : "null") +
@@ -1389,6 +1394,7 @@ function wireLongPress() {
     mo.observe(imgEl, { attributes: true, attributeFilter: ["src", "class"] });
   }
   refreshShareFile();   // build for the initial state (no-op while on the back)
+  shareDbg("ready");    // show the build marker immediately on load
 
   // Returning from the native share sheet fires visibilitychange/pageshow;
   // clear any in-flight flag then so a never-settling iOS share promise can
