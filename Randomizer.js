@@ -733,7 +733,7 @@ function refreshShareFile() {
 // Build marker — keep in sync with the ?v= query on the script tags in
 // index.html. Shown in the diagnostics readout so you can confirm the PWA
 // is actually running the latest deploy and not a cached copy.
-const BUILD_TAG = "20260625-2";
+const BUILD_TAG = "20260625-3";
 
 // --- TEMP on-screen share diagnostics (remove once iOS share is solved) -
 // Shows where the three-finger share path gets to on each gesture, so a
@@ -741,6 +741,7 @@ const BUILD_TAG = "20260625-2";
 let _shareDbgEl = null;
 let _shareDbgOn = true;
 let _shareFireCount = 0;
+let _shareDbgHist = [];   // recent stages, newest last
 function shareDbg(stage, extra) {
   if (!_shareDbgOn) return;
   if (!_shareDbgEl) {
@@ -752,17 +753,15 @@ function shareDbg(stage, extra) {
       "background:rgba(0,0,0,0.6);white-space:pre-wrap;pointer-events:none;";
     document.body.appendChild(_shareDbgEl);
   }
-  const imgEl = document.querySelector("img");
+  const t = new Date().toTimeString().slice(3, 8); // mm:ss
+  _shareDbgHist.push(t + " " + stage + (extra ? " " + extra : ""));
+  if (_shareDbgHist.length > 6) _shareDbgHist.shift();
   _shareDbgEl.textContent =
-    "build " + BUILD_TAG + " — SHARE " + stage + (extra ? " " + extra : "") +
-    "\nfires=" + _shareFireCount +
-    " share=" + (!!navigator.share) + " canShare=" + (!!navigator.canShare) +
+    "build " + BUILD_TAG +
+    "  share=" + (!!navigator.share) + " canShare=" + (!!navigator.canShare) +
     " file=" + (currentShareFile ? Math.round(currentShareFile.size / 1024) + "k" : "null") +
-    "\ninFlight=" + shareInFlight + " back=" + showingBack +
-    " drawing=" + drawing + " overlay=" + infoOverlayOpen +
-    "\ntfActive=" + threeFingerActive + " armed=" + threeFingerArmed +
-    " fired=" + threeFingerFired + " vis=" + document.visibilityState +
-    " src=" + (imgEl ? imgEl.src.split("/").slice(-2).join("/") : "?");
+    " fires=" + _shareFireCount +
+    "\n" + _shareDbgHist.join("\n");
 }
 
 function threeFingerStart(e) {
@@ -806,16 +805,29 @@ function threeFingerMove(e) {
 // Terminator for the gesture — bound to BOTH touchend and touchcancel.
 function threeFingerEnd(e) {
   if (!threeFingerActive) return;
-  // On touchend, wait until fewer than three remain so a brief lift mid-
-  // swipe doesn't end it early. touchcancel always terminates immediately.
-  if (e && e.type === "touchend" && e.touches && e.touches.length >= 3) return;
+  const type = e ? e.type : "touchend";
+  // CRITICAL: only a real touchend carries transient user activation. A
+  // touchcancel (which iOS loves to send for a multi-touch, especially the
+  // swipe right after a share sheet) does NOT — calling navigator.share()
+  // from it rejects with NotAllowedError ("not allowed ... in the current
+  // context"). So on cancel we just reset and let the user re-swipe; we
+  // never try to share from it.
+  if (type === "touchcancel") {
+    threeFingerActive = false;
+    threeFingerArmed  = false;
+    shareDbg("cancel-noshare");
+    return;
+  }
+  // touchend: wait until fewer than three remain so a brief lift mid-swipe
+  // doesn't end it early.
+  if (e && e.touches && e.touches.length >= 3) return;
   threeFingerActive = false;
   suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
-  shareDbg("end", e ? e.type : "?");
+  shareDbg("end", "rem=" + (e && e.touches ? e.touches.length : 0));
   if (threeFingerArmed && !threeFingerFired) {
     threeFingerFired = true;
     haptic(12);
-    fireShare();   // synchronous within this terminator → activation intact
+    fireShare();   // synchronous within this touchend → activation intact
   }
 }
 
