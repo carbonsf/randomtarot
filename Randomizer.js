@@ -62,30 +62,14 @@ const DECKS = {
     // Marseille art is local, one image per card, no zoom — same shape as
     // the RW deck. (Lequart, Paris; public domain. See marseille/_fetch.py.)
     cardSrc: (key) => "marseille/" + key + ".jpg",
-    // No Marseille-specific meaning text has been authored yet, so we lend
-    // it the Rider-Waite readings — with the trumps corrected for the
-    // Marseille ordering (see marseilleActions).
-    upright:  () => marseilleActions(typeof CARD_ACTIONS !== "undefined" ? CARD_ACTIONS : null),
-    reversed: () => marseilleActions(typeof CARD_ACTIONS_REVERSED !== "undefined" ? CARD_ACTIONS_REVERSED : null),
+    // Marseille has its own authored readings now (no longer borrowing the
+    // Rider-Waite text): the trumps read plainly and medievally, and the
+    // pips by NUMBER meeting SUIT, since Marseille pips are non-scenic.
+    // Authored against Marseille's own numbering, so no key swap is needed.
+    upright:  () => (typeof CARD_ACTIONS_MARSEILLE !== "undefined" ? CARD_ACTIONS_MARSEILLE : null),
+    reversed: () => (typeof CARD_ACTIONS_REVERSED_MARSEILLE !== "undefined" ? CARD_ACTIONS_REVERSED_MARSEILLE : null),
   },
 };
-
-// Marseille numbers two trumps the other way round from Rider-Waite:
-// VIII is LA JUSTICE and XI is LA FORCE, where RW has 8 Strength and
-// 11 Justice. (Thoth agrees with Marseille here — 8 Adjustment, 11 Lust.)
-// So when the Marseille deck borrows the RW readings, those two keys have
-// to trade places or the card on screen won't match the words. Built once
-// and cached; the RW data itself is never mutated.
-const MARSEILLE_TRUMP_SWAP = { maj08: "maj11", maj11: "maj08" };
-const _marseilleCache = new WeakMap();
-function marseilleActions(rwData) {
-  if (!rwData) return null;
-  if (_marseilleCache.has(rwData)) return _marseilleCache.get(rwData);
-  const out = Object.assign({}, rwData);
-  for (const key in MARSEILLE_TRUMP_SWAP) out[key] = rwData[MARSEILLE_TRUMP_SWAP[key]];
-  _marseilleCache.set(rwData, out);
-  return out;
-}
 
 let currentDeck = "rw";          // active deck id
 const ZOOM_ORDER = ["artfill", "fullart", "big"];  // index 0 = most zoomed-in
