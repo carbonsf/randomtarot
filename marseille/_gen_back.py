@@ -1,97 +1,106 @@
 #!/usr/bin/env python3
-"""Generate the Marseille card back: back.jpg.
+# -*- coding: utf-8 -*-
+"""Build the Marseille card back: back.jpg.
 
-The Lequart deck's own reverse was not photographed alongside the faces,
-and no public-domain scan of a Marseille back exists at a usable size (the
-one on Commons is 214x385). Rather than borrow a back from a different
-deck at the wrong proportions, we print a period-correct one.
+Source: the reverse of a Grimaud aluette deck (c.1858-1890), from the
+house that later published the Ancien Tarot de Marseille — so the right
+period and the right lineage. Public domain; kept in-repo as _back_src.jpg
+so this is reproducible.
 
-Historic French cards of this era were backed with *papier dominoté* —
-block-printed decorative paper, most commonly a diamond lattice seeded
-with small florets. That is what this draws, in the deck's own measured
-paper and ink colours (sampled from the scans), at exactly the same
-dimensions as the trimmed faces so the flip never shifts.
+The source card is photographed at aspect ~0.65 and ours is 0.511, so we
+cannot simply resize it — that would squash the pattern. Instead we take
+the pattern INTERIOR, crop it to the proportions our card needs, and then
+rebuild the card around it: the same ~10px paper margin the faces carry,
+and the same softly-cut corners, so the back reads as the same physical
+object as the fronts rather than as a texture bled to the edge.
 """
-import math
 import os
 from PIL import Image, ImageDraw, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+SRC = os.path.join(HERE, "_back_src.jpg")
 
-# Match _crop.py's canonical face size exactly.
+# Must match _crop.py exactly.
 W, H = 744, 1456
-SS = 3                                   # supersample for clean diagonals
 
-# Sampled from the scans, then taken a few steps darker. The faces are
-# bright cream; a back at that value glares against the app's black field
-# and reads louder than the card it's hiding. This is the same stock seen
-# in shadow — still unmistakably the deck's paper, but it sits down.
-PAPER = (128, 112, 99)
-INK = (54, 40, 36)
-RED = (126, 51, 49)                      # the deck's madder red
-BLUE = (66, 80, 103)                     # the deck's muted indigo
+# Measured off the faces: paper between the card edge and the printed
+# design runs 9-12px, and the cut corner shows a sliver of the pale
+# backdrop the cards were photographed against.
+MARGIN = 10
+CORNER_R = 16
+BACKDROP = (219, 214, 210)     # what the faces show at their extreme corners
 
-LATTICE = 118                            # diamond pitch, in output px
-BORDER = 30                              # plain paper margin, in output px
+SS = 2                          # supersample, for clean corner arcs
 
 
-def floret(draw, cx, cy, r, color):
-    """A small four-petal block-printed flower."""
-    for k in range(4):
-        a = math.pi / 2 * k
-        px = cx + math.cos(a) * r * 0.62
-        py = cy + math.sin(a) * r * 0.62
-        draw.ellipse([px - r * 0.48, py - r * 0.48, px + r * 0.48, py + r * 0.48],
-                     fill=color)
-    draw.ellipse([cx - r * 0.30, cy - r * 0.30, cx + r * 0.30, cy + r * 0.30],
-                 fill=INK)
+def pattern_box(im):
+    """Bounds of the printed pattern inside the source card's own margin."""
+    w, h = im.size
+    px = im.load()
+
+    def var_row(y):
+        vals = [px[x, y] for x in range(0, w, 4)]
+        m = sum(sum(v) for v in vals) / len(vals)
+        return sum((sum(v) - m) ** 2 for v in vals) / len(vals)
+
+    def var_col(x):
+        vals = [px[x, y] for y in range(0, h, 4)]
+        m = sum(sum(v) for v in vals) / len(vals)
+        return sum((sum(v) - m) ** 2 for v in vals) / len(vals)
+
+    rv = [var_row(y) for y in range(h)]
+    cv = [var_col(x) for x in range(w)]
+    tr, tc = max(rv) * 0.15, max(cv) * 0.15
+    top = next(y for y in range(h) if rv[y] > tr)
+    bot = next(y for y in range(h - 1, -1, -1) if rv[y] > tr)
+    left = next(x for x in range(w) if cv[x] > tc)
+    right = next(x for x in range(w - 1, -1, -1) if cv[x] > tc)
+    return left, top, right, bot
 
 
 def main():
-    w, h = W * SS, H * SS
-    pitch = LATTICE * SS
-    border = BORDER * SS
+    src = Image.open(SRC).convert("RGB")
+    left, top, right, bot = pattern_box(src)
 
-    im = Image.new("RGB", (w, h), PAPER)
-    d = ImageDraw.Draw(im)
+    inner_w, inner_h = W - 2 * MARGIN, H - 2 * MARGIN
+    want = inner_w / inner_h
 
-    # Diagonal lattice across the whole sheet, both directions.
-    line_w = max(1, int(2.2 * SS))
-    span = w + h
-    for i in range(-span, span, pitch):
-        d.line([(i, 0), (i + h, h)], fill=INK, width=line_w)
-        d.line([(i, h), (i + h, 0)], fill=INK, width=line_w)
+    # Take the largest centred piece of the pattern at our proportions.
+    pw, ph = right - left, bot - top
+    if pw / ph > want:
+        nw = int(round(ph * want))
+        box = (left + (pw - nw) // 2, top, left + (pw - nw) // 2 + nw, bot)
+    else:
+        nh = int(round(pw / want))
+        box = (left, top + (ph - nh) // 2, right, top + (ph - nh) // 2 + nh)
+    pattern = src.crop(box)
+    scale = inner_w / pattern.width
+    pattern = pattern.resize((inner_w, inner_h), Image.LANCZOS)
 
-    # A floret in the centre of every diamond, alternating red / blue the
-    # way two-block printing would have alternated colours.
-    r = pitch * 0.20
-    row = 0
-    y = 0
-    while y < h + pitch:
-        offset = 0 if row % 2 == 0 else pitch // 2
-        x = offset
-        col = 0
-        while x < w + pitch:
-            floret(d, x, y, r, RED if (row + col) % 2 == 0 else BLUE)
-            x += pitch
-            col += 1
-        y += pitch // 2
-        row += 1
+    # Paper colour taken from the source's own margin, so the border is the
+    # stock this pattern was actually printed on.
+    paper = src.getpixel((max(0, left - 6), (top + bot) // 2))
 
-    # Plain paper border with a keyline, echoing the faces' framing rule.
-    d.rectangle([0, 0, w - 1, border], fill=PAPER)
-    d.rectangle([0, h - border, w - 1, h - 1], fill=PAPER)
-    d.rectangle([0, 0, border, h - 1], fill=PAPER)
-    d.rectangle([w - border, 0, w - 1, h - 1], fill=PAPER)
-    d.rectangle([border, border, w - border - 1, h - border - 1],
-                outline=INK, width=max(1, int(3 * SS)))
+    card = Image.new("RGB", (W, H), paper)
+    card.paste(pattern, (MARGIN, MARGIN))
 
-    # Down-sample for antialiasing, then a whisper of blur so it reads as
-    # ink pressed into paper rather than vector art.
-    im = im.resize((W, H), Image.LANCZOS).filter(ImageFilter.GaussianBlur(0.4))
-    out = os.path.join(HERE, "back.jpg")
-    im.save(out, "JPEG", quality=90, optimize=True, progressive=True)
-    print("wrote", out, im.size)
+    # Cut the corners the way a real card is cut, letting the same pale
+    # backdrop the faces show peek through at the extreme corners.
+    big = (W * SS, H * SS)
+    mask = Image.new("L", big, 0)
+    ImageDraw.Draw(mask).rounded_rectangle(
+        [0, 0, big[0] - 1, big[1] - 1], radius=CORNER_R * SS, fill=255)
+    mask = mask.resize((W, H), Image.LANCZOS)
+    out = Image.new("RGB", (W, H), BACKDROP)
+    out.paste(card, (0, 0), mask)
+
+    out = out.filter(ImageFilter.GaussianBlur(0.25))
+    dest = os.path.join(HERE, "back.jpg")
+    out.save(dest, "JPEG", quality=90, optimize=True, progressive=True)
+    print("wrote %s  %dx%d" % (dest, W, H))
+    print("pattern crop %dx%d -> %dx%d (scale x%.2f)"
+          % (box[2] - box[0], box[3] - box[1], inner_w, inner_h, scale))
+    print("paper %s  margin %dpx  corner r%d" % (paper, MARGIN, CORNER_R))
 
 
 if __name__ == "__main__":
