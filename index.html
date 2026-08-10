@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <title>Random Tarot Card</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <!-- Deliberately NOT viewport-fit=cover. With cover, the layout viewport
+       extends under the status bar and home indicator, so 100dvh becomes the
+       whole screen rather than the safe area — which grew the card and
+       pushed it up under the status bar, making a landed card read as
+       top-aligned. The centred card is the whole interface; it wins over
+       edge-to-edge. (With cover absent, env(safe-area-inset-*) resolves to
+       0, so the overlay padding below simply falls back to its base values.) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Discourage the (service-worker-less) PWA from running a stale shell.
        The real cache-bust is the ?v= query on the scripts below; this just
        nudges the HTML itself to revalidate on launch. -->
