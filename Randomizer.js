@@ -87,6 +87,56 @@ function backSrc() { return deckModel().back; }
 // Resolve the on-screen image URL for a card key in the current deck/zoom.
 function cardSrcFor(key) { return deckModel().cardSrc(key, zoomMode); }
 
+// --- Card display names (used for the <img> alt text) ------------------
+// Per-deck: the Thoth deck renames four trumps and the courts, and calls
+// pentacles "Disks". Kept tiny — this feeds accessibility, not UI chrome.
+const MAJOR_NAMES = [
+  "The Fool", "The Magician", "The High Priestess", "The Empress",
+  "The Emperor", "The Hierophant", "The Lovers", "The Chariot",
+  "Strength", "The Hermit", "Wheel of Fortune", "Justice",
+  "The Hanged Man", "Death", "Temperance", "The Devil",
+  "The Tower", "The Star", "The Moon", "The Sun",
+  "Judgement", "The World",
+];
+const THOTH_MAJOR_RENAMES = {
+  8: "Adjustment", 11: "Lust", 14: "Art", 20: "The Aeon", 21: "The Universe",
+};
+const NUMBER_WORDS = ["", "Ace", "Two", "Three", "Four", "Five",
+  "Six", "Seven", "Eight", "Nine", "Ten"];
+const COURT_RANKS = {
+  rw:    { 11: "Page", 12: "Knight", 13: "Queen", 14: "King" },
+  thoth: { 11: "Princess", 12: "Prince", 13: "Queen", 14: "Knight" },
+};
+const SUIT_NAMES = {
+  rw:    { wands: "Wands", cups: "Cups", swords: "Swords", pents: "Pentacles" },
+  thoth: { wands: "Wands", cups: "Cups", swords: "Swords", pents: "Disks" },
+};
+function cardDisplayName(key, deckId) {
+  const deck = deckId === "thoth" ? "thoth" : "rw";
+  const maj = /^maj(\d\d)$/.exec(key || "");
+  if (maj) {
+    const n = parseInt(maj[1], 10);
+    if (deck === "thoth" && THOTH_MAJOR_RENAMES[n]) return THOTH_MAJOR_RENAMES[n];
+    return MAJOR_NAMES[n] || key;
+  }
+  const minor = /^(wands|cups|swords|pents)(\d\d)$/.exec(key || "");
+  if (minor) {
+    const suit = SUIT_NAMES[deck][minor[1]];
+    const n = parseInt(minor[2], 10);
+    const rank = n <= 10 ? NUMBER_WORDS[n] : COURT_RANKS[deck][n];
+    if (rank && suit) return rank + " of " + suit;
+  }
+  return key || "Tarot card";
+}
+// Keep the <img> alt in sync with what's shown: the drawn card's name
+// (with a reversed note), or the deck back.
+function updateCardAlt(imgEl, key, reversed) {
+  if (!imgEl) return;
+  imgEl.alt = key
+    ? cardDisplayName(key, currentDeck) + (reversed ? " (reversed)" : "")
+    : "Tarot card back";
+}
+
 // --- Reversal config --------------------------------------------------
 // Percentage chance that any given draw resolves to a reversed card.
 // Production setting: 100 / 78 ≈ 1.282% — roughly one card in a full
@@ -338,6 +388,7 @@ async function drawCard(imgEl, event) {
   imgEl.src = chosenUrl;
   // Stash the card key so the info overlay can look it up on long-press.
   currentCardName = chosenKey;
+  updateCardAlt(imgEl, chosenKey, reversal);
   requestAnimationFrame(() => {
     imgEl.classList.remove("dimmed");
     haptic(10); // a contemplative beat — the card has arrived
@@ -409,6 +460,7 @@ async function setDownToBack(imgEl) {
     haptic(4); // a quieter beat — the card is placed
     showingBack = true;
     currentCardName = null;
+    updateCardAlt(imgEl, null, false);
     setTimeout(() => { drawing = false; }, 300);
   });
 }
@@ -766,18 +818,26 @@ function threeFingerMove(e) {
   }
 }
 
-// Terminator for the gesture — bound to BOTH touchend and touchcancel.
+// Terminator for the gesture — bound to BOTH touchend and touchcancel,
+// but ONLY touchend may fire the share. A touchcancel carries no transient
+// user activation, so navigator.share() called from it is rejected by iOS
+// with NotAllowedError. On cancel we just reset so the user can re-swipe.
 function threeFingerEnd(e) {
   if (!threeFingerActive) return;
-  // On touchend, wait until fewer than three remain so a brief lift mid-
-  // swipe doesn't end it early. touchcancel always terminates immediately.
-  if (e && e.type === "touchend" && e.touches && e.touches.length >= 3) return;
+  if (e && e.type === "touchcancel") {
+    threeFingerActive = false;
+    threeFingerArmed  = false;
+    return;
+  }
+  // touchend: wait until fewer than three fingers remain so a brief lift
+  // mid-swipe doesn't end the gesture early.
+  if (e && e.touches && e.touches.length >= 3) return;
   threeFingerActive = false;
   suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
   if (threeFingerArmed && !threeFingerFired) {
     threeFingerFired = true;
     haptic(12);
-    fireShare();   // synchronous within this terminator → activation intact
+    fireShare();   // synchronous within this touchend → activation intact
   }
 }
 
@@ -1138,6 +1198,11 @@ function toggleDeck() {
     ? backSrc()
     : (currentCardName ? deckModel().cardSrc(currentCardName, zoomMode) : backSrc());
 
+  // The same card is named differently across decks (Pentacles/Disks,
+  // Justice/Lust, Page/Princess), so re-derive the alt for the new deck.
+  updateCardAlt(imgEl, wasBack ? null : currentCardName,
+                imgEl.classList.contains("reversed"));
+
   haptic(14);
   playRealityWarp(imgEl, fromUrl, toUrl).then(() => {
     deckSwitching = false;
@@ -1295,6 +1360,11 @@ let preloadStarted = false;
 function preloadDeckInBackground() {
   if (preloadStarted) return;
   preloadStarted = true;
+  // Respect the user's Data Saver setting: warming the whole inactive deck
+  // is ~8–13 MB, a purely speculative transfer. When saveData is on, skip
+  // it entirely — the other deck simply loads on demand at first toggle.
+  const conn = typeof navigator !== "undefined" && navigator.connection;
+  if (conn && conn.saveData) return;
   const run = () => {
     // The back of whichever deck isn't active right now.
     const other = (currentDeck === "rw") ? "thoth" : "rw";

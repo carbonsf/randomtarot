@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Random Tarot Card</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!-- Discourage the (service-worker-less) PWA from running a stale shell.
        The real cache-bust is the ?v= query on the scripts below; this just
        nudges the HTML itself to revalidate on launch. -->
@@ -236,7 +236,13 @@
       inset: 0;
       z-index: 100;
       box-sizing: border-box;
-      padding: clamp(28px, 7vh, 72px) clamp(22px, 6vw, 80px);
+      /* Base padding, floored by the device safe areas (notch, home
+         indicator) so overlay text never crowds them in standalone/PWA. */
+      padding:
+        max(clamp(28px, 7vh, 72px), env(safe-area-inset-top))
+        max(clamp(22px, 6vw, 80px), env(safe-area-inset-right))
+        max(clamp(28px, 7vh, 72px), calc(env(safe-area-inset-bottom) + 8px))
+        max(clamp(22px, 6vw, 80px), env(safe-area-inset-left));
       background: rgba(0, 0, 0, 0.78);
       opacity: 0;
       pointer-events: none;
@@ -421,10 +427,15 @@
       .info-stanza.pending .info-flow { animation: none; }
     }
 
-    /* Portrait phones: tighter padding, full-width measure. */
+    /* Portrait phones: tighter padding, full-width measure. Safe-area
+       floors keep the text clear of the notch and home indicator. */
     @media (max-width: 520px) and (orientation: portrait) {
       #info-overlay {
-        padding: clamp(20px, 5vh, 36px) 18px;
+        padding:
+          max(clamp(20px, 5vh, 36px), env(safe-area-inset-top))
+          max(18px, env(safe-area-inset-right))
+          max(clamp(20px, 5vh, 36px), calc(env(safe-area-inset-bottom) + 8px))
+          max(18px, env(safe-area-inset-left));
         --measure: 100%;
       }
     }
