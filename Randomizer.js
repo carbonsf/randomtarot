@@ -1026,7 +1026,11 @@ function renderReversedBlob(url, sourceType) {
 // with a pinch/zoom done on the card body.
 function isZigzag() {
   if (!tfStart || tfMidPath.length < 6) return false;
-  if (!startedInDeckZone()) return false;
+  // The deck-zone gate exists to keep the zigzag from clashing with the
+  // Thoth pinch-zoom on the card body. Marseille has no zoom, so from
+  // Marseille the zigzag works ANYWHERE on screen — it's the express
+  // route to Thoth (see toggleDeck).
+  if (!startedInDeckZone() && currentDeck !== "marseille") return false;
   const first = tfMidPath[0];
   const last = tfMidPath[tfMidPath.length - 1];
   const netDown = last.y - first.y;
@@ -1258,26 +1262,30 @@ function cancelZoom() {
 
 let deckSwitching = false;
 
-// The zigzag's job is unchanged: it flips between the two original decks.
+// The zigzag flips the RW/Thoth pair as it always has — and from
+// Marseille it goes STRAIGHT to Thoth (workable anywhere on screen; the
+// deck-zone gate is waived for Marseille in isZigzag, since that deck has
+// no pinch-zoom to clash with).
 function toggleDeck() {
-  switchToDeck(currentDeck === "rw" ? "thoth" : "rw");
+  switchToDeck(currentDeck === "rw" ? "thoth" : currentDeck === "marseille" ? "thoth" : "rw");
 }
 
 // The two-finger circle summons Marseille from wherever you are, and
 // circling again puts you back in the deck you left. Marseille sits
-// alongside the RW/Thoth pair rather than joining their rotation, so the
-// zigzag keeps behaving exactly as it always has.
+// alongside the RW/Thoth pair rather than joining their rotation. The
+// circle travels by its own whirlpool warp, distinct from the zigzag's
+// reality-warp.
 let marseilleOrigin = "rw";
 function toggleMarseille() {
   if (currentDeck === "marseille") {
-    switchToDeck(marseilleOrigin === "thoth" ? "thoth" : "rw");
+    switchToDeck(marseilleOrigin === "thoth" ? "thoth" : "rw", "whirlpool");
   } else {
     marseilleOrigin = currentDeck;
-    switchToDeck("marseille");
+    switchToDeck("marseille", "whirlpool");
   }
 }
 
-function switchToDeck(target) {
+function switchToDeck(target, warpStyle) {
   if (deckSwitching || target === currentDeck) return;
   deckSwitching = true;
 
@@ -1314,11 +1322,117 @@ function switchToDeck(target) {
                 imgEl.classList.contains("reversed"));
 
   haptic(14);
-  playRealityWarp(imgEl, fromUrl, toUrl).then(() => {
+  const warp = (warpStyle === "whirlpool") ? playWhirlpoolWarp : playRealityWarp;
+  warp(imgEl, fromUrl, toUrl).then(() => {
     deckSwitching = false;
     // Kick off background preload of the now-inactive deck's assets so a
     // toggle back is instant.
     preloadDeckInBackground();
+  });
+}
+
+// The circle's transition: a whirlpool. The card spins up and dips down
+// into a vortex — blurring, squashing rubberily, shrinking to a point —
+// the deck swaps at the bottom of the dip, and the new card spins back
+// out, unwinding, landing with an elastic rubber-band settle.
+//
+// Built on the single <img> (transform + filter per rAF frame), so it
+// composites on every browser. The two decks' cards have DIFFERENT
+// aspects (Marseille is narrower than RW/Thoth): the swap happens at the
+// dip's bottom, where the card is at ~6% scale under heavy blur, so the
+// aspect change is invisible — the new proportions are simply what
+// unwinds back out of the vortex.
+function playWhirlpoolWarp(imgEl, fromUrl, toUrl) {
+  return new Promise((resolve) => {
+    const reduce = window.matchMedia &&
+                   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Preload the target so the mid-dip swap is instant.
+    const pre = new Image();
+    pre.src = toUrl;
+
+    if (reduce) {
+      // Reduced motion: the same quick crossfade the zigzag warp uses.
+      imgEl.style.transition = "opacity 200ms ease";
+      imgEl.style.opacity = "0";
+      setTimeout(() => {
+        imgEl.src = toUrl;
+        requestAnimationFrame(() => {
+          imgEl.style.opacity = "1";
+          setTimeout(() => { imgEl.style.transition = ""; resolve(); }, 220);
+        });
+      }, 210);
+      return;
+    }
+
+    const DUR = 1150;          // the vortex proper (settle plays after)
+    const SPIN = 640;          // total degrees across the whole dip
+    let start = 0;
+    let swapped = false;
+
+    imgEl.style.transition = "none";
+    imgEl.style.willChange = "transform, filter";
+
+    function smoothstep(x) { return x * x * (3 - 2 * x); }
+
+    function frame(now) {
+      if (!start) start = now;
+      const t = Math.min(1, (now - start) / DUR);
+      const inPhase = t < 0.5;
+      const p = smoothstep(inPhase ? t / 0.5 : (t - 0.5) / 0.5);
+
+      // Depth into the vortex: 0 at either end, 1 at the swap.
+      const depth = inPhase ? p : 1 - p;
+      // Spin is continuous through the dip — winds up going in, keeps
+      // turning the same way coming out, decelerating as it lands.
+      const spin = inPhase ? SPIN / 2 * p : SPIN / 2 + SPIN / 2 * p;
+      // Down to a point at the bottom of the dip.
+      const scale = 1 - 0.94 * depth;
+      // The rubber: a differential squash that trembles faster as the
+      // card nears the vortex centre, elastic rather than rigid.
+      const wob = Math.sin(t * Math.PI * 9) * 0.12 * depth;
+      const sx = scale * (1 + wob);
+      const sy = scale * (1 - wob);
+      // The dip: pulled down as it goes under, rising back out.
+      const dip = 46 * depth;
+      // Heavy blur at the centre — this is also what hides the aspect
+      // change between the two decks' cards at the swap.
+      const blur = 16 * depth;
+
+      imgEl.style.transform =
+        "translateY(" + dip.toFixed(1) + "px) " +
+        "rotate(" + spin.toFixed(1) + "deg) " +
+        "scale(" + Math.max(0.02, sx).toFixed(4) + ", " + Math.max(0.02, sy).toFixed(4) + ")";
+      imgEl.style.filter =
+        "blur(" + blur.toFixed(1) + "px) saturate(" + (1 - 0.35 * depth).toFixed(3) + ")";
+
+      if (!swapped && t >= 0.5) { swapped = true; imgEl.src = toUrl; }
+
+      if (t < 1) { requestAnimationFrame(frame); return; }
+
+      // Landed: elastic rubber-band settle — overshooting squash/stretch
+      // that rings down to rest, then clear every inline style.
+      imgEl.style.transform = "";
+      imgEl.style.filter = "";
+      const settle = imgEl.animate([
+        { transform: "scale(0.96, 1.05)" },
+        { transform: "scale(1.05, 0.955)", offset: 0.38 },
+        { transform: "scale(0.985, 1.012)", offset: 0.68 },
+        { transform: "scale(1.004, 0.997)", offset: 0.86 },
+        { transform: "scale(1, 1)" }
+      ], { duration: 340, easing: "cubic-bezier(0.22, 1, 0.36, 1)" });
+      const done = () => {
+        imgEl.style.transition = "";
+        imgEl.style.willChange = "";
+        resolve();
+      };
+      if (settle && typeof settle.finished !== "undefined" && settle.finished.then) {
+        settle.finished.then(done).catch(done);
+      } else {
+        setTimeout(done, 360);
+      }
+    }
+    requestAnimationFrame(frame);
   });
 }
 
