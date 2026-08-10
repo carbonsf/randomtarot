@@ -1311,6 +1311,12 @@
       coords = (activeCrop === "big")
         ? { cx: 0.494, cy: 0.378, r: 0.213 }   // whole bordered card
         : { cx: 0.50,  cy: 0.36,  r: 0.27 };   // art fills the frame (artfill/fullart)
+    } else if (activeDeck === "marseille") {
+      // Measured against marseille/maj19.jpg by overlaying the mask: the
+      // radius covers the sun's FACE only. The Marseille sun has long
+      // wavy rays that a naive colour-extent measurement swallows, and a
+      // radius that big punches out the rays and the sky with it.
+      coords = { cx: 0.500, cy: 0.258, r: 0.195 };
     } else {
       coords = { cx: 0.50, cy: 0.25, r: 0.24 };
     }
@@ -1796,10 +1802,19 @@
     maj20: aeonDawn
   };
 
+  // Marseille numbers VIII as LA JUSTICE and XI as LA FORCE — the reverse
+  // of Rider-Waite. Its other trumps match the RW effects, so only these
+  // two need to trade places, or Strength's ember would play over Justice.
+  const MARSEILLE_OVERRIDES = {
+    maj08: justiceBalance,
+    maj11: strengthEmber
+  };
+
   function isMajor(name) { return /^maj\d{2}$/.test(name || ''); }
 
   function effectFor(cardName) {
     if (activeDeck === "thoth" && THOTH_OVERRIDES[cardName]) return THOTH_OVERRIDES[cardName];
+    if (activeDeck === "marseille" && MARSEILLE_OVERRIDES[cardName]) return MARSEILLE_OVERRIDES[cardName];
     return EFFECTS[cardName];
   }
 
@@ -1827,7 +1842,9 @@
   const reduceMotion =
     window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function setDeck(id) { activeDeck = (id === "thoth") ? "thoth" : "rw"; }
+  function setDeck(id) {
+    activeDeck = (id === "thoth" || id === "marseille") ? id : "rw";
+  }
   function setCrop(id) {
     activeCrop = (id === "big" || id === "fullart") ? id : "artfill";
   }

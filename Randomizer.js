@@ -56,7 +56,36 @@ const DECKS = {
     upright:  () => (typeof CARD_ACTIONS_THOTH !== "undefined" ? CARD_ACTIONS_THOTH : null),
     reversed: () => (typeof CARD_ACTIONS_REVERSED_THOTH !== "undefined" ? CARD_ACTIONS_REVERSED_THOTH : null),
   },
+  marseille: {
+    back: "marseille/back.jpg",
+    hasZoom: false,
+    // Marseille art is local, one image per card, no zoom — same shape as
+    // the RW deck. (Lequart, Paris; public domain. See marseille/_fetch.py.)
+    cardSrc: (key) => "marseille/" + key + ".jpg",
+    // No Marseille-specific meaning text has been authored yet, so we lend
+    // it the Rider-Waite readings — with the trumps corrected for the
+    // Marseille ordering (see marseilleActions).
+    upright:  () => marseilleActions(typeof CARD_ACTIONS !== "undefined" ? CARD_ACTIONS : null),
+    reversed: () => marseilleActions(typeof CARD_ACTIONS_REVERSED !== "undefined" ? CARD_ACTIONS_REVERSED : null),
+  },
 };
+
+// Marseille numbers two trumps the other way round from Rider-Waite:
+// VIII is LA JUSTICE and XI is LA FORCE, where RW has 8 Strength and
+// 11 Justice. (Thoth agrees with Marseille here — 8 Adjustment, 11 Lust.)
+// So when the Marseille deck borrows the RW readings, those two keys have
+// to trade places or the card on screen won't match the words. Built once
+// and cached; the RW data itself is never mutated.
+const MARSEILLE_TRUMP_SWAP = { maj08: "maj11", maj11: "maj08" };
+const _marseilleCache = new WeakMap();
+function marseilleActions(rwData) {
+  if (!rwData) return null;
+  if (_marseilleCache.has(rwData)) return _marseilleCache.get(rwData);
+  const out = Object.assign({}, rwData);
+  for (const key in MARSEILLE_TRUMP_SWAP) out[key] = rwData[MARSEILLE_TRUMP_SWAP[key]];
+  _marseilleCache.set(rwData, out);
+  return out;
+}
 
 let currentDeck = "rw";          // active deck id
 const ZOOM_ORDER = ["artfill", "fullart", "big"];  // index 0 = most zoomed-in
@@ -107,11 +136,42 @@ const COURT_RANKS = {
   rw:    { 11: "Page", 12: "Knight", 13: "Queen", 14: "King" },
   thoth: { 11: "Princess", 12: "Prince", 13: "Queen", 14: "Knight" },
 };
+// Marseille trumps, in Marseille's own order — note VIII Justice and
+// XI Force, the reverse of Rider-Waite. XIII is deliberately unnamed on
+// the card itself, so we name it plainly.
+const MARSEILLE_MAJOR_NAMES = [
+  "Le Mat", "Le Bateleur", "La Papesse", "L'Impératrice",
+  "L'Empereur", "Le Pape", "L'Amoureux", "Le Chariot",
+  "La Justice", "L'Ermite", "La Roue de Fortune", "La Force",
+  "Le Pendu", "The Nameless Arcanum (XIII)", "Tempérance", "Le Diable",
+  "La Maison Dieu", "L'Étoile", "La Lune", "Le Soleil",
+  "Le Jugement", "Le Monde",
+];
+const MARSEILLE_SUIT_NAMES = {
+  wands: "Bâtons", cups: "Coupes", swords: "Épées", pents: "Deniers",
+};
+const MARSEILLE_COURT = { 11: "Valet", 12: "Cavalier", 13: "Reyne", 14: "Roy" };
 const SUIT_NAMES = {
   rw:    { wands: "Wands", cups: "Cups", swords: "Swords", pents: "Pentacles" },
   thoth: { wands: "Wands", cups: "Cups", swords: "Swords", pents: "Disks" },
 };
 function cardDisplayName(key, deckId) {
+  // Marseille names its trumps in French and swaps VIII/XI, and calls the
+  // coins Deniers; it borrows the RW court/rank words otherwise.
+  if (deckId === "marseille") {
+    const maj = /^maj(\d\d)$/.exec(key || "");
+    if (maj) return MARSEILLE_MAJOR_NAMES[parseInt(maj[1], 10)] || key;
+    const minor = /^(wands|cups|swords|pents)(\d\d)$/.exec(key || "");
+    if (minor) {
+      const suit = MARSEILLE_SUIT_NAMES[minor[1]];
+      const n = parseInt(minor[2], 10);
+      const rank = n <= 10 ? NUMBER_WORDS[n] : MARSEILLE_COURT[n];
+      // Keep the French connector the cards themselves print, eliding
+      // before the vowel in Épées ("CAVALIER D'ÉPÉE").
+      if (rank && suit) return rank + (suit === "Épées" ? " d'" : " de ") + suit;
+    }
+    return key || "Tarot card";
+  }
   const deck = deckId === "thoth" ? "thoth" : "rw";
   const maj = /^maj(\d\d)$/.exec(key || "");
   if (maj) {
@@ -687,6 +747,45 @@ function twoFingerMove(e) {
   }
 }
 
+// --- Two-finger circle: summon the Marseille deck ---------------------
+// Stir two fingers round in a ring on the card. We measure the TURNING of
+// the two-finger midpoint path: sum the signed angle between consecutive
+// steps, so a full loop accumulates ±360°. This separates it cleanly from
+// everything else already on the touch stream:
+//   - a zigzag alternates direction, so its turns cancel toward zero;
+//   - a pinch/spread barely moves the midpoint at all;
+//   - a straight drag accumulates no turning.
+// Direction doesn't matter — clockwise or widdershins both summon.
+const CIRCLE_MIN_TURN = (280 * Math.PI) / 180;  // radians: most of a loop
+const CIRCLE_MIN_RADIUS = 26;                   // px, so small wobbles don't count
+const CIRCLE_MIN_SAMPLES = 12;
+
+function isCircle() {
+  if (!tfStart || tfMidPath.length < CIRCLE_MIN_SAMPLES) return false;
+
+  // The ring has to have some size, or a jittery pinch could wind up.
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const p of tfMidPath) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  if (Math.max(maxX - minX, maxY - minY) / 2 < CIRCLE_MIN_RADIUS) return false;
+
+  // Accumulate signed turning along the path.
+  let turn = 0;
+  for (let i = 2; i < tfMidPath.length; i++) {
+    const a = tfMidPath[i - 2], b = tfMidPath[i - 1], c = tfMidPath[i];
+    const v1x = b.x - a.x, v1y = b.y - a.y;
+    const v2x = c.x - b.x, v2y = c.y - b.y;
+    // Skip sub-pixel jitter, whose direction is noise.
+    if (Math.hypot(v1x, v1y) < 2 || Math.hypot(v2x, v2y) < 2) continue;
+    turn += Math.atan2(v1x * v2y - v1y * v2x, v1x * v2x + v1y * v2y);
+  }
+  return Math.abs(turn) >= CIRCLE_MIN_TURN;
+}
+
 function twoFingerEnd(e) {
   if (!tfActive) return;
   // Wait until fewer than two fingers remain.
@@ -697,7 +796,15 @@ function twoFingerEnd(e) {
   // gesture is never chased by an unwanted draw / set-down.
   suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
 
-  if (isZigzag()) {
+  // A circle is tested BEFORE the zigzag. The two can't really be mistaken
+  // for one another (a zigzag's turns alternate and cancel out, a circle's
+  // all wind the same way), but a sloppy multi-loop stir that drifts
+  // downward could otherwise satisfy the zigzag test, and the circle is
+  // the more deliberate gesture — so it wins.
+  if (isCircle()) {
+    cancelZoom();
+    toggleMarseille();
+  } else if (isZigzag()) {
     cancelZoom();          // a zigzag wins over any stray zoom preview
     toggleDeck();
   } else if (zoom) {
@@ -1167,8 +1274,27 @@ function cancelZoom() {
 
 let deckSwitching = false;
 
+// The zigzag's job is unchanged: it flips between the two original decks.
 function toggleDeck() {
-  if (deckSwitching) return;
+  switchToDeck(currentDeck === "rw" ? "thoth" : "rw");
+}
+
+// The two-finger circle summons Marseille from wherever you are, and
+// circling again puts you back in the deck you left. Marseille sits
+// alongside the RW/Thoth pair rather than joining their rotation, so the
+// zigzag keeps behaving exactly as it always has.
+let marseilleOrigin = "rw";
+function toggleMarseille() {
+  if (currentDeck === "marseille") {
+    switchToDeck(marseilleOrigin === "thoth" ? "thoth" : "rw");
+  } else {
+    marseilleOrigin = currentDeck;
+    switchToDeck("marseille");
+  }
+}
+
+function switchToDeck(target) {
+  if (deckSwitching || target === currentDeck) return;
   deckSwitching = true;
 
   const imgEl = document.querySelector("img");
@@ -1181,9 +1307,9 @@ function toggleDeck() {
   const wasBack = showingBack;
   const fromUrl = imgEl.src;
 
-  // Flip the active deck. The new deck "arrives" at its remembered zoom:
-  // the querent's in/out Thoth preference (artfill always for RW).
-  currentDeck = (currentDeck === "rw") ? "thoth" : "rw";
+  // Move to the requested deck. It "arrives" at its remembered zoom: the
+  // querent's in/out Thoth preference (artfill always for RW/Marseille).
+  currentDeck = target;
   zoomMode = defaultZoomForDraw();
   // Tell the signature module which deck + crop is active so art-location-
   // dependent effects (the Sun) use the matching coordinates.
@@ -1366,14 +1492,22 @@ function preloadDeckInBackground() {
   const conn = typeof navigator !== "undefined" && navigator.connection;
   if (conn && conn.saveData) return;
   const run = () => {
-    // The back of whichever deck isn't active right now.
-    const other = (currentDeck === "rw") ? "thoth" : "rw";
-    new Image().src = DECKS[other].back;
-    // Both decks are now self-hosted and small (RW faces ~100KB each under
-    // rw/, Thoth artfill crops likewise under thoth/artfill/), so warm the
-    // whole inactive deck's faces — a toggle in either direction is then
-    // instant. cardSrc() resolves rw/<key>.jpg or thoth/artfill/<key>.jpg.
-    for (const key of CARD_KEYS) new Image().src = DECKS[other].cardSrc(key);
+    // Every inactive deck's back — three small files, so the first frame
+    // of any switch is always ready.
+    for (const id in DECKS) {
+      if (id !== currentDeck) new Image().src = DECKS[id].back;
+    }
+    // Faces are warmed for the zigzag partner only. That's the switch a
+    // querent makes constantly, and it's the pair the gesture was built
+    // for; warming all 78 of every deck would be ~30 MB of speculative
+    // transfer. Marseille arrives via the deliberate circle gesture and
+    // loads on demand — its warp covers the fetch.
+    const partner = (currentDeck === "rw") ? "thoth"
+                  : (currentDeck === "thoth") ? "rw"
+                  : null;
+    if (partner) {
+      for (const key of CARD_KEYS) new Image().src = DECKS[partner].cardSrc(key);
+    }
   };
   if ("requestIdleCallback" in window) requestIdleCallback(run, { timeout: 4000 });
   else setTimeout(run, 1500);
