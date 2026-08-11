@@ -1356,10 +1356,11 @@ function switchToDeck(target, warpStyle) {
 // this is what fixes the old jarring lock (640° of spin meant the style
 // clear snapped the card through 280°). The spin direction follows the
 // way the finger actually stirred (lastCircleDir). Distortion is a
-// spin-following SHEAR — a transform, so it composites on the GPU;
-// filters are stepped coarsely (see below) because per-frame filter
-// changes re-render the full layer and choke a phone. Reversed cards
-// keep their 180° base.
+// SHEAR that follows the spin's angular velocity — a transform, so it
+// composites on the GPU and can never counter-twist. NO CSS filters are
+// used at all (each filter write re-renders the full-viewport layer — a
+// visible stutter on phones); the mid-dip haze is an opacity fade into
+// the black field instead. Reversed cards keep their 180° base.
 //
 // The two decks' cards have DIFFERENT aspects (Marseille is narrower):
 // the swap happens at the bottom, ~6% scale under 16px blur + full
@@ -1395,24 +1396,25 @@ function playWhirlpoolWarp(imgEl, fromUrl, toUrl) {
 
     let start = 0;
     let swapped = false;
-    let lastFilter = null;
 
     imgEl.style.transition = "none";
-    // transform ONLY — filters are deliberately kept out of will-change and
-    // out of the per-frame path (see below): on iOS WebKit, re-rendering a
-    // full-viewport filtered layer every frame is what makes a warp choppy.
-    imgEl.style.willChange = "transform";
+    // transform + opacity ONLY — both composite on the GPU. No CSS filters
+    // anywhere in this warp: even stepped blur writes each forced a
+    // full-viewport re-render (a visible micro-stutter apiece). The card
+    // instead darkens into the vortex via opacity against the black field.
+    imgEl.style.willChange = "transform, opacity";
 
     function frame(now) {
       if (!start) start = now;
       const t = Math.min(1, (now - start) / DUR);
 
-      let depth, spin, scale;
+      let depth, spin, scale, w;
       if (t < DIP_END) {
         const p = t / DIP_END;
         depth = Math.pow(p, 2.4);                 // gravity: slow grab, hard fall
         spin  = SPIN_IN * Math.pow(p, 3.1);       // vortex: spin rate ~ 1/radius
         scale = 1 - 0.94 * depth;
+        w = Math.pow(p, 2.1);                     // normalised angular velocity
       } else {
         const q = (t - DIP_END) / (1 - DIP_END);
         // Exponential decay of angular velocity, normalised to land at
@@ -1424,7 +1426,8 @@ function playWhirlpoolWarp(imgEl, fromUrl, toUrl) {
         // overshoot at q≈0.72, and the ring-down to rest.
         const env = Math.exp(-4.6 * q);
         scale = 1 - 0.94 * env * Math.cos(4.35 * q);
-        depth = env;                              // drives blur/dip/wobble/distort out
+        depth = env;                              // drives dip/wobble/fade out
+        w = Math.exp(-k * q);                     // spin rate dies with the same k
       }
 
       // Rubber: differential squash, amplitude following depth.
@@ -1432,39 +1435,32 @@ function playWhirlpoolWarp(imgEl, fromUrl, toUrl) {
       const sx = Math.max(0.02, scale * (1 + wob));
       const sy = Math.max(0.02, scale * (1 - wob));
       const dip = 46 * depth;
-      // Liquid distortion as a TRANSFORM — a shear that sways with the
-      // spin, deepest at the drain. Transforms composite on the GPU, so
-      // this is free. (The first cut used an feTurbulence displacement
-      // filter here; gorgeous, but iOS WebKit takes reference filters
-      // down a software path and re-renders the full-viewport layer
-      // every frame — the warp dropped to single-digit fps on a phone.)
-      const shear = Math.sin(t * Math.PI * 5 + 1.1) * 11 * depth;
+      // Liquid distortion: a shear that FOLLOWS the spin's angular
+      // velocity — builds going into the drain, decays smoothly coming
+      // out, and NEVER changes sign. (Its first version rode a
+      // free-running sine, which flipped direction late in the exit and
+      // read as a back-twist against the unwinding card.)
+      const shear = dir * 10 * w;
 
       imgEl.style.transform =
         "translateY(" + dip.toFixed(1) + "px) " +
         "rotate(" + (baseRot + dir * spin).toFixed(2) + "deg) " +
         "skew(" + shear.toFixed(2) + "deg, " + (-shear * 0.6).toFixed(2) + "deg) " +
         "scale(" + sx.toFixed(4) + ", " + sy.toFixed(4) + ")";
-
-      // Blur/saturation change in a few coarse STEPS, not per frame: every
-      // filter change re-renders the full layer, so we pay that cost ~8
-      // times per warp instead of ~90. Between steps the cached filtered
-      // layer just rides the composited transform.
-      const blurStep = Math.round((14 * depth) / 3.5) * 3.5;
-      const satStep = Math.round((1 - 0.35 * depth) * 10) / 10;
-      const filter = blurStep > 0
-        ? "blur(" + blurStep + "px) saturate(" + satStep + ")"
-        : "";
-      if (filter !== lastFilter) { imgEl.style.filter = filter; lastFilter = filter; }
+      // Sink into darkness rather than blur: opacity composites on the
+      // GPU, so it costs nothing per frame, and against the pure black
+      // field it reads as the card going under the surface.
+      imgEl.style.opacity = (1 - 0.62 * depth).toFixed(3);
 
       if (!swapped && t >= DIP_END) { swapped = true; imgEl.src = toUrl; }
 
       if (t < 1) { requestAnimationFrame(frame); return; }
 
       // The spring has already landed (scale within 0.4% of rest, spin flat
-      // on two full turns), so clearing the inline styles is invisible.
+      // on two full turns, shear and fade at zero), so clearing the inline
+      // styles is invisible.
       imgEl.style.transform = "";
-      imgEl.style.filter = "";
+      imgEl.style.opacity = "";
       imgEl.style.transition = "";
       imgEl.style.willChange = "";
       resolve();
