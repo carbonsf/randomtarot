@@ -767,8 +767,14 @@ function isCircle() {
     if (Math.hypot(v1x, v1y) < 2 || Math.hypot(v2x, v2y) < 2) continue;
     turn += Math.atan2(v1x * v2y - v1y * v2x, v1x * v2x + v1y * v2y);
   }
-  return Math.abs(turn) >= CIRCLE_MIN_TURN;
+  const qualifies = Math.abs(turn) >= CIRCLE_MIN_TURN;
+  // Record which way the stir wound (screen-clockwise is positive) so the
+  // whirlpool warp can spin the same way the finger did. Pure observation —
+  // the detection logic above is unchanged.
+  if (qualifies) lastCircleDir = turn > 0 ? 1 : -1;
+  return qualifies;
 }
+let lastCircleDir = 1;
 
 function twoFingerEnd(e) {
   if (!tfActive) return;
@@ -1331,23 +1337,38 @@ function switchToDeck(target, warpStyle) {
   });
 }
 
-// The circle's transition: a whirlpool. The card spins up and dips down
-// into a vortex — blurring, squashing rubberily, shrinking to a point —
-// the deck swaps at the bottom of the dip, and the new card spins back
-// out, unwinding, landing with an elastic rubber-band settle.
+// The circle's transition: a whirlpool, on vortex physics.
 //
-// Built on the single <img> (transform + filter per rAF frame), so it
-// composites on every browser. The two decks' cards have DIFFERENT
-// aspects (Marseille is narrower than RW/Thoth): the swap happens at the
-// dip's bottom, where the card is at ~6% scale under heavy blur, so the
-// aspect change is invisible — the new proportions are simply what
-// unwinds back out of the vortex.
+//   IN  (0 .. DIP_END): the card is CAUGHT — depth follows a gravity-fed
+//       power curve (slow first grab, accelerating hard), and the spin
+//       rate climbs as the radius falls, the way a real vortex speeds up
+//       toward the drain: a lazy first quarter-turn, furious by the
+//       bottom.
+//   OUT (DIP_END .. 1): spat back out — angular velocity decays
+//       EXPONENTIALLY toward rest (never a hard stop), while the scale
+//       rises as a damped spring: it overshoots ~3-4% about two-thirds of
+//       the way out, rings once, and is at rest as the loop ends. The
+//       rubber-band settle is part of the same physics, not a bolted-on
+//       animation.
+//
+// Total spin is EXACTLY two turns (720°) and the decay lands flat on it,
+// so clearing the inline transform at the end changes nothing visually —
+// this is what fixes the old jarring lock (640° of spin meant the style
+// clear snapped the card through 280°). The spin direction follows the
+// way the finger actually stirred (lastCircleDir). Distortion comes from
+// an feTurbulence displacement (whirl-distort in index.html) whose
+// strength follows depth — the card smears liquidly near the drain and
+// is untouched at either end. Reversed cards keep their 180° base.
+//
+// The two decks' cards have DIFFERENT aspects (Marseille is narrower):
+// the swap happens at the bottom, ~6% scale under 16px blur + full
+// distortion, so the new proportions simply unwind out of the vortex.
 function playWhirlpoolWarp(imgEl, fromUrl, toUrl) {
   return new Promise((resolve) => {
     const reduce = window.matchMedia &&
                    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // Preload the target so the mid-dip swap is instant.
+    // Preload the target so the bottom-of-dip swap is instant.
     const pre = new Image();
     pre.src = toUrl;
 
@@ -1365,72 +1386,80 @@ function playWhirlpoolWarp(imgEl, fromUrl, toUrl) {
       return;
     }
 
-    const DUR = 1150;          // the vortex proper (settle plays after)
-    const SPIN = 640;          // total degrees across the whole dip
+    const DUR = 1500;
+    const DIP_END = 0.42;            // fast suck, longer springy release
+    const SPIN_IN = 360, SPIN_OUT = 360;   // exactly two turns total
+    const dir = lastCircleDir;       // spin the way the finger stirred
+    const baseRot = imgEl.classList.contains("reversed") ? 180 : 0;
+    const displace = document.getElementById("whirl-displace"); // may be null
+
     let start = 0;
     let swapped = false;
 
     imgEl.style.transition = "none";
     imgEl.style.willChange = "transform, filter";
 
-    function smoothstep(x) { return x * x * (3 - 2 * x); }
-
     function frame(now) {
       if (!start) start = now;
       const t = Math.min(1, (now - start) / DUR);
-      const inPhase = t < 0.5;
-      const p = smoothstep(inPhase ? t / 0.5 : (t - 0.5) / 0.5);
 
-      // Depth into the vortex: 0 at either end, 1 at the swap.
-      const depth = inPhase ? p : 1 - p;
-      // Spin is continuous through the dip — winds up going in, keeps
-      // turning the same way coming out, decelerating as it lands.
-      const spin = inPhase ? SPIN / 2 * p : SPIN / 2 + SPIN / 2 * p;
-      // Down to a point at the bottom of the dip.
-      const scale = 1 - 0.94 * depth;
-      // The rubber: a differential squash that trembles faster as the
-      // card nears the vortex centre, elastic rather than rigid.
+      let depth, spin, scale;
+      if (t < DIP_END) {
+        const p = t / DIP_END;
+        depth = Math.pow(p, 2.4);                 // gravity: slow grab, hard fall
+        spin  = SPIN_IN * Math.pow(p, 3.1);       // vortex: spin rate ~ 1/radius
+        scale = 1 - 0.94 * depth;
+      } else {
+        const q = (t - DIP_END) / (1 - DIP_END);
+        // Exponential decay of angular velocity, normalised to land at
+        // exactly SPIN_IN + SPIN_OUT with near-zero velocity.
+        const k = 5.2;
+        const decay = (1 - Math.exp(-k * q)) / (1 - Math.exp(-k));
+        spin = SPIN_IN + SPIN_OUT * decay;
+        // Damped spring for the scale: env * cos gives the rise, the ~3.4%
+        // overshoot at q≈0.72, and the ring-down to rest.
+        const env = Math.exp(-4.6 * q);
+        scale = 1 - 0.94 * env * Math.cos(4.35 * q);
+        depth = env;                              // drives blur/dip/wobble/distort out
+      }
+
+      // Rubber: differential squash, amplitude following depth.
       const wob = Math.sin(t * Math.PI * 9) * 0.12 * depth;
-      const sx = scale * (1 + wob);
-      const sy = scale * (1 - wob);
-      // The dip: pulled down as it goes under, rising back out.
+      const sx = Math.max(0.02, scale * (1 + wob));
+      const sy = Math.max(0.02, scale * (1 - wob));
       const dip = 46 * depth;
-      // Heavy blur at the centre — this is also what hides the aspect
-      // change between the two decks' cards at the swap.
       const blur = 16 * depth;
 
       imgEl.style.transform =
         "translateY(" + dip.toFixed(1) + "px) " +
-        "rotate(" + spin.toFixed(1) + "deg) " +
-        "scale(" + Math.max(0.02, sx).toFixed(4) + ", " + Math.max(0.02, sy).toFixed(4) + ")";
-      imgEl.style.filter =
-        "blur(" + blur.toFixed(1) + "px) saturate(" + (1 - 0.35 * depth).toFixed(3) + ")";
+        "rotate(" + (baseRot + dir * spin).toFixed(2) + "deg) " +
+        "scale(" + sx.toFixed(4) + ", " + sy.toFixed(4) + ")";
+      // Liquid smear near the drain: feTurbulence displacement whose
+      // strength follows depth. Skipped entirely when shallow (or if the
+      // filter isn't in the DOM) so the ends stay crisp and cheap.
+      let filter = "blur(" + blur.toFixed(1) + "px) saturate(" + (1 - 0.35 * depth).toFixed(3) + ")";
+      if (displace) {
+        if (depth > 0.02) {
+          displace.setAttribute("scale", (64 * depth).toFixed(1));
+          filter += " url(#whirl-distort)";
+        } else {
+          displace.setAttribute("scale", "0");
+        }
+      }
+      imgEl.style.filter = filter;
 
-      if (!swapped && t >= 0.5) { swapped = true; imgEl.src = toUrl; }
+      if (!swapped && t >= DIP_END) { swapped = true; imgEl.src = toUrl; }
 
       if (t < 1) { requestAnimationFrame(frame); return; }
 
-      // Landed: elastic rubber-band settle — overshooting squash/stretch
-      // that rings down to rest, then clear every inline style.
+      // The spring has already landed (scale within 0.4% of rest, spin flat
+      // on two full turns), so clearing the inline styles is invisible.
+      if (displace) displace.setAttribute("scale", "0");
       imgEl.style.transform = "";
       imgEl.style.filter = "";
-      const settle = imgEl.animate([
-        { transform: "scale(0.96, 1.05)" },
-        { transform: "scale(1.05, 0.955)", offset: 0.38 },
-        { transform: "scale(0.985, 1.012)", offset: 0.68 },
-        { transform: "scale(1.004, 0.997)", offset: 0.86 },
-        { transform: "scale(1, 1)" }
-      ], { duration: 340, easing: "cubic-bezier(0.22, 1, 0.36, 1)" });
-      const done = () => {
-        imgEl.style.transition = "";
-        imgEl.style.willChange = "";
-        resolve();
-      };
-      if (settle && typeof settle.finished !== "undefined" && settle.finished.then) {
-        settle.finished.then(done).catch(done);
-      } else {
-        setTimeout(done, 360);
-      }
+      imgEl.style.transition = "";
+      imgEl.style.willChange = "";
+      resolve();
     }
     requestAnimationFrame(frame);
   });
