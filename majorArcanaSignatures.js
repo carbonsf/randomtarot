@@ -1773,6 +1773,291 @@
     await sleep(900);
   }
 
+  // ---- Besançon-Marseille variants ----------------------------------
+  // The Lequart deck replaces the two papal trumps with Roman deities,
+  // so II and V need their own signatures — the Papesse's veil and the
+  // Pape's transmission describe imagery these cards don't carry.
+
+  // ---- II Junon : Argus's hundred eyes open in the peacock's tail ----
+  // Juno set the hundred eyes of Argus Panoptes into the peacock's tail
+  // when he died, and the card shows her walking with her peacocks. So:
+  // ocelli unfurl across the card in a PHYLLOTAXIS spiral (the golden
+  // angle, 137.508° — the same packing a real tail uses) seeded at the
+  // birds by her feet, opening outward in a wave whose stagger is
+  // sqrt-spaced, so the fan accelerates as it spreads. Each eye is a
+  // stack of concentric ellipses in true ocellus colours — bronze rim,
+  // green, iridescent teal, indigo, black pupil. They hold, shimmer
+  // (crossfading two rings rather than animating a hue filter, which
+  // would re-raster every element every frame), then every pupil slides
+  // the same way at once — a hundred eyes glancing in unison — before
+  // the tail folds shut in reverse.
+  async function junonPeacock(imgEl) {
+    const cr = getContentRect(imgEl);
+    const N = 26;
+    const GOLD = Math.PI * (3 - Math.sqrt(5));      // 137.508° in radians
+    // Seed at the peacocks (lower centre); the tail opens up and outward.
+    const ox = cr.left + cr.width * 0.50;
+    const oy = cr.top  + cr.height * 0.74;
+    const reach = Math.min(cr.width * 0.62, cr.height * 0.42);
+
+    const svg = svgEl('svg');
+    svg.style.cssText =
+      'position:fixed;left:0;top:0;width:100vw;height:100vh;' +
+      'pointer-events:none;z-index:40;overflow:visible;';
+    trackEl(svg); document.body.appendChild(svg);
+
+    const OPEN = 520, HOLD = 900, SHUT = 460;
+    const eyes = [];
+
+    for (let i = 0; i < N; i++) {
+      const f = i / (N - 1);
+      const ang = i * GOLD - Math.PI / 2;            // start pointing up
+      const rad = reach * Math.sqrt(f);              // even areal packing
+      // Squash the spiral vertically so it reads as a fanned tail rather
+      // than a disc, and lift it — tails open upward. Positions are
+      // clamped inside the card so no eye is half-cut by its edge.
+      const m = cr.width * 0.09;
+      const ex = Math.min(cr.left + cr.width - m,
+                 Math.max(cr.left + m, ox + Math.cos(ang) * rad * 0.94));
+      const ey = Math.min(cr.top + cr.height - m,
+                 Math.max(cr.top + m, oy + Math.sin(ang) * rad * 0.82 - rad * 0.16));
+      const size = (15 + 10 * (1 - f)) * (cr.width / 460);
+
+      // TWO nested groups on purpose. On an SVG element the CSS transform
+      // property and the `transform` attribute are the same property, and
+      // CSS wins — so animating transform on the group that carries the
+      // translate() attribute wipes the position and stacks every eye at
+      // the SVG origin. The outer group holds the (never-animated)
+      // placement; the inner one takes the scale/rotate.
+      const place = svgEl('g');
+      place.setAttribute('transform', `translate(${ex.toFixed(1)} ${ey.toFixed(1)})`);
+      const g = svgEl('g');
+      g.style.opacity = '0';
+      place.appendChild(g);
+
+      const ring = (rx, ry, fill) => svgEl('ellipse',
+        { cx: 0, cy: 0, rx: rx.toFixed(2), ry: ry.toFixed(2), fill: fill });
+
+      // Ocellus, outside in: a soft halo (a wide low-alpha ellipse rather
+      // than a drop-shadow — 26 filtered layers is exactly the kind of
+      // per-element rasterisation that costs a phone its frame budget),
+      // then bronze, green, teal, indigo, pupil.
+      g.appendChild(ring(size * 1.5, size * 1.62, 'rgba(34,132,158,0.18)'));
+      g.appendChild(ring(size * 1.24, size * 1.36, 'rgba(38,140,164,0.28)'));
+      g.appendChild(ring(size, size * 1.12, 'rgba(206,150,52,0.92)'));
+      const green = ring(size * 0.76, size * 0.86, 'rgba(58,138,92,0.85)');
+      g.appendChild(green);
+      const teal = ring(size * 0.76, size * 0.86, 'rgba(34,150,168,0.85)');
+      teal.style.opacity = '0';                       // shimmer partner
+      g.appendChild(teal);
+      g.appendChild(ring(size * 0.50, size * 0.58, 'rgba(28,74,150,0.92)'));
+      g.appendChild(ring(size * 0.30, size * 0.36, 'rgba(14,20,58,0.97)'));
+
+      const pupil = svgEl('g');
+      pupil.appendChild(ring(size * 0.17, size * 0.21, 'rgba(6,8,20,1)'));
+      const glint = svgEl('ellipse', {
+        cx: (-size * 0.06).toFixed(2), cy: (-size * 0.07).toFixed(2),
+        rx: (size * 0.06).toFixed(2), ry: (size * 0.05).toFixed(2),
+        fill: 'rgba(255,252,240,0.85)'
+      });
+      pupil.appendChild(glint);
+      g.appendChild(pupil);
+
+      svg.appendChild(place);
+      eyes.push({ g, teal, green, pupil, f, size });
+    }
+
+    // Open: sqrt-spaced stagger, so the wave quickens as it travels out.
+    const spread = 620;
+    for (const e of eyes) {
+      const delay = Math.sqrt(e.f) * spread;
+      trackAnim(e.g.animate([
+        { opacity: 0, transform: 'scale(0.05) rotate(-24deg)' },
+        { opacity: 1, transform: 'scale(1.18) rotate(4deg)', offset: 0.62 },
+        { opacity: 1, transform: 'scale(1) rotate(0deg)' }
+      ], { duration: OPEN, delay: delay, easing: 'cubic-bezier(0.16, 1.5, 0.3, 1)', fill: 'both' }));
+
+      // Iridescence: crossfade the teal ring over the green, each eye on
+      // its own phase so the tail shivers rather than pulsing as one.
+      trackAnim(e.teal.animate(
+        [{ opacity: 0 }, { opacity: 0.9 }, { opacity: 0 }],
+        { duration: 1500, delay: delay + 120, iterations: 2,
+          direction: 'alternate', easing: 'ease-in-out', fill: 'both' }));
+    }
+
+    // The glance: after the tail is open, every pupil slides the same
+    // way at once, holds a beat, and returns. This is the moment — a
+    // hundred eyes noticing you together.
+    const glanceAt = spread + OPEN + 160;
+    for (const e of eyes) {
+      const shift = e.size * 0.30;
+      trackAnim(e.pupil.animate([
+        { transform: 'translate(0px,0px)' },
+        { transform: `translate(${shift.toFixed(2)}px, ${(-shift * 0.22).toFixed(2)}px)`, offset: 0.22 },
+        { transform: `translate(${shift.toFixed(2)}px, ${(-shift * 0.22).toFixed(2)}px)`, offset: 0.62 },
+        { transform: 'translate(0px,0px)' }
+      ], { duration: 900, delay: glanceAt, easing: 'cubic-bezier(0.3, 0, 0.2, 1)', fill: 'both' }));
+    }
+
+    // Fold shut in reverse — outermost eyes close first.
+    const shutAt = glanceAt + HOLD;
+    for (const e of eyes) {
+      trackAnim(e.g.animate([
+        { opacity: 1, transform: 'scale(1)' },
+        { opacity: 0, transform: 'scale(0.06) rotate(16deg)' }
+      ], { duration: SHUT, delay: shutAt + (1 - e.f) * 260,
+           easing: 'cubic-bezier(0.5, 0, 0.75, 0)', fill: 'forwards' }));
+    }
+
+    await sleep(shutAt + 260 + SHUT + 120);
+  }
+
+  // ---- V Jupiter : the bolt, and the thunder after it ----------------
+  // He holds thunderbolts and rides the eagle, so the signature is an
+  // actual strike. The bolt is GENERATED, not drawn: recursive midpoint
+  // displacement (the classic fractal-lightning construction) subdivides
+  // the segment from the top of the card to his raised hand five times,
+  // jittering each midpoint perpendicular to the run by an amount that
+  // halves each level — so the path is jagged at every scale, and
+  // different on every draw. Forks branch off at random vertices with
+  // the same routine at lower energy.
+  //
+  // Nonlinear throughout: the strike is revealed by stroke-dashoffset in
+  // ~70ms, the flash decays exponentially rather than linearly, real
+  // lightning's multiple return strokes are modelled as a re-strike, and
+  // the thunder that follows shudders the card as a DAMPED HARMONIC
+  // OSCILLATOR — keyframes sampled from A·e^(−kt)·sin(ωt).
+  async function jupiterBolt(imgEl) {
+    const cr = getContentRect(imgEl);
+    // His raised hand, upper right — where the bolt lands.
+    const hand = { x: cr.left + cr.width * 0.79, y: cr.top + cr.height * 0.15 };
+    const sky  = { x: cr.left + cr.width * 0.62, y: cr.top - Math.max(40, cr.height * 0.06) };
+
+    // Recursive midpoint displacement: returns a jagged polyline.
+    function bolt(ax, ay, bx, by, levels, jitter) {
+      let pts = [{ x: ax, y: ay }, { x: bx, y: by }];
+      for (let l = 0; l < levels; l++) {
+        const next = [pts[0]];
+        for (let i = 0; i < pts.length - 1; i++) {
+          const p = pts[i], q = pts[i + 1];
+          const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
+          const dx = q.x - p.x, dy = q.y - p.y;
+          const len = Math.hypot(dx, dy) || 1;
+          // Displace perpendicular to the run; amplitude halves per level.
+          const off = (Math.random() - 0.5) * jitter;
+          next.push({ x: mx + (-dy / len) * off, y: my + (dx / len) * off });
+          next.push(q);
+        }
+        pts = next;
+        jitter *= 0.52;
+      }
+      return pts;
+    }
+    const toPath = (pts) =>
+      'M' + pts.map(p => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' L');
+
+    const svg = svgEl('svg');
+    svg.style.cssText =
+      'position:fixed;left:0;top:0;width:100vw;height:100vh;' +
+      'pointer-events:none;z-index:41;overflow:visible;';
+    trackEl(svg); document.body.appendChild(svg);
+
+    // Main channel + forks off random vertices.
+    const main = bolt(sky.x, sky.y, hand.x, hand.y, 5, cr.width * 0.30);
+    const strokes = [{ pts: main, w: 1 }];
+    for (let k = 0; k < 3; k++) {
+      const at = main[2 + Math.floor(Math.random() * (main.length - 6))];
+      const end = {
+        x: at.x + (Math.random() - 0.5) * cr.width * 0.42,
+        y: at.y + cr.height * (0.10 + Math.random() * 0.16)
+      };
+      strokes.push({ pts: bolt(at.x, at.y, end.x, end.y, 3, cr.width * 0.14), w: 0.5 });
+    }
+
+    // Glow is built from THREE stacked strokes — wide and faint, medium,
+    // then a hot white core — rather than a blur or drop-shadow filter.
+    // Same look, no filtered layers to rasterise, which is what keeps it
+    // smooth on a phone.
+    const paths = [];
+    const layers = [
+      { w: 16, color: 'rgba(120,170,255,0.20)' },
+      { w: 7,  color: 'rgba(175,205,255,0.55)' },
+      { w: 2.4, color: 'rgba(255,253,245,0.98)' }
+    ];
+    for (const s of strokes) {
+      const d = toPath(s.pts);
+      for (const L of layers) {
+        const p = svgEl('path', {
+          d: d, fill: 'none', stroke: L.color,
+          'stroke-width': (L.w * s.w).toFixed(1),
+          'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+        });
+        svg.appendChild(p);
+        const len = p.getTotalLength ? p.getTotalLength() : 1200;
+        p.style.strokeDasharray = len;
+        p.style.strokeDashoffset = len;
+        paths.push({ p, len, w: s.w });
+      }
+    }
+
+    // The flash: a full-card bloom that decays exponentially.
+    const flash = newOverlayDiv(
+      `left:${cr.left}px;top:${cr.top}px;` +
+      `width:${cr.width}px;height:${cr.height}px;` +
+      `background:radial-gradient(ellipse 70% 55% at ${(0.79 * 100).toFixed(0)}% ${(0.15 * 100).toFixed(0)}%,` +
+        `rgba(255,255,255,0.92) 0%,rgba(200,225,255,0.55) 34%,transparent 76%);` +
+      `mix-blend-mode:screen;opacity:0;`
+    );
+
+    // Strike: the channel draws itself top-down, almost instantly.
+    for (const { p, len } of paths) {
+      trackAnim(p.animate(
+        [{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+        { duration: 70, easing: 'cubic-bezier(0.1, 0.9, 0.2, 1)', fill: 'forwards' }));
+    }
+    // Real lightning fires several return strokes down the same channel:
+    // bright, gutter, brighter, then decay. Sampled as an exponential.
+    trackAnim(svg.animate([
+      { opacity: 0,    offset: 0 },
+      { opacity: 1,    offset: 0.06 },
+      { opacity: 0.35, offset: 0.13 },
+      { opacity: 1,    offset: 0.19 },
+      { opacity: 0.62, offset: 0.30 },
+      { opacity: 0.30, offset: 0.48 },
+      { opacity: 0.12, offset: 0.70 },
+      { opacity: 0,    offset: 1 }
+    ], { duration: 1500, easing: 'linear', fill: 'forwards' }));
+
+    trackAnim(flash.animate([
+      { opacity: 0,    offset: 0 },
+      { opacity: 0.95, offset: 0.05 },
+      { opacity: 0.22, offset: 0.14 },
+      { opacity: 0.80, offset: 0.20 },
+      { opacity: 0.10, offset: 0.42 },
+      { opacity: 0,    offset: 1 }
+    ], { duration: 1100, easing: 'linear', fill: 'forwards' }));
+
+    // Thunder: the card shudders as a damped harmonic oscillator,
+    // A·e^(−kt)·sin(ωt), sampled into keyframes. Starts a beat after the
+    // flash — the sound arriving after the light.
+    const STEPS = 34, SHUDDER = 900, A = 7.5, K = 4.4, W = 26;
+    const keys = [];
+    for (let i = 0; i <= STEPS; i++) {
+      const t = i / STEPS;
+      const d = A * Math.exp(-K * t) * Math.sin(W * t);
+      keys.push({
+        transform: `translate(${(d * 0.55).toFixed(2)}px, ${d.toFixed(2)}px)`,
+        offset: t
+      });
+    }
+    setTimeout(() => {
+      if (!imgEl.isConnected) return;
+      trackAnim(imgEl.animate(keys, { duration: SHUDDER, easing: 'linear', fill: 'none' }));
+    }, 150);
+
+    await sleep(1650);
+  }
+
   // ---- dispatch -----------------------------------------------------
   const EFFECTS = {
     maj00: foolSpark,            maj01: magicianLemniscate,
@@ -1807,7 +2092,12 @@
   // two need to trade places, or Strength's ember would play over Justice.
   const MARSEILLE_OVERRIDES = {
     maj08: justiceBalance,
-    maj11: strengthEmber
+    maj11: strengthEmber,
+    // Besançon variants: II is Junon (not the Papesse) and V is Jupiter
+    // (not the Pape), so the papal signatures would play over imagery
+    // that isn't there.
+    maj02: junonPeacock,
+    maj05: jupiterBolt
   };
 
   function isMajor(name) { return /^maj\d{2}$/.test(name || ''); }
