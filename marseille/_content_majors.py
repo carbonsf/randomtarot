@@ -6,6 +6,14 @@ Read from the Tarot de Marseille tradition rather than the Golden Dawn
 narrative the Rider-Waite carries: plainer, more medieval, closer to the
 woodcut. Note VIII is LA JUSTICE and XI is LA FORCE — the reverse of
 Rider-Waite — and XIII is unnamed on the card.
+
+The Lequart deck is a BESANÇON-type Marseille: trumps II and V are JUNON
+(with her peacocks) and JUPITER (thunderbolts, borne on the eagle), the
+Roman-deity replacements for the Papesse and Pape used in
+mixed-confession regions. The II and V texts below are written for what
+these cards actually depict — the station in the sequence keeps its
+function (the inward keeper; the sky-authority), but the imagery is
+Junon's and Jupiter's, not the papal pair's.
 """
 
 # key -> [(lead, key, [subs]), ...]
@@ -43,21 +51,21 @@ UP = {
         "talent still deciding what it is",
         "opening the shop for the day"])],
 "maj02": [
-    ("keeping", "the book", [
-        "a volume half-open on her lap",
-        "reading rather than proclaiming",
-        "knowledge held, not yet spent",
-        "the page she has not turned"]),
-    ("sitting", "in stillness", [
-        "the only trump entirely at rest",
-        "authority that never stands up",
-        "presence without performance",
-        "patience as a form of power"]),
-    ("guarding", "what is inward", [
-        "the veil behind the throne",
-        "what is not said, deliberately",
-        "interiority kept intact",
-        "the private held as sacred"])],
+    ("pointing", "skyward", [
+        "one finger raised to the clouds",
+        "attention drawn above the visible",
+        "the queen of heaven at her station",
+        "what she knows, she indicates"]),
+    ("keeping", "her own counsel", [
+        "sovereign without a throne",
+        "majesty carried, not seated",
+        "guardian of thresholds and vows",
+        "dignity that needs no book"]),
+    ("walking", "with peacocks", [
+        "the hundred-eyed watch at her feet",
+        "beauty that is also vigilance",
+        "seen more than she is seeing",
+        "splendour as a way of knowing"])],
 "maj03": [
     ("holding", "the shield", [
         "the eagle resting on her arm",
@@ -91,21 +99,21 @@ UP = {
         "the father as fact, not feeling",
         "power that has stopped moving"])],
 "maj05": [
-    ("raising", "the hand", [
-        "two fingers up in blessing",
-        "the gesture that transmits",
-        "sanction given from above",
-        "teaching by sign, not speech"]),
-    ("standing", "between", [
-        "two tonsured figures at his feet",
-        "the intermediary, never the source",
-        "doctrine passed hand to hand",
-        "tradition as a living channel"]),
-    ("keeping", "the form", [
-        "the outward rite that carries meaning",
-        "orthodoxy as a container",
-        "what the institution preserves",
-        "belonging to a lineage"])],
+    ("holding", "the thunderbolt", [
+        "power in either hand",
+        "authority that needs no chair",
+        "command carried openly",
+        "the sky's weight, hand-held"]),
+    ("riding", "the eagle", [
+        "borne up by what he rules",
+        "standing on wings in the clouds",
+        "sovereignty above the weather",
+        "the height that sees whole"]),
+    ("granting", "and withholding", [
+        "the father who says yes and no",
+        "law spoken from the sky",
+        "favour that must be asked",
+        "judgement above appeal"])],
 "maj06": [
     ("standing", "at the crossing", [
         "three figures and an archer above",
@@ -377,10 +385,10 @@ REV = {
     ("Negative", "trickery", ["sleight of hand used to deceive", "talent spent on the con", "the table set to distract", "cleverness without conscience"]),
     ("Delayed", "the work", ["the craft still being learned", "tools present, mastery pending", "the first move not yet made", "readiness arriving slowly"])],
 "maj02": [
-    ("Weakened", "stillness", ["quiet that has gone slack", "patience thinning into inertia", "the book open but unread", "presence without attention"]),
-    ("Inverted", "knowing", ["secrecy for its own sake", "withholding mistaken for depth", "the veil kept from habit", "silence that has stopped meaning"]),
-    ("Negative", "withholding", ["knowledge hoarded as leverage", "privacy weaponised", "refusing to say what would help", "the closed book as a wall"]),
-    ("Delayed", "understanding", ["the page still unturned", "insight forming out of sight", "what is known not yet sayable", "the answer gathering quietly"])],
+    ("Weakened", "the watch", ["the hundred eyes drooping shut", "vigilance thinning to habit", "the vow kept in name only", "majesty losing its bearing"]),
+    ("Inverted", "vigilance", ["watching instead of living", "the guard kept on the wrong door", "suspicion dressed as care", "seeing everything, trusting nothing"]),
+    ("Negative", "jealousy", ["the watch turned to possession", "punishing what cannot be held", "the peacock's eyes as evidence", "love enforced like a law"]),
+    ("Delayed", "the vow", ["the promise not yet kept", "the threshold not yet crossed", "recognition still to come", "her moment waiting on the sky"])],
 "maj03": [
     ("Weakened", "increase", ["growth that will not quite take", "abundance short of arriving", "fertility running thin", "the shield heavy on the arm"]),
     ("Inverted", "nurture", ["tending that smothers", "care given to be needed", "protection that prevents growing", "the shelter become an enclosure"]),
@@ -392,10 +400,10 @@ REV = {
     ("Negative", "domination", ["rule enforced because it can be", "control mistaken for care", "power that permits no question", "the father as a closed door"]),
     ("Delayed", "order", ["the ground still settling", "authority not yet earned", "structure being built slowly", "the seat waiting to be taken"])],
 "maj05": [
-    ("Weakened", "transmission", ["doctrine losing its charge", "the blessing given by rote", "teaching that no longer reaches", "the channel narrowing"]),
-    ("Inverted", "tradition", ["form kept after the meaning left", "orthodoxy defended, not lived", "the rite performed at the truth", "lineage as an excuse"]),
-    ("Negative", "dogma", ["belonging enforced by exclusion", "the institution above the teaching", "conformity demanded as virtue", "authority claiming the source"]),
-    ("Delayed", "teaching", ["the lesson not yet given", "the student not yet ready", "transmission still being prepared", "understanding arriving late"])],
+    ("Weakened", "command", ["thunder held without the charge", "authority that must repeat itself", "the eagle flying lower", "law announced, not felt"]),
+    ("Inverted", "authority", ["rule from too far above to see", "the sky talking over the ground", "power that answers no questions", "grandeur standing in for judgement"]),
+    ("Negative", "the bolt", ["the strike before the hearing", "punishment as first resort", "favour sold, wrath free", "the father who only says no"]),
+    ("Delayed", "the answer", ["the petition still ascending", "the sky quiet for now", "judgement gathering like weather", "the yes not yet spoken"])],
 "maj06": [
     ("Weakened", "choosing", ["the decision losing its edge", "both paths dimming at once", "the arrow loosed but unaimed", "commitment that will not set"]),
     ("Inverted", "love", ["choice deferred to keep both", "attachment mistaken for decision", "wanting the fork, not the road", "loving in order not to choose"]),

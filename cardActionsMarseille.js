@@ -17,9 +17,9 @@ const CARD_ACTIONS_MARSEILLE = {
     {"lead": "practising", "key": "the craft", "subs": ["the juggler, the trickster, the maker", "sleight of hand or true art", "talent still deciding what it is", "opening the shop for the day"]}
   ],
   "maj02": [
-    {"lead": "keeping", "key": "the book", "subs": ["a volume half-open on her lap", "reading rather than proclaiming", "knowledge held, not yet spent", "the page she has not turned"]},
-    {"lead": "sitting", "key": "in stillness", "subs": ["the only trump entirely at rest", "authority that never stands up", "presence without performance", "patience as a form of power"]},
-    {"lead": "guarding", "key": "what is inward", "subs": ["the veil behind the throne", "what is not said, deliberately", "interiority kept intact", "the private held as sacred"]}
+    {"lead": "pointing", "key": "skyward", "subs": ["one finger raised to the clouds", "attention drawn above the visible", "the queen of heaven at her station", "what she knows, she indicates"]},
+    {"lead": "keeping", "key": "her own counsel", "subs": ["sovereign without a throne", "majesty carried, not seated", "guardian of thresholds and vows", "dignity that needs no book"]},
+    {"lead": "walking", "key": "with peacocks", "subs": ["the hundred-eyed watch at her feet", "beauty that is also vigilance", "seen more than she is seeing", "splendour as a way of knowing"]}
   ],
   "maj03": [
     {"lead": "holding", "key": "the shield", "subs": ["the eagle resting on her arm", "authority that shelters rather than rules", "power turned toward tending", "protection offered, not imposed"]},
@@ -32,9 +32,9 @@ const CARD_ACTIONS_MARSEILLE = {
     {"lead": "ruling", "key": "the visible world", "subs": ["matter, borders, law, the built", "authority that answers to no mood", "the father as fact, not feeling", "power that has stopped moving"]}
   ],
   "maj05": [
-    {"lead": "raising", "key": "the hand", "subs": ["two fingers up in blessing", "the gesture that transmits", "sanction given from above", "teaching by sign, not speech"]},
-    {"lead": "standing", "key": "between", "subs": ["two tonsured figures at his feet", "the intermediary, never the source", "doctrine passed hand to hand", "tradition as a living channel"]},
-    {"lead": "keeping", "key": "the form", "subs": ["the outward rite that carries meaning", "orthodoxy as a container", "what the institution preserves", "belonging to a lineage"]}
+    {"lead": "holding", "key": "the thunderbolt", "subs": ["power in either hand", "authority that needs no chair", "command carried openly", "the sky's weight, hand-held"]},
+    {"lead": "riding", "key": "the eagle", "subs": ["borne up by what he rules", "standing on wings in the clouds", "sovereignty above the weather", "the height that sees whole"]},
+    {"lead": "granting", "key": "and withholding", "subs": ["the father who says yes and no", "law spoken from the sky", "favour that must be asked", "judgement above appeal"]}
   ],
   "maj06": [
     {"lead": "standing", "key": "at the crossing", "subs": ["three figures and an archer above", "the choice made under a loosed arrow", "not romance so much as decision", "one path taken, the rest closed"]},

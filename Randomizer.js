@@ -62,12 +62,20 @@ const DECKS = {
     // Marseille art is local, one image per card, no zoom — same shape as
     // the RW deck. (Lequart, Paris; public domain. See marseille/_fetch.py.)
     cardSrc: (key) => "marseille/" + key + ".jpg",
-    // Marseille has its own authored readings now (no longer borrowing the
-    // Rider-Waite text): the trumps read plainly and medievally, and the
-    // pips by NUMBER meeting SUIT, since Marseille pips are non-scenic.
-    // Authored against Marseille's own numbering, so no key swap is needed.
-    upright:  () => (typeof CARD_ACTIONS_MARSEILLE !== "undefined" ? CARD_ACTIONS_MARSEILLE : null),
-    reversed: () => (typeof CARD_ACTIONS_REVERSED_MARSEILLE !== "undefined" ? CARD_ACTIONS_REVERSED_MARSEILLE : null),
+    // Marseille has its own authored readings (trumps plainly and
+    // medievally — including the Besançon variant's Junon and Jupiter at
+    // II and V, which is what the Lequart deck actually prints — and pips
+    // by NUMBER meeting SUIT, since Marseille pips are non-scenic).
+    // Authored against Marseille's own numbering, so no key swap needed.
+    // If the Marseille data file ever fails to load (a transient fetch
+    // failure on a stale PWA shell), fall back to the Rider-Waite text
+    // rather than showing the overlay's loading-skeleton forever — real
+    // words for the wrong tradition beat shimmer lines. (In that degraded
+    // path VIII/XI read swapped; acceptable for a failure mode.)
+    upright:  () => (typeof CARD_ACTIONS_MARSEILLE !== "undefined" ? CARD_ACTIONS_MARSEILLE
+                     : (typeof CARD_ACTIONS !== "undefined" ? CARD_ACTIONS : null)),
+    reversed: () => (typeof CARD_ACTIONS_REVERSED_MARSEILLE !== "undefined" ? CARD_ACTIONS_REVERSED_MARSEILLE
+                     : (typeof CARD_ACTIONS_REVERSED !== "undefined" ? CARD_ACTIONS_REVERSED : null)),
   },
 };
 
@@ -122,10 +130,13 @@ const COURT_RANKS = {
 };
 // Marseille trumps, in Marseille's own order — note VIII Justice and
 // XI Force, the reverse of Rider-Waite. XIII is deliberately unnamed on
-// the card itself, so we name it plainly.
+// the card itself, so we name it plainly. The Lequart deck is a
+// BESANÇON-type Marseille: II and V are Junon and Jupiter (the papal
+// trumps were replaced with Roman deities to sidestep religious censure
+// in mixed-confession regions), and those are the names the cards print.
 const MARSEILLE_MAJOR_NAMES = [
-  "Le Mat", "Le Bateleur", "La Papesse", "L'Impératrice",
-  "L'Empereur", "Le Pape", "L'Amoureux", "Le Chariot",
+  "Le Mat", "Le Bateleur", "Junon", "L'Impératrice",
+  "L'Empereur", "Jupiter", "L'Amoureux", "Le Chariot",
   "La Justice", "L'Ermite", "La Roue de Fortune", "La Force",
   "Le Pendu", "The Nameless Arcanum (XIII)", "Tempérance", "Le Diable",
   "La Maison Dieu", "L'Étoile", "La Lune", "Le Soleil",

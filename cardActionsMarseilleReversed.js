@@ -18,10 +18,10 @@ const CARD_ACTIONS_REVERSED_MARSEILLE = {
     {"lead": "Delayed", "key": "the work", "subs": ["the craft still being learned", "tools present, mastery pending", "the first move not yet made", "readiness arriving slowly"]}
   ],
   "maj02": [
-    {"lead": "Weakened", "key": "stillness", "subs": ["quiet that has gone slack", "patience thinning into inertia", "the book open but unread", "presence without attention"]},
-    {"lead": "Inverted", "key": "knowing", "subs": ["secrecy for its own sake", "withholding mistaken for depth", "the veil kept from habit", "silence that has stopped meaning"]},
-    {"lead": "Negative", "key": "withholding", "subs": ["knowledge hoarded as leverage", "privacy weaponised", "refusing to say what would help", "the closed book as a wall"]},
-    {"lead": "Delayed", "key": "understanding", "subs": ["the page still unturned", "insight forming out of sight", "what is known not yet sayable", "the answer gathering quietly"]}
+    {"lead": "Weakened", "key": "the watch", "subs": ["the hundred eyes drooping shut", "vigilance thinning to habit", "the vow kept in name only", "majesty losing its bearing"]},
+    {"lead": "Inverted", "key": "vigilance", "subs": ["watching instead of living", "the guard kept on the wrong door", "suspicion dressed as care", "seeing everything, trusting nothing"]},
+    {"lead": "Negative", "key": "jealousy", "subs": ["the watch turned to possession", "punishing what cannot be held", "the peacock's eyes as evidence", "love enforced like a law"]},
+    {"lead": "Delayed", "key": "the vow", "subs": ["the promise not yet kept", "the threshold not yet crossed", "recognition still to come", "her moment waiting on the sky"]}
   ],
   "maj03": [
     {"lead": "Weakened", "key": "increase", "subs": ["growth that will not quite take", "abundance short of arriving", "fertility running thin", "the shield heavy on the arm"]},
@@ -36,10 +36,10 @@ const CARD_ACTIONS_REVERSED_MARSEILLE = {
     {"lead": "Delayed", "key": "order", "subs": ["the ground still settling", "authority not yet earned", "structure being built slowly", "the seat waiting to be taken"]}
   ],
   "maj05": [
-    {"lead": "Weakened", "key": "transmission", "subs": ["doctrine losing its charge", "the blessing given by rote", "teaching that no longer reaches", "the channel narrowing"]},
-    {"lead": "Inverted", "key": "tradition", "subs": ["form kept after the meaning left", "orthodoxy defended, not lived", "the rite performed at the truth", "lineage as an excuse"]},
-    {"lead": "Negative", "key": "dogma", "subs": ["belonging enforced by exclusion", "the institution above the teaching", "conformity demanded as virtue", "authority claiming the source"]},
-    {"lead": "Delayed", "key": "teaching", "subs": ["the lesson not yet given", "the student not yet ready", "transmission still being prepared", "understanding arriving late"]}
+    {"lead": "Weakened", "key": "command", "subs": ["thunder held without the charge", "authority that must repeat itself", "the eagle flying lower", "law announced, not felt"]},
+    {"lead": "Inverted", "key": "authority", "subs": ["rule from too far above to see", "the sky talking over the ground", "power that answers no questions", "grandeur standing in for judgement"]},
+    {"lead": "Negative", "key": "the bolt", "subs": ["the strike before the hearing", "punishment as first resort", "favour sold, wrath free", "the father who only says no"]},
+    {"lead": "Delayed", "key": "the answer", "subs": ["the petition still ascending", "the sky quiet for now", "judgement gathering like weather", "the yes not yet spoken"]}
   ],
   "maj06": [
     {"lead": "Weakened", "key": "choosing", "subs": ["the decision losing its edge", "both paths dimming at once", "the arrow loosed but unaimed", "commitment that will not set"]},
