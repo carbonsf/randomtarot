@@ -1456,11 +1456,18 @@ function playWhirlpoolWarp(imgEl, fromUrl, toUrl) {
 
       if (t < 1) { requestAnimationFrame(frame); return; }
 
-      // The spring has already landed (scale within 0.4% of rest, spin flat
-      // on two full turns, shear and fade at zero), so clearing the inline
-      // styles is invisible.
+      // The spring has landed. Clear the motion styles while transitions
+      // are STILL disabled, force a reflow to commit that reset, and only
+      // then hand transition control back to the stylesheet. Order is
+      // everything here: clearing transform and transition in one batch
+      // let the base 240ms transform transition see rotate(719.7deg) ->
+      // none and animate the rotation NUMERICALLY back to zero — the card
+      // whipped backward through two full turns at the end (the sudden
+      // back-twist). Same idiom as the reversal un-rotate in
+      // setDownToBack.
       imgEl.style.transform = "";
       imgEl.style.opacity = "";
+      void imgEl.offsetHeight;          // commit with transition:none active
       imgEl.style.transition = "";
       imgEl.style.willChange = "";
       resolve();
