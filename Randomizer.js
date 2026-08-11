@@ -1355,10 +1355,11 @@ function switchToDeck(target, warpStyle) {
 // so clearing the inline transform at the end changes nothing visually —
 // this is what fixes the old jarring lock (640° of spin meant the style
 // clear snapped the card through 280°). The spin direction follows the
-// way the finger actually stirred (lastCircleDir). Distortion comes from
-// an feTurbulence displacement (whirl-distort in index.html) whose
-// strength follows depth — the card smears liquidly near the drain and
-// is untouched at either end. Reversed cards keep their 180° base.
+// way the finger actually stirred (lastCircleDir). Distortion is a
+// spin-following SHEAR — a transform, so it composites on the GPU;
+// filters are stepped coarsely (see below) because per-frame filter
+// changes re-render the full layer and choke a phone. Reversed cards
+// keep their 180° base.
 //
 // The two decks' cards have DIFFERENT aspects (Marseille is narrower):
 // the swap happens at the bottom, ~6% scale under 16px blur + full
@@ -1391,13 +1392,16 @@ function playWhirlpoolWarp(imgEl, fromUrl, toUrl) {
     const SPIN_IN = 360, SPIN_OUT = 360;   // exactly two turns total
     const dir = lastCircleDir;       // spin the way the finger stirred
     const baseRot = imgEl.classList.contains("reversed") ? 180 : 0;
-    const displace = document.getElementById("whirl-displace"); // may be null
 
     let start = 0;
     let swapped = false;
+    let lastFilter = null;
 
     imgEl.style.transition = "none";
-    imgEl.style.willChange = "transform, filter";
+    // transform ONLY — filters are deliberately kept out of will-change and
+    // out of the per-frame path (see below): on iOS WebKit, re-rendering a
+    // full-viewport filtered layer every frame is what makes a warp choppy.
+    imgEl.style.willChange = "transform";
 
     function frame(now) {
       if (!start) start = now;
@@ -1428,25 +1432,30 @@ function playWhirlpoolWarp(imgEl, fromUrl, toUrl) {
       const sx = Math.max(0.02, scale * (1 + wob));
       const sy = Math.max(0.02, scale * (1 - wob));
       const dip = 46 * depth;
-      const blur = 16 * depth;
+      // Liquid distortion as a TRANSFORM — a shear that sways with the
+      // spin, deepest at the drain. Transforms composite on the GPU, so
+      // this is free. (The first cut used an feTurbulence displacement
+      // filter here; gorgeous, but iOS WebKit takes reference filters
+      // down a software path and re-renders the full-viewport layer
+      // every frame — the warp dropped to single-digit fps on a phone.)
+      const shear = Math.sin(t * Math.PI * 5 + 1.1) * 11 * depth;
 
       imgEl.style.transform =
         "translateY(" + dip.toFixed(1) + "px) " +
         "rotate(" + (baseRot + dir * spin).toFixed(2) + "deg) " +
+        "skew(" + shear.toFixed(2) + "deg, " + (-shear * 0.6).toFixed(2) + "deg) " +
         "scale(" + sx.toFixed(4) + ", " + sy.toFixed(4) + ")";
-      // Liquid smear near the drain: feTurbulence displacement whose
-      // strength follows depth. Skipped entirely when shallow (or if the
-      // filter isn't in the DOM) so the ends stay crisp and cheap.
-      let filter = "blur(" + blur.toFixed(1) + "px) saturate(" + (1 - 0.35 * depth).toFixed(3) + ")";
-      if (displace) {
-        if (depth > 0.02) {
-          displace.setAttribute("scale", (64 * depth).toFixed(1));
-          filter += " url(#whirl-distort)";
-        } else {
-          displace.setAttribute("scale", "0");
-        }
-      }
-      imgEl.style.filter = filter;
+
+      // Blur/saturation change in a few coarse STEPS, not per frame: every
+      // filter change re-renders the full layer, so we pay that cost ~8
+      // times per warp instead of ~90. Between steps the cached filtered
+      // layer just rides the composited transform.
+      const blurStep = Math.round((14 * depth) / 3.5) * 3.5;
+      const satStep = Math.round((1 - 0.35 * depth) * 10) / 10;
+      const filter = blurStep > 0
+        ? "blur(" + blurStep + "px) saturate(" + satStep + ")"
+        : "";
+      if (filter !== lastFilter) { imgEl.style.filter = filter; lastFilter = filter; }
 
       if (!swapped && t >= DIP_END) { swapped = true; imgEl.src = toUrl; }
 
@@ -1454,7 +1463,6 @@ function playWhirlpoolWarp(imgEl, fromUrl, toUrl) {
 
       // The spring has already landed (scale within 0.4% of rest, spin flat
       // on two full turns), so clearing the inline styles is invisible.
-      if (displace) displace.setAttribute("scale", "0");
       imgEl.style.transform = "";
       imgEl.style.filter = "";
       imgEl.style.transition = "";

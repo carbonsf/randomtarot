@@ -465,16 +465,12 @@
       </feComponentTransfer>
       <feColorMatrix values="1.3 0 0 0 0  0 1.3 0 0 0  0 0 1.3 0 0  0 0 0 1 0"/>
     </filter>
-    <!-- Liquid distortion for the whirlpool deck-switch: fractal-noise
-         displacement whose scale the warp drives per-frame (0 at rest,
-         ~64px at the drain). Region padded so displaced pixels aren't
-         clipped at the card edge. -->
-    <filter id="whirl-distort" x="-25%" y="-25%" width="150%" height="150%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.011 0.017"
-                    numOctaves="2" seed="7" result="whirlnoise"/>
-      <feDisplacementMap id="whirl-displace" in="SourceGraphic" in2="whirlnoise"
-                         scale="0" xChannelSelector="R" yChannelSelector="G"/>
-    </filter>
+    <!-- NOTE: the whirlpool warp deliberately uses NO SVG reference filter.
+         A feTurbulence/feDisplacementMap version was tried and reverted:
+         iOS WebKit renders reference filters in software, re-rasterising
+         the full-viewport card every frame — the warp dropped to
+         single-digit fps on a phone. Its distortion is now a transform
+         shear inside Randomizer.js's playWhirlpoolWarp. -->
   </svg>
 
   <!-- Local image to start (RoseLilyRed.jpg must be in the same folder) -->
@@ -494,26 +490,26 @@
   <!-- ?v= cache-buster. BUMP THIS STRING on every deploy so installed PWAs
        (which cache assets aggressively, especially iOS standalone) actually
        fetch the new code instead of running a stale copy. -->
-  <script src="cardActions.js?v=20260810-4"></script>
+  <script src="cardActions.js?v=20260810-5"></script>
   <!-- Reversed-meaning data for the same 78 cards, used by the info
        overlay when a draw resolves to a reversed state. Each card has
        four stanzas (Weakened / Inverted / Negative / Delayed) — holistic
        takes on the card's classic meaning from those four angles. -->
-  <script src="cardActionsReversed.js?v=20260810-4"></script>
+  <script src="cardActionsReversed.js?v=20260810-5"></script>
   <!-- Thoth deck data (placeholder lorem-ipsum, real meanings later).
        Reached via the two-finger zigzag-down gesture. Same structure as
        the RW data above so the info overlay renders identically. -->
-  <script src="cardActionsThoth.js?v=20260810-4"></script>
-  <script src="cardActionsThothReversed.js?v=20260810-4"></script>
+  <script src="cardActionsThoth.js?v=20260810-5"></script>
+  <script src="cardActionsThothReversed.js?v=20260810-5"></script>
   <!-- Tarot de Marseille data. Its own authored readings — the pips are
        non-scenic in this deck, so they read by number and suit rather than
        by a pictured scene. Same structure as the decks above. -->
-  <script src="cardActionsMarseille.js?v=20260810-4"></script>
-  <script src="cardActionsMarseilleReversed.js?v=20260810-4"></script>
+  <script src="cardActionsMarseille.js?v=20260810-5"></script>
+  <script src="cardActionsMarseilleReversed.js?v=20260810-5"></script>
   <!-- Per-card signature effects for the 22 Major Arcana. Each plays
        once, 1200ms after the card lands face-up upright, and returns
        to the normal card. Exposes window.MajorArcanaSignature. -->
-  <script src="majorArcanaSignatures.js?v=20260810-4"></script>
-  <script src="Randomizer.js?v=20260810-4"></script>
+  <script src="majorArcanaSignatures.js?v=20260810-5"></script>
+  <script src="Randomizer.js?v=20260810-5"></script>
 </body>
 </html>
