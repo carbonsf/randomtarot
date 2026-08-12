@@ -1744,6 +1744,12 @@ function wireLongPress() {
 // behaviour is bit-for-bit unchanged.
 const DECK_CYCLE = ["rw", "thoth", "marseille"];
 
+// How long the secondary button must be held before release means SHARE
+// rather than cycle. Long enough to be deliberate, short enough not to
+// feel like waiting.
+const RIGHT_HOLD_MS = 500;
+let rightPressAt = 0;
+
 function isFinePointer() {
   return !!(window.matchMedia &&
             window.matchMedia("(hover: hover) and (pointer: fine)").matches);
@@ -1766,18 +1772,77 @@ function desktopCycleDeck(dir) {
   desktopSwitchDeck(DECK_CYCLE[((i < 0 ? 0 : i) + dir + n) % n]);
 }
 
+// Hand the current card to the desktop's share sheet. Called synchronously
+// from the right-button mouseup so transient user activation is intact.
+//
+// Reality of desktop support: macOS SAFARI implements Web Share and opens
+// the real system share sheet. Chrome on macOS does not expose
+// navigator.share at all — there is no platform sheet to open — so rather
+// than have the gesture do nothing there, it falls back to saving the card
+// image, which is what "share this card" practically means on a desktop
+// without a sheet. Both paths reuse the same File the mobile share built.
+function desktopShareCard() {
+  const file = currentShareFile;
+  if (!file) return;
+  haptic(12);
+  if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+    try {
+      const p = navigator.share({ files: [file] });
+      if (p && p.catch) p.catch(() => { /* cancelled, or refused */ });
+      invalidateShareFile();         // a shared File is spent; rebuild
+      return;
+    } catch (_e) { /* fall through to saving */ }
+  }
+  // No share sheet available: save the image instead.
+  try {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  } catch (_e) { /* nothing more we can offer */ }
+}
+
 function wireDesktopDeckSwitch() {
   if (!isFinePointer()) return;      // touch devices keep gestures only
   const imgEl = document.querySelector("img");
   if (!imgEl) return;
 
   // Right-click anywhere on the card. Added as its OWN listener; the
-  // existing contextmenu suppressor is left exactly as it is.
+  // existing contextmenu suppressor is left exactly as it is. The menu is
+  // always suppressed here; what the press MEANS is decided on release:
+  //   quick right-click  -> cycle the deck (as before)
+  //   right-click HELD   -> hand the card to the platform share sheet
+  // Deciding on release is what lets one button carry both without either
+  // guessing: a hold never cycles, a click never shares.
   imgEl.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     cancelPress();                   // a right-press shouldn't leave a charge
     suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
-    desktopCycleDeck(1);
+  });
+
+  imgEl.addEventListener("mousedown", (e) => {
+    if (e.button !== 2) return;      // secondary button only
+    rightPressAt = performance.now();
+    // Build the shareable File now, during the hold, so the release can
+    // call share() synchronously — awaiting inside the firing path is
+    // what costs you the user activation.
+    if (!showingBack && !drawing) refreshShareFile();
+  });
+
+  imgEl.addEventListener("mouseup", (e) => {
+    if (e.button !== 2 || !rightPressAt) return;
+    const held = performance.now() - rightPressAt;
+    rightPressAt = 0;
+    suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
+    if (held >= RIGHT_HOLD_MS && !showingBack && !drawing) {
+      desktopShareCard();            // synchronous, inside this handler
+    } else {
+      desktopCycleDeck(1);
+    }
   });
 
   document.addEventListener("keydown", (e) => {
