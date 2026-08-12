@@ -1723,8 +1723,81 @@ function wireLongPress() {
   imgEl.addEventListener("contextmenu", (e) => e.preventDefault());
 }
 
+// --- Desktop deck switching ------------------------------------------
+// The deck gestures are touch-only by nature: you cannot stir a circle or
+// zigzag two fingers with a mouse. Desktop therefore had no way to reach
+// Thoth or Marseille at all. This adds two INPUTS ONLY — it calls the
+// same switchToDeck() the gestures call, and does not touch, read, or
+// alter a single line of the gesture code.
+//
+//   RIGHT-CLICK  cycles forward: RW -> Thoth -> Marseille -> RW.
+//                Right-click was already dead input here (the card
+//                suppresses the context menu so the browser's save-image
+//                menu can't cover the reading), so nothing is taken away.
+//   ARROW KEYS   left/right step decks; D cycles forward; 1/2/3 jump
+//                straight to a deck. Keyboard is free of any pointer
+//                semantics, and it makes the app operable without a
+//                mouse at all.
+//
+// Both are hard-gated to fine-pointer devices, so a long-press on iOS —
+// which fires `contextmenu` in WebKit — can NEVER switch decks. Touch
+// behaviour is bit-for-bit unchanged.
+const DECK_CYCLE = ["rw", "thoth", "marseille"];
+
+function isFinePointer() {
+  return !!(window.matchMedia &&
+            window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+}
+
+// Step `dir` places through the cycle, or jump to an explicit deck.
+// The transition matches the gesture that would have done it: anything
+// involving Marseille travels by its whirlpool, RW<->Thoth by the warp.
+function desktopSwitchDeck(target) {
+  if (deckSwitching || drawing || !target || target === currentDeck) return;
+  const whirl = (target === "marseille" || currentDeck === "marseille");
+  if (target === "marseille") marseilleOrigin = currentDeck;
+  haptic(8);
+  switchToDeck(target, whirl ? "whirlpool" : undefined);
+}
+
+function desktopCycleDeck(dir) {
+  const i = DECK_CYCLE.indexOf(currentDeck);
+  const n = DECK_CYCLE.length;
+  desktopSwitchDeck(DECK_CYCLE[((i < 0 ? 0 : i) + dir + n) % n]);
+}
+
+function wireDesktopDeckSwitch() {
+  if (!isFinePointer()) return;      // touch devices keep gestures only
+  const imgEl = document.querySelector("img");
+  if (!imgEl) return;
+
+  // Right-click anywhere on the card. Added as its OWN listener; the
+  // existing contextmenu suppressor is left exactly as it is.
+  imgEl.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    cancelPress();                   // a right-press shouldn't leave a charge
+    suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
+    desktopCycleDeck(1);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;   // leave shortcuts alone
+    switch (e.key) {
+      case "ArrowRight": desktopCycleDeck(1); break;
+      case "ArrowLeft":  desktopCycleDeck(-1); break;
+      case "d": case "D": desktopCycleDeck(1); break;
+      case "1": desktopSwitchDeck("rw"); break;
+      case "2": desktopSwitchDeck("thoth"); break;
+      case "3": desktopSwitchDeck("marseille"); break;
+      default: return;
+    }
+    e.preventDefault();
+  });
+}
+
 function init() {
   wireLongPress();
+  wireDesktopDeckSwitch();
   // Quietly warm the alternate deck's assets so the first zigzag toggle
   // is instant. Runs on idle so it never competes with the first paint.
   preloadDeckInBackground();
