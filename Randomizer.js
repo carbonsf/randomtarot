@@ -1788,12 +1788,26 @@ function desktopShareCard() {
   if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
     try {
       const p = navigator.share({ files: [file] });
-      if (p && p.catch) p.catch(() => { /* cancelled, or refused */ });
+      if (p && p.catch) {
+        p.catch((err) => {
+          // Cancelling the sheet rejects with AbortError — that is the
+          // user's choice, so respect it and do nothing. NotAllowedError
+          // means the BROWSER refused the call (a secondary-button event
+          // may not grant transient activation everywhere), and silently
+          // doing nothing there is the worst outcome — save instead.
+          if (err && err.name === "NotAllowedError") desktopSaveCard(file);
+        });
+      }
       invalidateShareFile();         // a shared File is spent; rebuild
       return;
-    } catch (_e) { /* fall through to saving */ }
+    } catch (_e) { /* synchronous refusal — fall through to saving */ }
   }
-  // No share sheet available: save the image instead.
+  desktopSaveCard(file);             // no share sheet on this platform
+}
+
+// Desktop fallback when there is no share sheet (Chrome on macOS) or the
+// browser refuses the share: save the card image.
+function desktopSaveCard(file) {
   try {
     const url = URL.createObjectURL(file);
     const a = document.createElement("a");
