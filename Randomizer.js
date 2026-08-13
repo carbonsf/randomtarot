@@ -1775,12 +1775,21 @@ function desktopCycleDeck(dir) {
 // Hand the current card to the desktop's share sheet. Called synchronously
 // from the right-button mouseup so transient user activation is intact.
 //
-// Reality of desktop support: macOS SAFARI implements Web Share and opens
-// the real system share sheet. Chrome on macOS does not expose
-// navigator.share at all — there is no platform sheet to open — so rather
-// than have the gesture do nothing there, it falls back to saving the card
-// image, which is what "share this card" practically means on a desktop
-// without a sheet. Both paths reuse the same File the mobile share built.
+// Verified in real Chrome on macOS: navigator.share and canShare both
+// exist, canShare({files:[imageFile]}) is true, and — the part that
+// decides whether this can work at all — navigator.userActivation.isActive
+// is TRUE on the secondary button's mousedown, contextmenu, mouseup and
+// auxclick. So a right-button release does grant activation, and the call
+// is permitted; Chrome opens the macOS share sheet. Safari on macOS
+// supports Web Share too (since 12.1).
+//
+// (An earlier note here claimed Chrome/macOS had no navigator.share. That
+// was measured in an embedded Chromium preview shell, not Chrome, and was
+// wrong — hence the explicit verification above.)
+//
+// The save fallback below therefore exists only for genuinely unsupported
+// browsers, not as the expected desktop path. It reuses the same File the
+// mobile share builds.
 function desktopShareCard() {
   const file = currentShareFile;
   if (!file) return;
@@ -1805,8 +1814,8 @@ function desktopShareCard() {
   desktopSaveCard(file);             // no share sheet on this platform
 }
 
-// Desktop fallback when there is no share sheet (Chrome on macOS) or the
-// browser refuses the share: save the card image.
+// Desktop fallback for browsers with no Web Share support, or that refuse
+// the call: save the card image rather than do nothing.
 function desktopSaveCard(file) {
   try {
     const url = URL.createObjectURL(file);
