@@ -858,7 +858,11 @@ let currentShareFile  = null;   // eagerly-built File for the on-screen card
 let currentShareKey   = "";     // the src(+orientation) currentShareFile was built from
 let shareFileToken    = 0;      // guards against stale async builds
 function shareKeyFor(imgEl) {
-  return imgEl.src + (imgEl.classList.contains("reversed") ? "|r" : "");
+  // The meaning screen shares a different artefact from the same card, so
+  // it needs its own key or the cache would look current across the switch.
+  return imgEl.src
+       + (imgEl.classList.contains("reversed") ? "|r" : "")
+       + (infoOverlayOpen ? "|meaning" : "");
 }
 let shareInFlight     = false;  // a share sheet is (believed) open
 let shareWatchdog     = null;
@@ -885,14 +889,26 @@ function refreshShareFile() {
   const url = imgEl.src;
   const reversed = imgEl.classList.contains("reversed");
   const key = shareKeyFor(imgEl);
-  buildShareFile(url, reversed)
+  // On the MEANING screen the share becomes a composite: the card plus its
+  // headline meanings, on transparency. Everywhere else the plain card
+  // image is shared exactly as before. openInfoOverlay/closeInfoOverlay
+  // both toggle the <img>'s "muted" class, which the MutationObserver
+  // already watches — so this swaps over on its own as the overlay opens
+  // and closes, with no new hook into the overlay's own code.
+  const build = infoOverlayOpen
+    ? buildMeaningCompositeFile(url, reversed)
+    : buildShareFile(url, reversed);
+  build
     .then((f) => { if (token === shareFileToken) { currentShareFile = f; currentShareKey = key; } })
     .catch(() => { if (token === shareFileToken) { currentShareFile = null; currentShareKey = ""; } });
 }
 
 function threeFingerStart(e) {
   if (!e.touches || e.touches.length !== 3) return;
-  if (showingBack || drawing || infoOverlayOpen) return; // only a face-up card
+  // Face-up card only. The meanings screen is now shareable too (it shares
+  // the card+meanings composite), so an open overlay no longer blocks the
+  // gesture — everything else about this handler is unchanged.
+  if (showingBack || drawing) return;
   // Defensive: a brand-new deliberate gesture means any previous share is
   // done (its sheet, if open, would be intercepting touches — so we'd never
   // get here). Clear a possibly-stuck flag so this share isn't blocked.
@@ -962,6 +978,134 @@ async function buildShareFile(url, reversed) {
   const ext  = type === "image/png" ? "png" : "jpg";
   const name = (currentCardName || "card") + (reversed ? "-reversed" : "") + "." + ext;
   return new File([blob], name, { type });
+}
+
+// --- The meaning share: card + headlines, composited on transparency ---
+// Shared when the gesture happens while the meanings are open. The card is
+// drawn whole at the top; its headline meanings (the 2-5 stanza headings,
+// read straight off the rendered overlay so the picture always matches
+// what is on screen) begin over the card's lower third and flow off the
+// bottom edge onto transparent ground.
+//
+// Readability on an unknown backdrop is the hard part of a transparent
+// PNG — it may land on white, black, or a photo. So each line is drawn
+// three times: a wide soft dark glow, a dark stroke, then the warm-white
+// fill. That reads on anything.
+const MEANING_CARD_W   = 820;    // card width in the composite, px
+const MEANING_OVERLAP  = 1.35;   // how many lines sit ON the card before the
+                                 // block crosses its bottom edge — the rest
+                                 // flow off onto transparency
+const MEANING_PAD      = 54;     // side padding, room for the glow
+
+function meaningHeadlines() {
+  const overlay = document.getElementById("info-overlay");
+  if (!overlay) return [];
+  return [...overlay.querySelectorAll(".info-head")]
+    .map((h) => h.textContent.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
+function wrapLines(ctx, text, maxW) {
+  const words = text.split(" ");
+  const out = [];
+  let line = "";
+  for (const w of words) {
+    const test = line ? line + " " + w : w;
+    if (ctx.measureText(test).width > maxW && line) { out.push(line); line = w; }
+    else line = test;
+  }
+  if (line) out.push(line);
+  return out;
+}
+
+async function buildMeaningCompositeFile(url, reversed) {
+  const heads = meaningHeadlines();
+  // No headlines rendered (the skeleton path) — fall back to the plain card
+  // rather than share an empty composite.
+  if (!heads.length) return buildShareFile(url, reversed);
+
+  const im = await new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = () => rej(new Error("card load failed"));
+    i.src = url;
+  });
+
+  // The overlay's headline face. Ask for it explicitly so canvas doesn't
+  // silently fall back to a default serif on first use.
+  const fontPx = Math.round(MEANING_CARD_W * 0.077);
+  const fontSpec = 'italic 500 ' + fontPx + 'px "Cormorant Garamond", Garamond, Georgia, serif';
+  try {
+    if (document.fonts && document.fonts.load) {
+      await document.fonts.load(fontSpec.replace(/^italic 500 /, "italic 500 "));
+      await document.fonts.ready;
+    }
+  } catch (_e) { /* fall back to the generic serif */ }
+
+  const cardW = MEANING_CARD_W;
+  const cardH = Math.round(cardW * (im.naturalHeight / im.naturalWidth));
+
+  // Measure with a scratch context before sizing the real canvas.
+  const scratch = document.createElement("canvas").getContext("2d");
+  scratch.font = fontSpec;
+  const maxTextW = cardW + MEANING_PAD * 2 - 40;
+  const lines = [];
+  for (const h of heads) for (const l of wrapLines(scratch, h, maxTextW)) lines.push(l);
+
+  const lineH = Math.round(fontPx * 1.34);
+  const textH = lines.length * lineH;
+  // Anchor the block so it STRADDLES the card's bottom edge: the first
+  // line or so lands on the card, and the remainder flows off it onto
+  // transparent ground. Short readings still cross the edge; long ones
+  // simply trail further down.
+  const textTop = Math.round(cardH - lineH * MEANING_OVERLAP);
+  const W = cardW + MEANING_PAD * 2;
+  const H = Math.max(cardH, textTop + textH) + Math.round(fontPx * 0.9);
+
+  const c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  const ctx = c.getContext("2d");
+
+  // Card, whole, at the top — rotated when the reading is reversed, so the
+  // composite matches what the querent is actually looking at.
+  ctx.save();
+  if (reversed) {
+    ctx.translate(MEANING_PAD + cardW / 2, cardH / 2);
+    ctx.rotate(Math.PI);
+    ctx.drawImage(im, -cardW / 2, -cardH / 2, cardW, cardH);
+  } else {
+    ctx.drawImage(im, MEANING_PAD, 0, cardW, cardH);
+  }
+  ctx.restore();
+
+  // Headlines: glow, stroke, fill.
+  ctx.font = fontSpec;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.lineJoin = "round";
+  ctx.miterLimit = 2;
+  const cx = W / 2;
+  lines.forEach((line, i) => {
+    const y = textTop + i * lineH + fontPx;
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.85)";
+    ctx.shadowBlur = Math.round(fontPx * 0.55);
+    ctx.lineWidth = Math.round(fontPx * 0.20);
+    ctx.strokeStyle = "rgba(0,0,0,0.72)";
+    ctx.strokeText(line, cx, y);       // glow + dark halo in one pass
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = Math.round(fontPx * 0.11);
+    ctx.strokeText(line, cx, y);       // crisp dark edge
+    ctx.fillStyle = "#f7f3e9";
+    ctx.fillText(line, cx, y);         // warm white face
+    ctx.restore();
+  });
+
+  const blob = await new Promise((res) => c.toBlob(res, "image/png"));
+  if (!blob) throw new Error("composite toBlob failed");
+  const name = (currentCardName || "card") + (reversed ? "-reversed" : "") + "-meaning.png";
+  return new File([blob], name, { type: "image/png" });
 }
 
 function clearShareInFlight() {
@@ -1683,6 +1827,21 @@ function wireLongPress() {
   imgEl.addEventListener("touchend",    threeFingerEnd,   { passive: false });
   imgEl.addEventListener("touchcancel", threeFingerEnd,   { passive: false });
 
+  // The meanings overlay sits ABOVE the card and takes pointer events when
+  // open, so the card's listeners never see a gesture made while reading.
+  // The SAME share handlers are bound to it, so the three-finger swipe
+  // works on the meanings screen too — where it shares the composite.
+  // Nothing else about the overlay changes: its tap-to-dismiss is
+  // untouched, and threeFingerStart preventDefaults the touch, so a share
+  // swipe cannot also dismiss it.
+  const overlayEl = document.getElementById("info-overlay");
+  if (overlayEl) {
+    overlayEl.addEventListener("touchstart",  threeFingerStart, { passive: false });
+    overlayEl.addEventListener("touchmove",   threeFingerMove,  { passive: false });
+    overlayEl.addEventListener("touchend",    threeFingerEnd,   { passive: false });
+    overlayEl.addEventListener("touchcancel", threeFingerEnd,   { passive: false });
+  }
+
   // Keep the eager share-File cache in sync with whatever card is on screen:
   // every draw, zoom crossfade, deck toggle, or reversal changes the <img>
   // src and/or class, so the share fire path is always synchronous.
@@ -1867,6 +2026,26 @@ function wireDesktopDeckSwitch() {
       desktopCycleDeck(1);
     }
   });
+
+  // Same right-click-HOLD share on the meanings overlay, which covers the
+  // card while open. Share ONLY here — deliberately no deck cycling from
+  // the reading screen, so a stray right-click can't swap the deck out
+  // from under what you are reading.
+  const overlayEl = document.getElementById("info-overlay");
+  if (overlayEl) {
+    overlayEl.addEventListener("contextmenu", (e) => e.preventDefault());
+    overlayEl.addEventListener("mousedown", (e) => {
+      if (e.button !== 2) return;
+      rightPressAt = performance.now();
+      if (!showingBack && !drawing) refreshShareFile();
+    });
+    overlayEl.addEventListener("mouseup", (e) => {
+      if (e.button !== 2 || !rightPressAt) return;
+      const held = performance.now() - rightPressAt;
+      rightPressAt = 0;
+      if (held >= RIGHT_HOLD_MS && !showingBack && !drawing) desktopShareCard();
+    });
+  }
 
   document.addEventListener("keydown", (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;   // leave shortcuts alone
