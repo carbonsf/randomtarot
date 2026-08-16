@@ -1806,6 +1806,62 @@ function preloadDeckInBackground() {
   else setTimeout(run, 1500);
 }
 
+// --- Overlay scrolling, done by hand ----------------------------------
+// The meanings overlay carries `touch-action: none` so iOS cannot claim a
+// multi-finger swipe for its native scroller (which ends the gesture with
+// touchcancel — and only touchend grants the transient activation a share
+// needs). That switches its scrolling off, so we do it here: ONE finger
+// drags, and a flick coasts to a stop. Anything other than a single touch
+// is ignored, leaving the three-finger share untouched.
+let ovDragging = false, ovStartY = 0, ovStartTop = 0;
+let ovLastY = 0, ovLastT = 0, ovVel = 0, ovGlide = null;
+
+function overlayEl() { return document.getElementById("info-overlay"); }
+
+function overlayScrollStart(e) {
+  if (!e.touches || e.touches.length !== 1) return;
+  const ov = overlayEl();
+  if (!ov) return;
+  if (ovGlide) { cancelAnimationFrame(ovGlide); ovGlide = null; }   // catch the coast
+  ovDragging = true;
+  ovStartY = e.touches[0].clientY;
+  ovStartTop = ov.scrollTop;
+  ovLastY = ovStartY;
+  ovLastT = performance.now();
+  ovVel = 0;
+}
+
+function overlayScrollMove(e) {
+  if (!ovDragging || !e.touches || e.touches.length !== 1) return;
+  const ov = overlayEl();
+  if (!ov) return;
+  const y = e.touches[0].clientY;
+  ov.scrollTop = ovStartTop + (ovStartY - y);
+  const now = performance.now();
+  const dt = now - ovLastT;
+  if (dt > 0) ovVel = (ovLastY - y) / dt;    // px per ms
+  ovLastY = y;
+  ovLastT = now;
+  if (e.cancelable) e.preventDefault();
+}
+
+function overlayScrollEnd() {
+  if (!ovDragging) return;
+  ovDragging = false;
+  const ov = overlayEl();
+  if (!ov) return;
+  // Flick inertia: carry the last velocity and decay it, so a long reading
+  // still feels like it glides rather than stopping dead.
+  let v = ovVel * 16;                        // px per frame
+  if (Math.abs(v) < 0.6) return;
+  const step = () => {
+    v *= 0.94;
+    ov.scrollTop += v;
+    ovGlide = Math.abs(v) > 0.4 ? requestAnimationFrame(step) : null;
+  };
+  ovGlide = requestAnimationFrame(step);
+}
+
 function wireLongPress() {
   const imgEl = document.querySelector("img");
   if (!imgEl) return;
@@ -1844,10 +1900,18 @@ function wireLongPress() {
   // did. These only act while the overlay is open, so the card path is
   // untouched and nothing can double-fire.
   const whenOverlayOpen = (fn) => (e) => { if (infoOverlayOpen) fn(e); };
-  document.addEventListener("touchstart",  whenOverlayOpen(threeFingerStart), { passive: false, capture: true });
-  document.addEventListener("touchmove",   whenOverlayOpen(threeFingerMove),  { passive: false, capture: true });
-  document.addEventListener("touchend",    whenOverlayOpen(threeFingerEnd),   { passive: false, capture: true });
-  document.addEventListener("touchcancel", whenOverlayOpen(threeFingerEnd),   { passive: false, capture: true });
+  document.addEventListener("touchstart", whenOverlayOpen((e) => {
+    overlayScrollStart(e); threeFingerStart(e);
+  }), { passive: false, capture: true });
+  document.addEventListener("touchmove", whenOverlayOpen((e) => {
+    overlayScrollMove(e); threeFingerMove(e);
+  }), { passive: false, capture: true });
+  document.addEventListener("touchend", whenOverlayOpen((e) => {
+    overlayScrollEnd(); threeFingerEnd(e);
+  }), { passive: false, capture: true });
+  document.addEventListener("touchcancel", whenOverlayOpen((e) => {
+    overlayScrollEnd(); threeFingerEnd(e);
+  }), { passive: false, capture: true });
 
   // Keep the eager share-File cache in sync with whatever card is on screen:
   // every draw, zoom crossfade, deck toggle, or reversal changes the <img>
