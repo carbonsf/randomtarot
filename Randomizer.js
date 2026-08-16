@@ -1829,18 +1829,25 @@ function wireLongPress() {
 
   // The meanings overlay sits ABOVE the card and takes pointer events when
   // open, so the card's listeners never see a gesture made while reading.
-  // The SAME share handlers are bound to it, so the three-finger swipe
-  // works on the meanings screen too — where it shares the composite.
-  // Nothing else about the overlay changes: its tap-to-dismiss is
-  // untouched, and threeFingerStart preventDefaults the touch, so a share
-  // swipe cannot also dismiss it.
-  const overlayEl = document.getElementById("info-overlay");
-  if (overlayEl) {
-    overlayEl.addEventListener("touchstart",  threeFingerStart, { passive: false });
-    overlayEl.addEventListener("touchmove",   threeFingerMove,  { passive: false });
-    overlayEl.addEventListener("touchend",    threeFingerEnd,   { passive: false });
-    overlayEl.addEventListener("touchcancel", threeFingerEnd,   { passive: false });
-  }
+  //
+  // Binding the share handlers to the overlay element was NOT enough: the
+  // card carries `touch-action: none` (precisely so iOS doesn't claim its
+  // touches), but the overlay is a live scroll container with
+  // `touch-action: auto`. On iOS WebKit takes a multi-finger drag there
+  // for its own scrolling before a bubble-phase listener can stop it, so
+  // the swipe was simply eaten — nothing fired.
+  //
+  // So the overlay's share is handled in the CAPTURE phase on `document`,
+  // which runs before the scroll container sees the touch and lets
+  // threeFingerStart's preventDefault actually take hold. No CSS changes,
+  // so one-finger scrolling of a long reading still works exactly as it
+  // did. These only act while the overlay is open, so the card path is
+  // untouched and nothing can double-fire.
+  const whenOverlayOpen = (fn) => (e) => { if (infoOverlayOpen) fn(e); };
+  document.addEventListener("touchstart",  whenOverlayOpen(threeFingerStart), { passive: false, capture: true });
+  document.addEventListener("touchmove",   whenOverlayOpen(threeFingerMove),  { passive: false, capture: true });
+  document.addEventListener("touchend",    whenOverlayOpen(threeFingerEnd),   { passive: false, capture: true });
+  document.addEventListener("touchcancel", whenOverlayOpen(threeFingerEnd),   { passive: false, capture: true });
 
   // Keep the eager share-File cache in sync with whatever card is on screen:
   // every draw, zoom crossfade, deck toggle, or reversal changes the <img>
@@ -2031,21 +2038,20 @@ function wireDesktopDeckSwitch() {
   // card while open. Share ONLY here — deliberately no deck cycling from
   // the reading screen, so a stray right-click can't swap the deck out
   // from under what you are reading.
-  const overlayEl = document.getElementById("info-overlay");
-  if (overlayEl) {
-    overlayEl.addEventListener("contextmenu", (e) => e.preventDefault());
-    overlayEl.addEventListener("mousedown", (e) => {
-      if (e.button !== 2) return;
-      rightPressAt = performance.now();
-      if (!showingBack && !drawing) refreshShareFile();
-    });
-    overlayEl.addEventListener("mouseup", (e) => {
-      if (e.button !== 2 || !rightPressAt) return;
-      const held = performance.now() - rightPressAt;
-      rightPressAt = 0;
-      if (held >= RIGHT_HOLD_MS && !showingBack && !drawing) desktopShareCard();
-    });
-  }
+  document.addEventListener("contextmenu", (e) => {
+    if (infoOverlayOpen) e.preventDefault();
+  }, true);
+  document.addEventListener("mousedown", (e) => {
+    if (!infoOverlayOpen || e.button !== 2) return;
+    rightPressAt = performance.now();
+    if (!showingBack && !drawing) refreshShareFile();
+  }, true);
+  document.addEventListener("mouseup", (e) => {
+    if (!infoOverlayOpen || e.button !== 2 || !rightPressAt) return;
+    const held = performance.now() - rightPressAt;
+    rightPressAt = 0;
+    if (held >= RIGHT_HOLD_MS && !showingBack && !drawing) desktopShareCard();
+  }, true);
 
   document.addEventListener("keydown", (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;   // leave shortcuts alone
