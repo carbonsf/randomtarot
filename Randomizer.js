@@ -855,6 +855,7 @@ let threeFingerPeakUp = 0;      // largest upward travel seen this gesture
 let threeFingerArmed  = false;
 let threeFingerFired  = false;  // already fired this gesture (anti-double)
 let currentShareFile  = null;   // eagerly-built File for the on-screen card
+let fallbackShareFile = null;   // plain card image, always shareable
 let currentShareKey   = "";     // the src(+orientation) currentShareFile was built from
 let shareFileToken    = 0;      // guards against stale async builds
 function shareKeyFor(imgEl) {
@@ -897,10 +898,20 @@ function refreshShareFile() {
   // and closes, with no new hook into the overlay's own code.
   const build = infoOverlayOpen
     ? buildMeaningCompositeFile(url, reversed)
+        // The composite is a big canvas + PNG encode. If it fails on a
+        // device (memory, fonts, toBlob), share the plain card rather than
+        // leave the gesture with nothing to hand over — a silently-null
+        // file is indistinguishable from a broken gesture.
+        .catch(() => buildShareFile(url, reversed))
     : buildShareFile(url, reversed);
   build
     .then((f) => { if (token === shareFileToken) { currentShareFile = f; currentShareKey = key; } })
     .catch(() => { if (token === shareFileToken) { currentShareFile = null; currentShareKey = ""; } });
+  // Keep a plain-card File alongside as a guaranteed-shareable fallback for
+  // fireShare (see the canShare branch there).
+  buildShareFile(url, reversed)
+    .then((f) => { fallbackShareFile = f; })
+    .catch(() => { /* keep whatever we had */ });
 }
 
 function threeFingerStart(e) {
@@ -1131,11 +1142,24 @@ function invalidateShareFile() {
 // eagerly-cached image File.
 function fireShare() {
   if (shareInFlight || !navigator.share) return;
-  const file = currentShareFile;
+  let file = currentShareFile;
   if (!file) return;
   // canShare, when present, is authoritative; when absent (older iOS),
   // attempt the file share anyway rather than refusing.
-  if (navigator.canShare && !navigator.canShare({ files: [file] })) return;
+  //
+  // If the platform refuses THIS file, fall back to the plain card image
+  // rather than returning and doing nothing. This matters concretely: the
+  // card screen shares a JPEG and the meanings screen shares a PNG, so a
+  // platform that accepts one and not the other would look exactly like
+  // "the gesture is dead on that screen". Sharing the card beats sharing
+  // nothing.
+  if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+    if (fallbackShareFile && navigator.canShare({ files: [fallbackShareFile] })) {
+      file = fallbackShareFile;
+    } else {
+      return;
+    }
+  }
   shareInFlight = true;
   // Watchdog: if the promise never settles (a real iOS bug), free the flag
   // so future shares aren't blocked.
@@ -1878,40 +1902,39 @@ function wireLongPress() {
   // never collides with the one- or two-finger gestures above. Bound to
   // BOTH touchend and touchcancel because iOS often terminates a multi-
   // touch with cancel rather than end (see threeFingerEnd).
-  imgEl.addEventListener("touchstart",  threeFingerStart, { passive: false });
-  imgEl.addEventListener("touchmove",   threeFingerMove,  { passive: false });
-  imgEl.addEventListener("touchend",    threeFingerEnd,   { passive: false });
-  imgEl.addEventListener("touchcancel", threeFingerEnd,   { passive: false });
-
-  // The meanings overlay sits ABOVE the card and takes pointer events when
-  // open, so the card's listeners never see a gesture made while reading.
+  // ONE global handler set for the three-finger share, in the CAPTURE
+  // phase on `document`. Deliberately NOT bound to the card element and
+  // NOT gated on which screen is showing.
   //
-  // Binding the share handlers to the overlay element was NOT enough: the
-  // card carries `touch-action: none` (precisely so iOS doesn't claim its
-  // touches), but the overlay is a live scroll container with
-  // `touch-action: auto`. On iOS WebKit takes a multi-finger drag there
-  // for its own scrolling before a bubble-phase listener can stop it, so
-  // the swipe was simply eaten — nothing fired.
+  // The history here is worth keeping. This gesture worked on the card but
+  // never on the meanings screen, through three attempts, because the two
+  // screens ran different code paths with different gating — first the
+  // card's own listeners (which the overlay covers), then a parallel
+  // overlay path gated on infoOverlayOpen. Every fix corrected one path
+  // while the other kept its own failure mode. Registering once, globally,
+  // in capture, means the meanings screen executes the IDENTICAL code that
+  // is already proven to work on the card: same listeners, same phase,
+  // same guards. There is no longer a second path that can diverge.
   //
-  // So the overlay's share is handled in the CAPTURE phase on `document`,
-  // which runs before the scroll container sees the touch and lets
-  // threeFingerStart's preventDefault actually take hold. No CSS changes,
-  // so one-finger scrolling of a long reading still works exactly as it
-  // did. These only act while the overlay is open, so the card path is
-  // untouched and nothing can double-fire.
-  const whenOverlayOpen = (fn) => (e) => { if (infoOverlayOpen) fn(e); };
-  document.addEventListener("touchstart", whenOverlayOpen((e) => {
-    overlayScrollStart(e); threeFingerStart(e);
-  }), { passive: false, capture: true });
-  document.addEventListener("touchmove", whenOverlayOpen((e) => {
-    overlayScrollMove(e); threeFingerMove(e);
-  }), { passive: false, capture: true });
-  document.addEventListener("touchend", whenOverlayOpen((e) => {
-    overlayScrollEnd(); threeFingerEnd(e);
-  }), { passive: false, capture: true });
-  document.addEventListener("touchcancel", whenOverlayOpen((e) => {
-    overlayScrollEnd(); threeFingerEnd(e);
-  }), { passive: false, capture: true });
+  // Safe to be global: each handler no-ops unless exactly three touches
+  // are present, and the share itself is still gated on a face-up card
+  // (showingBack/drawing) inside threeFingerStart.
+  document.addEventListener("touchstart", (e) => {
+    if (infoOverlayOpen) overlayScrollStart(e);   // overlay scrolling only
+    threeFingerStart(e);
+  }, { passive: false, capture: true });
+  document.addEventListener("touchmove", (e) => {
+    if (infoOverlayOpen) overlayScrollMove(e);
+    threeFingerMove(e);
+  }, { passive: false, capture: true });
+  document.addEventListener("touchend", (e) => {
+    if (infoOverlayOpen) overlayScrollEnd();
+    threeFingerEnd(e);
+  }, { passive: false, capture: true });
+  document.addEventListener("touchcancel", (e) => {
+    if (infoOverlayOpen) overlayScrollEnd();
+    threeFingerEnd(e);
+  }, { passive: false, capture: true });
 
   // Keep the eager share-File cache in sync with whatever card is on screen:
   // every draw, zoom crossfade, deck toggle, or reversal changes the <img>
