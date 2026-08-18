@@ -852,6 +852,9 @@ function twoFingerEnd(e) {
 let threeFingerActive = false;
 let threeFingerStartY = 0;
 let threeFingerPeakUp = 0;      // largest upward travel seen this gesture
+let threeFingerPeakDown = 0;    // and downward — the meanings share
+let threeFingerArmedDown = false;
+let meaningShareFile = null;    // card+meanings composite, built eagerly
 let threeFingerArmed  = false;
 let threeFingerFired  = false;  // already fired this gesture (anti-double)
 let currentShareFile  = null;   // eagerly-built File for the on-screen card
@@ -896,22 +899,40 @@ function refreshShareFile() {
   // both toggle the <img>'s "muted" class, which the MutationObserver
   // already watches — so this swaps over on its own as the overlay opens
   // and closes, with no new hook into the overlay's own code.
-  const build = infoOverlayOpen
-    ? buildMeaningCompositeFile(url, reversed)
-        // The composite is a big canvas + PNG encode. If it fails on a
-        // device (memory, fonts, toBlob), share the plain card rather than
-        // leave the gesture with nothing to hand over — a silently-null
-        // file is indistinguishable from a broken gesture.
-        .catch(() => buildShareFile(url, reversed))
-    : buildShareFile(url, reversed);
+  // Build each artefact ONCE and share the promises around. (Building the
+  // plain card twice — for currentShareFile and again for the fallback —
+  // was costing the composite a second of contention on every draw.)
+  const plain = buildShareFile(url, reversed);
+  plain.then((f) => { fallbackShareFile = f; })
+       .catch(() => { /* keep whatever we had */ });
+
+  // The card+meanings composite: what the three-finger DOWN swipe sends,
+  // and what the meanings screen shares. Kept ready so either can hand it
+  // over synchronously, without waiting on a build.
+  //
+  // Deferred to IDLE deliberately. It is a large canvas plus a multi-MB
+  // PNG encode, and running it the moment a card lands stalled the main
+  // thread right through the reveal and the Major-Arcana signature —
+  // measured: it pushed even the plain card's build from ~200ms out to
+  // ~2s. On idle it costs the animation nothing and is still ready long
+  // before a hand can finish a swipe.
+  const composite = new Promise((resolve, reject) => {
+    const run = () => buildMeaningCompositeFile(url, reversed).then(resolve, reject);
+    if ("requestIdleCallback" in window) requestIdleCallback(run, { timeout: 1800 });
+    else setTimeout(run, 700);
+  });
+  composite.then((f) => { if (token === shareFileToken) meaningShareFile = f; })
+           .catch(() => { /* the down-swipe falls back to the card */ });
+
+  // On the MEANINGS screen the plain share becomes the composite too; the
+  // card screen keeps sharing the plain image exactly as before. If the
+  // composite fails on a device (memory, fonts, toBlob), fall back to the
+  // card rather than leaving the gesture with nothing — a silently-null
+  // file is indistinguishable from a broken gesture.
+  const build = infoOverlayOpen ? composite.catch(() => plain) : plain;
   build
     .then((f) => { if (token === shareFileToken) { currentShareFile = f; currentShareKey = key; } })
     .catch(() => { if (token === shareFileToken) { currentShareFile = null; currentShareKey = ""; } });
-  // Keep a plain-card File alongside as a guaranteed-shareable fallback for
-  // fireShare (see the canShare branch there).
-  buildShareFile(url, reversed)
-    .then((f) => { fallbackShareFile = f; })
-    .catch(() => { /* keep whatever we had */ });
 }
 
 function threeFingerStart(e) {
@@ -929,6 +950,8 @@ function threeFingerStart(e) {
   threeFingerFired  = false;
   threeFingerStartY = avgY(e.touches);
   threeFingerPeakUp = 0;
+  threeFingerPeakDown = 0;
+  threeFingerArmedDown = false;
   // Ensure the cache matches the card on screen. The observer normally keeps
   // it current; this re-syncs if the user zoomed/flipped just before swiping
   // (the async build then has the whole swipe to finish before touchend).
@@ -951,6 +974,14 @@ function threeFingerMove(e) {
   if (threeFingerPeakUp >= Math.max(80, window.innerHeight * 0.12)) {
     threeFingerArmed = true;
   }
+  // ADDED: the same swipe measured DOWNWARD arms the meanings share. Same
+  // threshold, mirrored — nothing above is altered, so the up-swipe keeps
+  // behaving exactly as it does today.
+  const down = -up;
+  if (down > threeFingerPeakDown) threeFingerPeakDown = down;
+  if (threeFingerPeakDown >= Math.max(80, window.innerHeight * 0.12)) {
+    threeFingerArmedDown = true;
+  }
 }
 
 // Terminator for the gesture — bound to BOTH touchend and touchcancel,
@@ -969,10 +1000,18 @@ function threeFingerEnd(e) {
   if (e && e.touches && e.touches.length >= 3) return;
   threeFingerActive = false;
   suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
-  if (threeFingerArmed && !threeFingerFired) {
+  // UP shares the card, DOWN shares the card+meanings composite. When a
+  // sloppy swipe arms both, the larger travel wins, so an up-swipe that
+  // wobbles downward first still shares the card as it always has.
+  const wantsDown = threeFingerArmedDown && threeFingerPeakDown > threeFingerPeakUp;
+  if (threeFingerArmed && !wantsDown && !threeFingerFired) {
     threeFingerFired = true;
     haptic(12);
     fireShare();   // synchronous within this touchend → activation intact
+  } else if (wantsDown && !threeFingerFired) {
+    threeFingerFired = true;
+    haptic(12);
+    fireShare(meaningShareFile);   // same path, different payload
   }
 }
 
@@ -1009,10 +1048,30 @@ const MEANING_OVERLAP  = 1.35;   // how many lines sit ON the card before the
 const MEANING_PAD      = 54;     // side padding, room for the glow
 
 function meaningHeadlines() {
+  // Prefer what is actually rendered, so an open overlay always matches.
   const overlay = document.getElementById("info-overlay");
-  if (!overlay) return [];
-  return [...overlay.querySelectorAll(".info-head")]
-    .map((h) => h.textContent.replace(/\s+/g, " ").trim())
+  const rendered = overlay
+    ? [...overlay.querySelectorAll(".info-head")]
+        .map((h) => h.textContent.replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+    : [];
+  if (rendered.length) return rendered.slice(0, 6);
+
+  // Nothing rendered — the meanings screen isn't open. Read the same
+  // headlines straight from the deck's data so the three-finger DOWN
+  // swipe works from the CARD screen, without having to open the
+  // meanings first.
+  const imgEl = document.querySelector("img");
+  if (!imgEl || !currentCardName) return [];
+  const reversed = imgEl.classList.contains("reversed");
+  const data = reversed ? deckModel().reversed() : deckModel().upright();
+  const actions = data && data[currentCardName];
+  if (!Array.isArray(actions)) return [];
+  return actions
+    .map((a) => {
+      const key = String(a.key || "").replace(/\.{4,}/g, " — ");
+      return ((a.lead ? a.lead + " " : "") + key).replace(/\s+/g, " ").trim();
+    })
     .filter(Boolean)
     .slice(0, 6);
 }
@@ -1140,9 +1199,13 @@ function invalidateShareFile() {
 // Fire the native share sheet. Must be called synchronously from a touch
 // terminator so iOS still sees transient activation. Shares ONLY the
 // eagerly-cached image File.
-function fireShare() {
+function fireShare(preferredFile) {
   if (shareInFlight || !navigator.share) return;
-  let file = currentShareFile;
+  // preferredFile lets the down-swipe hand over the meanings composite
+  // instead of the plain card. Falls back to the card if it isn't built
+  // yet, so the gesture never does nothing.
+  let file = preferredFile || currentShareFile;
+  if (!file) file = currentShareFile;
   if (!file) return;
   // canShare, when present, is authoritative; when absent (older iOS),
   // attempt the file share anyway rather than refusing.
