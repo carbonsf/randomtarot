@@ -1030,22 +1030,83 @@ async function buildShareFile(url, reversed) {
   return new File([blob], name, { type });
 }
 
-// --- The meaning share: card + headlines, composited on transparency ---
-// Shared when the gesture happens while the meanings are open. The card is
-// drawn whole at the top; its headline meanings (the 2-5 stanza headings,
-// read straight off the rendered overlay so the picture always matches
-// what is on screen) begin over the card's lower third and flow off the
-// bottom edge onto transparent ground.
+// --- The meaning share: card + headlines, torn-paper composite ---------
+// Shared on the three-finger DOWN swipe (card or meanings screen) and by
+// the meanings screen's share. The card's right edge is torn — procedural
+// fractal-noise displacement baked into the PNG, unique per share — and
+// the reading overlaps the card's right third, spilling off through the
+// tear onto transparent ground. Vertically centred so 1..6+ lines all sit
+// right.
 //
 // Readability on an unknown backdrop is the hard part of a transparent
 // PNG — it may land on white, black, or a photo. So each line is drawn
 // three times: a wide soft dark glow, a dark stroke, then the warm-white
 // fill. That reads on anything.
-const MEANING_CARD_W   = 820;    // card width in the composite, px
-const MEANING_OVERLAP  = 1.35;   // how many lines sit ON the card before the
-                                 // block crosses its bottom edge — the rest
-                                 // flow off onto transparency
-const MEANING_PAD      = 54;     // side padding, room for the glow
+const MEANING_CARD_W  = 820;   // card width in the composite, px (share res)
+const MEANING_PAD     = 60;    // breathing room / glow padding, px
+const MEANING_TEAR_AT = 0.85;  // tear sits at this fraction of the card width
+const MEANING_TEXT_X  = 0.50;  // text starts at this fraction of the card width
+const MEANING_TEXT_W  = 0.82;  // wrap width as a fraction of the card width
+
+// --- The torn-edge SVG ---------------------------------------------------
+// Returns an SVG string, sized cardW x cardH, that paints `cardDataURL`
+// masked to a procedurally torn right edge. Rasterised via an <img> to bake
+// the filter into pixels. `seed` makes the tear unique; the card image must
+// already be baked into cardDataURL at the right orientation (rotate BEFORE
+// calling for reversed readings, so the tear always stays on the text side).
+function tornCardSVG(cardDataURL, cardW, cardH, seed) {
+  const rnd = mulberry32(seed);
+  const base  = (cardW * (MEANING_TEAR_AT - 0.04 + rnd() * 0.05)).toFixed(1);
+  const bfX   = (0.0035 + rnd() * 0.0035).toFixed(4); // coherent across width
+  const bfY   = (0.010  + rnd() * 0.008 ).toFixed(4); // wanders down the tear
+  const scale = (150 + rnd() * 90).toFixed(0);        // tear amplitude, px
+  const sd    = Math.floor(rnd() * 9999);
+  const bf2   = (0.020 + rnd() * 0.016).toFixed(4);   // fine fibre octave
+  const sd2   = Math.floor(rnd() * 9999);
+
+  return (
+    "<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' " +
+      "width='" + cardW + "' height='" + cardH + "' viewBox='0 0 " + cardW + " " + cardH + "'>" +
+    "<defs>" +
+      "<filter id='torn' x='-25%' y='-8%' width='150%' height='116%' color-interpolation-filters='sRGB'>" +
+        "<feTurbulence type='fractalNoise' baseFrequency='" + bfX + " " + bfY + "' numOctaves='5' seed='" + sd + "' stitchTiles='noStitch' result='big'/>" +
+        "<feDisplacementMap in='SourceGraphic' in2='big' scale='" + scale + "' xChannelSelector='R' yChannelSelector='G' result='d1'/>" +
+        "<feTurbulence type='fractalNoise' baseFrequency='" + bf2 + " " + bf2 + "' numOctaves='3' seed='" + sd2 + "' stitchTiles='noStitch' result='fine'/>" +
+        "<feDisplacementMap in='d1' in2='fine' scale='" + (scale * 0.16).toFixed(0) + "' xChannelSelector='R' yChannelSelector='G' result='d2'/>" +
+        "<feGaussianBlur in='d2' stdDeviation='" + (cardW * 0.0022).toFixed(2) + "' result='soft'/>" +
+        "<feComponentTransfer in='soft'><feFuncA type='linear' slope='3.4' intercept='-0.78'/></feComponentTransfer>" +
+      "</filter>" +
+      // mask-type:alpha so the translucent fringe survives (luminance would flatten it)
+      "<mask id='m' maskUnits='userSpaceOnUse' x='0' y='0' width='" + cardW + "' height='" + cardH + "' style='mask-type:alpha'>" +
+        "<rect x='-10' y='-16' width='" + base + "' height='" + (cardH + 32) + "' fill='#fff' filter='url(#torn)'/>" +
+      "</mask>" +
+    "</defs>" +
+    "<image xlink:href='" + cardDataURL + "' x='0' y='0' width='" + cardW + "' height='" + cardH + "' " +
+      "preserveAspectRatio='none' mask='url(#m)'/>" +
+    "</svg>"
+  );
+}
+
+// Small, fast, seedable PRNG (mulberry32) so a given seed always tears the same.
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function loadImg(src) {
+  return new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = () => rej(new Error("image load failed: " + src));
+    i.decoding = "async";
+    i.src = src;
+  });
+}
 
 function meaningHeadlines() {
   // Prefer what is actually rendered, so an open overlay always matches.
@@ -1091,84 +1152,94 @@ function wrapLines(ctx, text, maxW) {
 
 async function buildMeaningCompositeFile(url, reversed) {
   const heads = meaningHeadlines();
-  // No headlines rendered (the skeleton path) — fall back to the plain card
-  // rather than share an empty composite.
+  // Nothing to say -> share the plain card exactly as before.
   if (!heads.length) return buildShareFile(url, reversed);
 
-  const im = await new Promise((res, rej) => {
-    const i = new Image();
-    i.onload = () => res(i);
-    i.onerror = () => rej(new Error("card load failed"));
-    i.src = url;
-  });
+  const im = await loadImg(url);
 
-  // The overlay's headline face. Ask for it explicitly so canvas doesn't
-  // silently fall back to a default serif on first use.
-  const fontPx = Math.round(MEANING_CARD_W * 0.077);
-  const fontSpec = 'italic 500 ' + fontPx + 'px "Cormorant Garamond", Garamond, Georgia, serif';
+  // Load the headline face so canvas text isn't a default serif on first use.
+  const fontPx   = Math.round(MEANING_CARD_W * 0.072);
+  const fontSpec = 'italic 600 ' + fontPx + 'px "Cormorant Garamond", Garamond, Georgia, serif';
   try {
     if (document.fonts && document.fonts.load) {
-      await document.fonts.load(fontSpec.replace(/^italic 500 /, "italic 500 "));
+      await document.fonts.load(fontSpec);
       await document.fonts.ready;
     }
-  } catch (_e) { /* fall back to the generic serif */ }
+  } catch (_e) { /* generic serif fallback is fine */ }
 
   const cardW = MEANING_CARD_W;
   const cardH = Math.round(cardW * (im.naturalHeight / im.naturalWidth));
 
-  // Measure with a scratch context before sizing the real canvas.
+  // 1) Bake the card (rotated first when reversed) to a same-origin data URL.
+  const baked = document.createElement("canvas");
+  baked.width = cardW; baked.height = cardH;
+  const bctx = baked.getContext("2d");
+  if (reversed) {
+    bctx.translate(cardW / 2, cardH / 2);
+    bctx.rotate(Math.PI);
+    bctx.drawImage(im, -cardW / 2, -cardH / 2, cardW, cardH);
+  } else {
+    bctx.drawImage(im, 0, 0, cardW, cardH);
+  }
+  const cardDataURL = baked.toDataURL("image/jpeg", 0.92);
+
+  // 2) Rasterise the torn-edge SVG. Fresh seed -> unique tear every share.
+  const seed   = (Date.now() ^ (Math.random() * 0x7fffffff)) >>> 0;
+  const svg    = tornCardSVG(cardDataURL, cardW, cardH, seed);
+  const svgURL = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  let tornCard;
+  try {
+    tornCard = await loadImg(svgURL);
+  } catch (_e) {
+    // If the browser refuses the filtered SVG, degrade to the plain card.
+    return buildShareFile(url, reversed);
+  }
+
+  // 3) Lay out the reading: wrapped lines, vertically centred on the card so
+  //    1..6+ lines all sit right. It overlaps the card's right third and
+  //    spills off through the tear.
   const scratch = document.createElement("canvas").getContext("2d");
   scratch.font = fontSpec;
-  const maxTextW = cardW + MEANING_PAD * 2 - 40;
+  const maxTextW = cardW * MEANING_TEXT_W;
   const lines = [];
   for (const h of heads) for (const l of wrapLines(scratch, h, maxTextW)) lines.push(l);
 
-  const lineH = Math.round(fontPx * 1.34);
-  const textH = lines.length * lineH;
-  // Anchor the block so it STRADDLES the card's bottom edge: the first
-  // line or so lands on the card, and the remainder flows off it onto
-  // transparent ground. Short readings still cross the edge; long ones
-  // simply trail further down.
-  const textTop = Math.round(cardH - lineH * MEANING_OVERLAP);
-  const W = cardW + MEANING_PAD * 2;
-  const H = Math.max(cardH, textTop + textH) + Math.round(fontPx * 0.9);
+  const lineH  = Math.round(fontPx * 1.3);
+  const blockH = lines.length * lineH;
 
+  const cardLeft = MEANING_PAD;
+  const cardTop  = MEANING_PAD;
+  const textLeft = cardLeft + Math.round(cardW * MEANING_TEXT_X);
+  // Centre the block on the card; clamp to the card top when it's very tall.
+  const textTop  = cardTop + Math.max(0, Math.round((cardH - blockH) / 2));
+
+  const W = Math.round(textLeft + maxTextW + MEANING_PAD);
+  const H = Math.round(Math.max(cardTop + cardH, textTop + blockH) + MEANING_PAD);
+
+  // 4) Composite: torn card, then the outlined reading.
   const c = document.createElement("canvas");
   c.width = W; c.height = H;
   const ctx = c.getContext("2d");
+  ctx.drawImage(tornCard, cardLeft, cardTop, cardW, cardH);
 
-  // Card, whole, at the top — rotated when the reading is reversed, so the
-  // composite matches what the querent is actually looking at.
-  ctx.save();
-  if (reversed) {
-    ctx.translate(MEANING_PAD + cardW / 2, cardH / 2);
-    ctx.rotate(Math.PI);
-    ctx.drawImage(im, -cardW / 2, -cardH / 2, cardW, cardH);
-  } else {
-    ctx.drawImage(im, MEANING_PAD, 0, cardW, cardH);
-  }
-  ctx.restore();
-
-  // Headlines: glow, stroke, fill.
   ctx.font = fontSpec;
-  ctx.textAlign = "center";
+  ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
   ctx.lineJoin = "round";
   ctx.miterLimit = 2;
-  const cx = W / 2;
   lines.forEach((line, i) => {
     const y = textTop + i * lineH + fontPx;
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,0.85)";
-    ctx.shadowBlur = Math.round(fontPx * 0.55);
-    ctx.lineWidth = Math.round(fontPx * 0.20);
+    ctx.shadowBlur  = Math.round(fontPx * 0.5);
+    ctx.lineWidth   = Math.round(fontPx * 0.20);
     ctx.strokeStyle = "rgba(0,0,0,0.72)";
-    ctx.strokeText(line, cx, y);       // glow + dark halo in one pass
-    ctx.shadowBlur = 0;
-    ctx.lineWidth = Math.round(fontPx * 0.11);
-    ctx.strokeText(line, cx, y);       // crisp dark edge
-    ctx.fillStyle = "#f7f3e9";
-    ctx.fillText(line, cx, y);         // warm white face
+    ctx.strokeText(line, textLeft, y);   // soft dark glow + halo
+    ctx.shadowBlur  = 0;
+    ctx.lineWidth   = Math.round(fontPx * 0.11);
+    ctx.strokeText(line, textLeft, y);   // crisp dark edge
+    ctx.fillStyle   = "#f7f3e9";
+    ctx.fillText(line, textLeft, y);     // warm-white face
     ctx.restore();
   });
 
