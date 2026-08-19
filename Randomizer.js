@@ -881,15 +881,40 @@ function avgY(touches) {
 // Debounced + token-guarded so the frequent class flips during the glitch
 // animation don't thrash, and a stale build can't overwrite a newer one.
 let shareRefreshTimer = null;
+let shareRetryTimer = null;
+let shareRetries = 0;
 function scheduleShareRefresh() {
   if (shareRefreshTimer) clearTimeout(shareRefreshTimer);
   shareRefreshTimer = setTimeout(refreshShareFile, 120);
+  shareRetries = 0;              // a fresh trigger deserves a fresh budget
 }
 function refreshShareFile() {
   const imgEl = document.querySelector("img");
   const token = ++shareFileToken;
-  // Nothing shareable while the back is up or a draw is mid-flight.
-  if (!imgEl || showingBack || drawing) { currentShareFile = null; currentShareKey = ""; return; }
+
+  // A draw is still mid-flight. This is the case that used to strand the
+  // share file: the card's src changes and its "dimmed" class drops within
+  // one frame, so the observer's debounced refresh lands ~120ms later —
+  // while `drawing` is still true (it clears at 260ms, or after the whole
+  // glitch on a reversal). The old code just nulled the file and returned,
+  // and since NO further mutation ever came, it was never rebuilt. Both
+  // swipes did nothing until you opened and closed the meanings, whose
+  // "muted" class toggle happened to be the next mutation.
+  //
+  // So: clear the stale file (no sharing another card's image), but come
+  // back once the gate lifts instead of giving up.
+  if (drawing) {
+    currentShareFile = null; currentShareKey = "";
+    if (shareRetryTimer) clearTimeout(shareRetryTimer);
+    if (shareRetries++ < 30) {   // ~9s: covers the reversal glitch and then some
+      shareRetryTimer = setTimeout(refreshShareFile, 300);
+    }
+    return;
+  }
+  shareRetries = 0;
+
+  // Genuinely nothing to share: the back is up.
+  if (!imgEl || showingBack) { currentShareFile = null; currentShareKey = ""; return; }
   const url = imgEl.src;
   const reversed = imgEl.classList.contains("reversed");
   const key = shareKeyFor(imgEl);
