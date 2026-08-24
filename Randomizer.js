@@ -883,6 +883,7 @@ function avgY(touches) {
 let shareRefreshTimer = null;
 let shareRetryTimer = null;
 let shareRetries = 0;
+let shareBuilding = false;      // a build is in flight — don't start another
 function scheduleShareRefresh() {
   if (shareRefreshTimer) clearTimeout(shareRefreshTimer);
   shareRefreshTimer = setTimeout(refreshShareFile, 120);
@@ -954,10 +955,34 @@ function refreshShareFile() {
   // composite fails on a device (memory, fonts, toBlob), fall back to the
   // card rather than leaving the gesture with nothing — a silently-null
   // file is indistinguishable from a broken gesture.
+  shareBuilding = true;
   const build = infoOverlayOpen ? composite.catch(() => plain) : plain;
   build
     .then((f) => { if (token === shareFileToken) { currentShareFile = f; currentShareKey = key; } })
-    .catch(() => { if (token === shareFileToken) { currentShareFile = null; currentShareKey = ""; } });
+    .catch(() => { if (token === shareFileToken) { currentShareFile = null; currentShareKey = ""; } })
+    .then(() => { if (token === shareFileToken) shareBuilding = false; });
+}
+
+// --- The heartbeat: the trigger that cannot be missed ------------------
+// Everything above depends on a chain of triggers — MutationObserver fires,
+// a 120ms debounce lands, `drawing` has already cleared — and on the iOS
+// PWA that chain kept failing in a way none of the timing fixes caught.
+// The BUILD was never the problem: opening the meanings and closing them
+// always fixed it, and all that does is cause another refresh.
+//
+// So rather than keep repairing the chain, this guarantees the outcome. A
+// light heartbeat notices whenever a face-up card has no matching share
+// file and rebuilds it. It costs nothing when there is nothing to do (a
+// couple of comparisons), never runs while hidden, mid-draw, or while a
+// build is already in flight, and it makes the share independent of
+// mutation delivery entirely.
+function shareHeartbeat() {
+  if (document.hidden) return;
+  if (showingBack || drawing || shareBuilding) return;
+  const imgEl = document.querySelector("img");
+  if (!imgEl || !currentCardName) return;
+  if (currentShareFile && currentShareKey === shareKeyFor(imgEl)) return;
+  refreshShareFile();
 }
 
 function threeFingerStart(e) {
@@ -2103,6 +2128,10 @@ function wireLongPress() {
     mo.observe(imgEl, { attributes: true, attributeFilter: ["src", "class"] });
   }
   refreshShareFile();   // build for the initial state (no-op while on the back)
+  // The safety net described at shareHeartbeat(): keeps a shareable file
+  // present for whatever card is face-up, regardless of whether the
+  // observer/debounce chain above delivered.
+  setInterval(shareHeartbeat, 500);
 
   // Returning from the native share sheet fires visibilitychange/pageshow;
   // clear any in-flight flag then so a never-settling iOS share promise can
