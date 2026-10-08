@@ -130,3 +130,28 @@ harder than Safari — delete and re-add it to be certain. One session was
 spent chasing a bug on a device that turned out to be running a build from
 months earlier (identified by a green debug HUD that had long since been
 deleted from the source).
+
+---
+
+## The deck grid (deckGrid.js)
+
+Hold the meanings (same 600 ms charge / 2.2 s commit as the card's own
+long-press) to sink into a grid of all 78 cards; tap a card to lift it full
+screen; hold the grid to rise back into the meanings. Escape does the same
+on desktop.
+
+It is deliberately **bolted on, not woven in**: one file plus `thumbs/`,
+reading Randomizer.js's globals without changing any of them. To switch it
+off, set `DECK_GRID_ENABLED = false` at the top of deckGrid.js, or delete its
+`<script>` line in index.html. Re-run `_gen_thumbs.py` after re-sourcing any
+deck art.
+
+Two things it has to get right, both learned from the share bug above:
+
+- **The release after a committed hold is not a tap.** The finger is still
+  down when the screen changes underneath it, so its `click` would close the
+  meanings (or open a card). A capture-phase click swallower covers the
+  release, and only that release.
+- **The grid moves with transforms only.** The water writes one transform
+  per card per frame; the single filter is the flying card's mute/clear,
+  the same one `img.muted` already transitions.
