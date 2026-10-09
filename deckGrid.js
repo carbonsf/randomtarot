@@ -41,6 +41,15 @@
   const LEAVE_MS = 800;             // the deck sinks before the meanings return
   const DEEP = "cubic-bezier(0.16, 1, 0.3, 1)";
   const FIRM = "cubic-bezier(0.4, 0, 0.2, 1)";
+  // DEEP spends most of its change in its first quarter, which is right for
+  // something arriving in space and wrong for something changing in
+  // brightness: the card clearing from brightness .18 to 1 is a 5.5x jump,
+  // and front-loading it reads as a flash. Light changes ride this instead.
+  const SOFT = "cubic-bezier(0.45, 0, 0.35, 1)";
+  // A beat where the card simply sits where the reading was, before it
+  // starts back to its place. Without it the card moves the instant the
+  // words have gone and there is nothing to register.
+  const GRID_HOLD_MS = 260;
   const MUTED = "brightness(0.18) blur(3px) saturate(0.6)";   // = img.muted
   const CLEAR = "brightness(1) blur(0px) saturate(1)";
 
@@ -273,12 +282,26 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     // The words sink back into the dark, last stanza first. The muted card
     // stays exactly where it is, so the grid can take it over from this frame.
     ov.classList.add("dg-sink");
-    setTimeout(() => {
-      openGrid(img);
-      // Under the (opaque) grid, put the reading screen away as usual.
-      closeInfoOverlay();
+    // Have the card decoded before the grid takes it over. The grid's first
+    // frame is meant to be this screen minus its words, which only holds if
+    // its copy of the card can paint immediately; one that is still
+    // decoding turns the handover into a black blink. The source is already
+    // on screen, so this normally resolves at once — capped either way,
+    // since the sink must not be left hanging on it.
+    const warm = new Image();
+    warm.src = img.currentSrc || img.src;
+    const decoded = (warm.decode ? warm.decode() : Promise.resolve()).catch(() => {});
+    Promise.all([
+      Promise.race([decoded, new Promise((r) => setTimeout(r, 220))]),
+      new Promise((r) => setTimeout(r, SINK_MS)),
+    ]).then(() => {
+      if (!grid && infoOverlayOpen) {
+        openGrid(img);
+        // Under the (opaque) grid, put the reading screen away as usual.
+        closeInfoOverlay();
+      }
       ov.classList.remove("dg-sink");
-    }, SINK_MS);
+    });
   }
 
   // --- The grid ---------------------------------------------------------
@@ -405,18 +428,28 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (grid !== g) return;
       const slot = slotRect(g, fromKey, true);
-      // The scrim lifts and the card clears as it sinks back to its place,
-      // righting itself if it was drawn reversed; the deck surfaces around it.
-      scrim.style.opacity = "0";
-      fly.style.transition = "filter 700ms " + DEEP;
-      fly.style.filter = CLEAR;
-      later(140, () => {
+      // Nothing changes for a beat: the card is simply there, where the
+      // words were. Then everything moves together — it sinks back to its
+      // place, righting itself if it was drawn reversed, and comes into
+      // ordinary light ON THE WAY rather than before it leaves. The light
+      // rides SOFT so the clearing tracks the shrinking instead of
+      // arriving ahead of it in a flash.
+      later(GRID_HOLD_MS, () => {
         g.flyFull = false;
+        scrim.style.transition = "opacity 640ms " + SOFT;
+        scrim.style.opacity = "0";
+        backdrop.style.transition = "opacity 700ms " + SOFT;
         backdrop.style.opacity = "0";
         root.classList.add("dg-in");
-        if (slot) setFly(null, null, slot, 0, CLEAR, ARRIVE_LAND_MS + "ms " + DEEP);
+        if (slot) {
+          setFly(null, null, slot, 0, CLEAR, ARRIVE_LAND_MS + "ms " + DEEP,
+                 "filter 820ms " + SOFT);
+        } else {
+          fly.style.transition = "filter 820ms " + SOFT;
+          fly.style.filter = CLEAR;
+        }
       });
-      later(140 + ARRIVE_LAND_MS, () => {
+      later(GRID_HOLD_MS + ARRIVE_LAND_MS, () => {
         fly.classList.remove("dg-live");
         const t = g.tiles[fromKey];
         if (t) t.btn.classList.remove("dg-hidden");
@@ -437,7 +470,7 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
 
   // Place the flying card: full screen when rect is null, else exactly over
   // a tile. Transform only, so the flight never touches layout.
-  function setFly(src, aspect, rect, rot, filter, transition) {
+  function setFly(src, aspect, rect, rot, filter, transition, filterTr) {
     const g = grid;
     if (!g) return;
     const fly = g.fly;
@@ -451,7 +484,7 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
       tf = "translate3d(" + dx + "px," + dy + "px,0px) scale(" + rect.w / cw + "," + rect.h / ch + ") rotate(" + rot + "deg)";
     }
     fly.style.transition = transition === "none" ? "none"
-      : "transform " + transition + ", filter 700ms " + DEEP;
+      : "transform " + transition + ", " + (filterTr || "filter 700ms " + DEEP);
     fly.style.transform = tf;
     if (filter) fly.style.filter = filter;
   }
