@@ -722,6 +722,17 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
   let tfPath = null;
 
   const tfMidOf = (a, b) => ({ x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 });
+  // Thin a raw touch path down to points at least TF_STEP apart, keeping
+  // the shape and dropping the per-frame noise.
+  const TF_STEP = 3;
+  function resample(p) {
+    const out = [];
+    for (const q of p) {
+      const last = out[out.length - 1];
+      if (!last || Math.hypot(q.x - last.x, q.y - last.y) >= TF_STEP) out.push(q);
+    }
+    return out;
+  }
   const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
   // Signed turning of the midpoint path: a loop accumulates ±360°, a
@@ -736,11 +747,18 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
       if (q.y > maxY) maxY = q.y;
     }
     if (Math.max(maxX - minX, maxY - minY) / 2 < TF_RADIUS) return false;
+    // Measure the turning on a RESAMPLED path. Skipping short segments
+    // outright does not merely ignore jitter — it discards the turning
+    // inside them, and at 60Hz a slow, deliberate stir is mostly sub-2px
+    // steps. A full circle could measure a fraction of its real sweep, so
+    // the gesture worked when hurried and failed when done carefully.
+    // Resampling drops the noise and keeps every degree actually travelled.
+    const q = resample(p);
+    if (q.length < 3) return false;
     let turn = 0;
-    for (let i = 2; i < p.length; i++) {
-      const a = p[i - 2], b = p[i - 1], c = p[i];
+    for (let i = 2; i < q.length; i++) {
+      const a = q[i - 2], b = q[i - 1], c = q[i];
       const v1x = b.x - a.x, v1y = b.y - a.y, v2x = c.x - b.x, v2y = c.y - b.y;
-      if (Math.hypot(v1x, v1y) < 2 || Math.hypot(v2x, v2y) < 2) continue;
       turn += Math.atan2(v1x * v2y - v1y * v2x, v1x * v2x + v1y * v2y);
     }
     return Math.abs(turn) >= TF_TURN;
@@ -749,15 +767,19 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
   function pathIsZigzag(p) {
     if (p.length < 6) return false;
     const netDown = p[p.length - 1].y - p[0].y;
-    let reversals = 0, lastSign = 0, minX = Infinity, maxX = -Infinity;
+    let reversals = 0, lastSign = 0, minX = Infinity, maxX = -Infinity, run = 0;
     for (let i = 1; i < p.length; i++) {
-      const dx = p[i].x - p[i - 1].x;
       if (p[i].x < minX) minX = p[i].x;
       if (p[i].x > maxX) maxX = p[i].x;
-      if (Math.abs(dx) < 2) continue;
-      const sign = Math.sign(dx);
+      // Accumulate rather than discard, for the same reason as the circle:
+      // a slow zigzag moves less than 2px a frame and would lose every
+      // reversal it made.
+      run += p[i].x - p[i - 1].x;
+      if (Math.abs(run) < 2) continue;
+      const sign = Math.sign(run);
       if (lastSign !== 0 && sign !== lastSign) reversals++;
       lastSign = sign;
+      run = 0;
     }
     return reversals >= TF_REVERSALS && netDown >= TF_DOWN && maxX - minX >= TF_AMP;
   }
