@@ -238,3 +238,34 @@ Worth remembering whenever a threshold is tuned on one input and then
 shared by another. The same applies to timing: the card opens its meanings
 at ~600 ms, the grid commits at 2200 ms, and the longer a hold must be
 held the more the input's own noise floor matters.
+
+### Ease curves are not interchangeable between motion and light
+
+`cubic-bezier(0.16, 1, 0.3, 1)` is the app's signature arrival curve and it
+is right for things moving through space: it covers most of its distance
+immediately and lands softly, which reads as momentum. Applied to
+*brightness* it reads as a flash, because the eye has no expectation of
+momentum in light — it just sees the change, and that curve puts about 60%
+of it in the first quarter of the duration.
+
+Opening the deck grid did exactly this. The card cleared from
+`brightness(.18)` to `brightness(1)` — a 5.5x jump — on that curve, while
+the scrim lifted on it too, both starting the instant the grid appeared and
+140 ms *before* the card began to recede. Two stacked brightenings,
+front-loaded, ahead of any motion.
+
+The fix is not a longer duration, it is a different curve and a different
+order. Light changes now ride a symmetric `cubic-bezier(0.45, 0, 0.35, 1)`
+and start *with* the movement, so the card comes into ordinary light on its
+way home rather than before it sets off. Measured: at the halfway point of
+the journey the card has shrunk to 41% but is only at brightness .24, and
+reaches full brightness as it lands. Motion keeps DEEP; only light changed.
+
+There is also a held beat (260 ms) before anything moves. The handover from
+the reading used to begin the moment the words had gone, leaving nothing to
+register the card by.
+
+And the grid's first frame is meant to be the reading screen minus its
+words, which only holds if its copy of the card can paint immediately — so
+the card is decoded (capped, since it is already on screen) before the
+handover, or the seam becomes a black blink.
