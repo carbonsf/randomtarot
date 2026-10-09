@@ -155,3 +155,36 @@ Two things it has to get right, both learned from the share bug above:
 - **The grid moves with transforms only.** The water writes one transform
   per card per frame; the single filter is the flying card's mute/clear,
   the same one `img.muted` already transitions.
+
+---
+
+## Animation phases belong on the frame clock, not the wall clock
+
+The deck-grid sweep (`deckGrid.js`) moves 78 cards through phases — struck,
+sliding off, waiting, flying back. The first version read `performance.now()`
+to decide when each phase began, while the motion integrated `dt`, which
+`tick` clamps to 34 ms so the water stays stable.
+
+Those are two different clocks, and they diverge the moment frames get
+scarce. Below ~29 fps the clamp bites: wall time runs on while motion
+advances in slow steps, so a card's fade "completes" before it has gone
+anywhere. It vanishes in place instead of being swept off.
+
+The fix is one accumulator. `g.sim` sums the frame steps actually taken, and
+every phase boundary is read off that, so motion and timing cannot drift
+apart. On a slow device the whole flourish plays in slow motion, which is
+coherent; the alternative is cards teleporting, which is not.
+
+What still needs the wall clock is the watchdog. Phases that advance only
+with frames stop dead if the loop does — a backgrounded tab, a suspended
+PWA — so a timer watches `g.sim` itself and, if it has stopped moving,
+calls `finishSweep` to put the new deck on the table. Same discipline as the
+share heartbeat: when the frame loop is load-bearing for correctness,
+something off that loop has to guarantee the outcome.
+
+Note for testing: the preview pane never fires `requestAnimationFrame` at
+all (0 fps, even with `document.hidden` forced false). Shim it —
+`window.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 16)`
+— *before* the grid opens, since its loop re-registers through whatever
+`requestAnimationFrame` is at the time. Expect it to run several times
+slower than real, and measure convergence rather than wall-clock durations.
