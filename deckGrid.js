@@ -51,7 +51,14 @@
   const SWEEP_FADE_MS   = 210;   // and how long the fade takes
   const SWEEP_GAP_MS    = 470;   // a slot emptying -> its new card arriving
   const SWEEP_RISE_MS   = 170;   // the new card's fade-up as it flies in
-  const SWEEP_SETTLE_MS = 1700;  // after the last arrival, before idle again
+  // When a card stops being "arriving" and is simply floating again. This
+  // is bookkeeping, NOT an end to its motion: by now the extra authority
+  // below has decayed to nothing, so letting go of the record changes
+  // nothing on screen. Nothing in the sweep ever cuts a card's movement
+  // short — a card is only ever put in its place if the frame loop has
+  // died and there is no spring left to carry it (see finishSweep).
+  const SWEEP_RELEASE_MS = 1500;
+  const SWEEP_CAP_MS     = 12000; // absolute sim-time backstop
   const SWEEP_DRAG      = 1.15;  // air on a card sliding off the table (1/s)
   const SWEEP_GRAVITY   = 150;   // pulls the lifted card back down (z/s²)
 
@@ -115,8 +122,13 @@
 #deck-grid{position:fixed;inset:0;z-index:200;background:#000;overflow:hidden;color:#ececec;
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
   -webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
-#deck-grid .dg-scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;touch-action:pan-y}
+/* touch-action:none, for the reason the meanings overlay carries it
+   (NOTES.md): with a scrollable touch-action, iOS hands a two-finger stir
+   to its own scroller and terminates the gesture with touchcancel, so the
+   circle could never be read. Dragging the deck is preserved by the
+   one-finger handler in wireGrid(), with the throw carried by tick(). */
+#deck-grid .dg-scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;touch-action:none}
 #deck-grid .dg-inner{max-width:600px;margin:0 auto;box-sizing:border-box;padding:52px 16px 72px;
   display:flex;flex-direction:column;gap:36px}
 #deck-grid .dg-sec{display:flex;flex-direction:column;gap:14px;opacity:0;transform:translateY(6px);
@@ -281,7 +293,8 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
       // Simulated milliseconds: the sum of the frame steps actually taken.
       // The sweep runs on this rather than on the wall clock so its phases
       // can never outrun the motion when frames are scarce.
-      sim: 0, sweepTo: null, swapAt: 0, sweepEnd: 0, swapped: false,
+      sim: 0, sweepTo: null, swapAt: 0, sweepCap: 0, swapped: false,
+      scGlide: 0, scMoved: false,
       scrollVel: 0, lastScroll: 0, hold: null, openKey: null,
       lastWake: { x: -999, y: -999, at: 0 },
       t0: performance.now(), last: performance.now(),
@@ -596,6 +609,49 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     });
     ["pointerup", "pointercancel", "pointerleave"].forEach((t) =>
       sc.addEventListener(t, (e) => { if (g.hold && e.pointerId === g.hold.id) gridHoldCancel(g); }));
+    // Dragging the deck by hand, because the scroller carries
+    // touch-action:none (see the stylesheet). One finger only — the moment
+    // a second lands this stands down, so a stir is never also a scroll.
+    // Mouse wheel, trackpad and keyboard still scroll the container
+    // natively; touch-action has no say over those.
+    let scId = null, scStartY = 0, scStartTop = 0, scLastY = 0, scLastT = 0;
+    sc.addEventListener("touchstart", (e) => {
+      g.scGlide = 0;                       // a finger down stops the throw
+      g.scMoved = false;
+      if (!e.touches || e.touches.length !== 1 || g.mode === "open") { scId = null; return; }
+      const t = e.touches[0];
+      scId = t.identifier;
+      scStartY = scLastY = t.clientY;
+      scStartTop = sc.scrollTop;
+      scLastT = e.timeStamp || performance.now();
+    }, { passive: true });
+    sc.addEventListener("touchmove", (e) => {
+      if (scId === null || !e.touches || e.touches.length !== 1) { scId = null; return; }
+      const t = e.touches[0];
+      if (t.identifier !== scId) return;
+      const at = e.timeStamp || performance.now();
+      const dy = t.clientY - scLastY, span = Math.max(1, at - scLastT);
+      sc.scrollTop = scStartTop - (t.clientY - scStartY);
+      // px/s, smoothed so one jittery last frame can't decide the throw.
+      const v = (-dy / span) * 1000;
+      g.scGlide = g.scGlide ? g.scGlide * 0.6 + v * 0.4 : v;
+      scLastY = t.clientY;
+      scLastT = at;
+      if (Math.abs(t.clientY - scStartY) > 8) g.scMoved = true;
+    }, { passive: true });
+    sc.addEventListener("touchend", () => {
+      scId = null;
+      if (performance.now() - scLastT > 120) g.scGlide = 0;   // held still: no throw
+    }, { passive: true });
+    sc.addEventListener("touchcancel", () => { scId = null; g.scGlide = 0; }, { passive: true });
+    // A drag must not also count as a tap on whatever it ended over. Native
+    // scrolling suppressed that click for us; now we do it ourselves.
+    sc.addEventListener("click", (e) => {
+      if (!g.scMoved) return;
+      e.stopPropagation();
+      e.preventDefault();
+    }, true);
+
     // Two-finger gestures. Each handler no-ops unless exactly two fingers
     // are down, so one-finger scrolling is untouched and the three-finger
     // share — which Randomizer.js binds on document, in capture, ahead of
@@ -864,7 +920,7 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     g.mode = "sweep";
     g.sweepTo = target;
     gridHoldCancel(g);
-    g.scroller.style.touchAction = "none";
+    g.scGlide = 0;                      // no leftover throw under the sweep
     g.root.classList.add("dg-sweep");
 
     const rnd = (a, b) => a + Math.random() * (b - a);
@@ -921,18 +977,22 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     // Both moments are read off sim time by tick().
     g.swapped = false;
     g.swapAt = now + frontMs + 40;
-    g.sweepEnd = lastArrive + SWEEP_SETTLE_MS;
+    g.sweepCap = now + SWEEP_CAP_MS;
 
     // Backstop. Every phase above advances only while frames do, so a loop
     // that stops — a backgrounded tab, a suspended PWA — would strand the
     // sweep half-finished. Rather than guess a duration, watch sim time
-    // itself: if it stops moving, land the deck immediately.
-    const watch = (prev) => g.later(700, () => {
+    // itself. It must be stopped for two full checks running: this is the
+    // one path that puts cards down by force, and a phone decoding 78 new
+    // thumbnails can lose a second of frames without being dead at all.
+    // Intervening there would produce the very lock this must prevent.
+    const watch = (prev, strikes) => g.later(1000, () => {
       if (grid !== g || g.mode !== "sweep") return;
-      if (g.sim === prev) finishSweep(g, target);
-      else watch(g.sim);
+      if (g.sim !== prev) watch(g.sim, 0);
+      else if (strikes >= 1) finishSweep(g, target);
+      else watch(prev, strikes + 1);
     });
-    watch(-1);
+    watch(-1, 0);
   }
 
   // --- The water --------------------------------------------------------
@@ -1011,10 +1071,22 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     if (s.opacity !== want) s.opacity = want;
   }
 
-  // Guarantee the outcome, not the path. Every phase above is driven by the
-  // frame loop, and a frame loop can simply stop — a backgrounded tab, an
-  // iOS PWA suspended mid-stroke, a device under load. Whichever cards were
-  // left in the air, this is the moment the new deck is on the table.
+  // The ordinary end of a sweep: the last card has stopped being an
+  // arriving card and is floating with the rest. Nothing is moved here —
+  // the springs are still running and will keep running.
+  function endSweep(g) {
+    g.root.classList.remove("dg-sweep");
+    g.sweepTo = null;
+    g.mode = "idle";
+    g.layoutDirty = true;
+  }
+
+  // Guarantee the outcome, not the path. Every phase of the sweep advances
+  // only while frames do, and a frame loop can simply stop — a backgrounded
+  // tab, an iOS PWA suspended mid-stroke. THIS IS THE DEAD-LOOP PATH ONLY.
+  // It puts stranded cards in their places because there is no spring left
+  // to carry them; calling it on a living animation would cut 78 cards off
+  // mid-flight, which is exactly the jarring lock it must never cause.
   // (Same discipline as the share heartbeat; see NOTES.md.)
   function finishSweep(g, deckId) {
     if (g.deckId !== deckId) relayoutGrid(g, deckId);
@@ -1022,21 +1094,13 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     for (const k in g.bodies) {
       const b = g.bodies[k];
       b.sw = null;
-      // Anything still a long way from its place is put there. Judged by
-      // distance rather than by phase: at the normal end of a sweep every
-      // card is already home and only floating, so nothing is touched —
-      // but if the loop died there is no spring left to finish the job.
       if (Math.hypot(b.x, b.y) < 24 && Math.abs(b.rz) < 6) continue;
       b.x = b.y = b.z = b.rx = b.ry = b.rz = 0;
       b.vx = b.vy = b.vz = b.vrx = b.vry = b.vrz = 0;
       writeBody(g, k, b, 1);
     }
     for (const k in g.tiles) g.tiles[k].float.style.opacity = "";
-    g.root.classList.remove("dg-sweep");
-    g.scroller.style.touchAction = "";
-    g.sweepTo = null;
-    g.mode = "idle";
-    g.layoutDirty = true;
+    endSweep(g);
   }
 
   // The hand reaches this card: a shove along the stroke, a slew across it,
@@ -1100,16 +1164,26 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
         g.root.classList.remove("dg-sweep");
         measure(g);
       }
-      if (g.sim >= g.sweepEnd) finishSweep(g, g.sweepTo);
+      if (g.sim >= g.sweepCap) finishSweep(g, g.sweepTo);
     }
     if (g.layoutDirty) measure(g);
     const t = (now - g.t0) / 1000;
     g.ripples = g.ripples.filter((r) => t - r.t < 9);
 
+    // Carry the throw from a released drag. Decays like the overlay's, and
+    // stops dead at either end of the run.
+    if (g.scGlide) {
+      const was = g.scroller.scrollTop;
+      g.scroller.scrollTop = was + g.scGlide * dt;
+      if (g.scroller.scrollTop === was || Math.abs(g.scGlide) < 20) g.scGlide = 0;
+      else g.scGlide *= Math.pow(0.94, dt * 60);
+    }
+
     const st = g.scroller.scrollTop;
     g.scrollVel += ((st - g.lastScroll) / dt - g.scrollVel) * Math.min(1, dt * 7);
     g.lastScroll = st;
     const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+    let live = 0;                 // cards still mid-sweep
     const sDrag = clamp(-g.scrollVel * 0.016, -14, 14);
     const sTilt = clamp(g.scrollVel * 0.012, -11, 11);
 
@@ -1125,11 +1199,16 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
       // side (state 3) does the surface get hold of it again.
       const sw = b.sw;
       if (sw) {
-        if (sw.state === 0 && g.sim >= sw.departAt) strike(b, sw);
-        if (sw.state === 1) { slideOff(g, k, b, sw, g.sim, dt); continue; }
-        if (sw.state === 2) {
-          if (g.sim < sw.arriveAt) { writeBody(g, k, b, 0); continue; }
-          landIncoming(g, b, sw);
+        if (sw.state === 3 && g.sim - sw.arriveAt > SWEEP_RELEASE_MS) {
+          b.sw = null;            // floating again; its motion carries on
+        } else {
+          live++;
+          if (sw.state === 0 && g.sim >= sw.departAt) strike(b, sw);
+          if (sw.state === 1) { slideOff(g, k, b, sw, g.sim, dt); continue; }
+          if (sw.state === 2) {
+            if (g.sim < sw.arriveAt) { writeBody(g, k, b, 0); continue; }
+            landIncoming(g, b, sw);
+          }
         }
       }
 
@@ -1146,8 +1225,11 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
       // it arrives rather than wanders — both relax away over the next beat
       // and leave it floating like everything else.
       let kk = 7 / b.m, zeta = 0.3;
-      if (sw && sw.state === 3) {
-        const a = Math.exp(-(g.sim - sw.arriveAt) / 460);
+      if (b.sw && b.sw.state === 3) {
+        // Decays over most of a second, so the firm hand that catches the
+        // card hands it to the water gradually. Nothing steps in at the end
+        // — this IS the end, and it arrives by getting weaker.
+        const a = Math.exp(-(g.sim - b.sw.arriveAt) / 700);
         kk *= 1 + 2.4 * a;
         zeta += 0.34 * a;
       }
@@ -1158,8 +1240,10 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
       b.vrx += (kk * (trx - b.rx) - c * b.vrx) * dt; b.rx += b.vrx * dt;
       b.vry += (kk * (tryy - b.ry) - c * b.vry) * dt; b.ry += b.vry * dt;
       b.vrz += (kk * (trz - b.rz) - c * b.vrz) * dt; b.rz += b.vrz * dt;
-      writeBody(g, k, b, sw && sw.state === 3
-        ? clamp01((g.sim - sw.arriveAt) / SWEEP_RISE_MS) : 1);
+      writeBody(g, k, b, b.sw && b.sw.state === 3
+        ? clamp01((g.sim - b.sw.arriveAt) / SWEEP_RISE_MS) : 1);
     }
+    // Every card is floating again. Only the bookkeeping ends here.
+    if (g.mode === "sweep" && !live) endSweep(g);
   }
 })();

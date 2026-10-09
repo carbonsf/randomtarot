@@ -188,3 +188,38 @@ all (0 fps, even with `document.hidden` forced false). Shim it —
 — *before* the grid opens, since its loop re-registers through whatever
 `requestAnimationFrame` is at the time. Expect it to run several times
 slower than real, and measure convergence rather than wall-clock durations.
+
+### A safety net must never fire on a living animation
+
+The first version of the sweep ended on a fixed timer: 1700 ms after the
+last card was due to arrive, `finishSweep` put everything in its place. But
+the arrival spring is soft — from ~760 px out it needs three or four
+seconds to look at rest — so when the timer fired most cards were still
+well short of home and got snapped there in one frame. The handful already
+within the 24 px threshold drifted in normally. What that looks like is
+about 80% of the deck locking rigidly while the rest settles, which is
+exactly how it was reported.
+
+Two mistakes, and the second is the general one.
+
+A fixed duration was deciding when motion was finished, instead of the
+motion deciding. The sweep now simply stops being a sweep: the extra spring
+authority decays to nothing over ~700 ms, after which an arriving card is
+by definition an ordinary floating card, and dropping its record changes
+not one pixel. There is no end moment to get wrong.
+
+And a mechanism built for a dead frame loop was running on a live one.
+`finishSweep` exists only for the case where there is no spring left to
+carry a card — a suspended PWA, a backgrounded tab. On a running loop it
+can only do harm. It now has exactly two callers, both genuine
+catastrophes, and the watchdog that detects a stalled loop requires sim
+time to be frozen across two full checks before acting, because a phone
+decoding 78 fresh thumbnails can lose a second of frames without being
+dead at all — and intervening there would cause the very lock it exists to
+prevent.
+
+Worth generalising: a guarantee-the-outcome backstop needs a trigger that
+fires *only* in the failure it was written for. A heartbeat that repairs a
+missing file is safe to run always, because repairing an already-correct
+state is a no-op. Forcing 78 cards into position is not a no-op, so that
+one has to be sure.
