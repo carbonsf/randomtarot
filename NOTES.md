@@ -223,3 +223,18 @@ fires *only* in the failure it was written for. A heartbeat that repairs a
 missing file is safe to run always, because repairing an already-correct
 state is a no-op. Forcing 78 cards into position is not a no-op, so that
 one has to be sure.
+
+### A hold threshold is a property of the input, not of the gesture
+
+The grid's holds cancelled if the pointer moved more than 9 px. That
+number exists to tell a hold from a *scroll*, which is a finger problem: a
+held mouse button has nothing competing with it. But 2.2 s is a long time
+for a hand resting on a mouse or trackpad to stay inside nine pixels, so
+on a desktop the hold essentially never committed — measured, 6 px of
+drift survived and 12 px did not. The slop is now chosen by
+`e.pointerType`: 9 px for a finger, 48 px for a mouse.
+
+Worth remembering whenever a threshold is tuned on one input and then
+shared by another. The same applies to timing: the card opens its meanings
+at ~600 ms, the grid commits at 2200 ms, and the longer a hold must be
+held the more the input's own noise floor matters.

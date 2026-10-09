@@ -29,6 +29,13 @@
   const HOLD_CHARGE_MS = 600;
   const HOLD_COMMIT_MS = 2200;
   const HOLD_SLOP_PX = 9;           // movement that turns a hold into a scroll
+  // A mouse gets a far wider margin. The slop exists to tell a hold from a
+  // scroll, and nothing competes with a held mouse button the way a scroll
+  // competes with a held finger — while 2.2 s is a long time for a hand
+  // resting on a mouse or trackpad to stay inside nine pixels. At the tight
+  // threshold the hold simply never committed on a desktop.
+  const HOLD_SLOP_MOUSE_PX = 48;
+  const slopFor = (type) => (type === "mouse" ? HOLD_SLOP_MOUSE_PX : HOLD_SLOP_PX);
   const SINK_MS = 520;              // meanings sink before the grid takes over
   const ARRIVE_LAND_MS = 840;       // the card's flight back into its place
   const LEAVE_MS = 800;             // the deck sinks before the meanings return
@@ -236,7 +243,7 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     if (!ov.contains(e.target) || e.button > 0 || !e.isPrimary) return;
     if (typeof currentCardName === "undefined" || !currentCardName) return;
     mHold = {
-      id: e.pointerId, x: e.clientX, y: e.clientY,
+      id: e.pointerId, x: e.clientX, y: e.clientY, type: e.pointerType,
       charge: setTimeout(() => {
         ov.classList.add("dg-charging");
         const img = cardImg();
@@ -248,7 +255,7 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
   }, true);
   document.addEventListener("pointermove", (e) => {
     if (!mHold || e.pointerId !== mHold.id) return;
-    if (Math.hypot(e.clientX - mHold.x, e.clientY - mHold.y) > HOLD_SLOP_PX) meaningsHoldCancel();
+    if (Math.hypot(e.clientX - mHold.x, e.clientY - mHold.y) > slopFor(mHold.type)) meaningsHoldCancel();
   }, true);
   ["pointerup", "pointercancel"].forEach((t) => document.addEventListener(t, (e) => {
     if (mHold && e.pointerId === mHold.id) meaningsHoldCancel();
@@ -586,7 +593,7 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
       ripple(g, p.x, p.y, 1.0);
       gridHoldCancel(g);
       g.hold = {
-        id: e.pointerId, x: e.clientX, y: e.clientY,
+        id: e.pointerId, x: e.clientX, y: e.clientY, type: e.pointerType,
         charge: setTimeout(() => {
           if (g.mode !== "idle") return;
           g.backdrop.style.opacity = "0.32";     // the deck hushes
@@ -597,7 +604,7 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     });
     sc.addEventListener("pointermove", (e) => {
       if (g.hold && e.pointerId === g.hold.id &&
-          Math.hypot(e.clientX - g.hold.x, e.clientY - g.hold.y) > HOLD_SLOP_PX) gridHoldCancel(g);
+          Math.hypot(e.clientX - g.hold.x, e.clientY - g.hold.y) > slopFor(g.hold.type)) gridHoldCancel(g);
       // A mouse trailing over the cards leaves a faint wake; a finger is scrolling instead.
       if (e.pointerType !== "mouse" || g.mode !== "idle") return;
       const p = point(e), now = performance.now();
@@ -683,19 +690,41 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     g.root.addEventListener("touchend", tfEnd, { passive: false });
     g.root.addEventListener("touchcancel", tfEnd, { passive: false });
 
-    // Keep the desktop deck switching (right-click, arrow keys) out of the
-    // grid, so the deck can't change underneath it.
+    // Desktop deck switching. These used to be swallowed here so the deck
+    // could not change underneath the grid — but changing deck is now what
+    // this screen does, so they drive the sweep instead. They are still
+    // stopped from reaching Randomizer.js's own handlers, which would warp
+    // the card lying underneath as well.
+    //
+    // Right-click cycles, as it does on the card. Unlike the card there is
+    // no held-to-share here: with 78 cards on screen there is no one card
+    // the gesture obviously means. Fine pointers only, so a long press on
+    // iOS — which fires contextmenu in WebKit — can never switch decks.
     g.root.addEventListener("contextmenu", (e) => e.preventDefault());
+    g.root.addEventListener("mouseup", (e) => {
+      if (e.button !== 2 || !isFine() || g.mode !== "idle") return;
+      e.stopPropagation();
+      sweepToDeck(g, cycleTarget(1));
+    }, true);
     g.onKey = (e) => {
       if (grid !== g) return;
-      if (e.key === "Escape") {
-        if (g.mode === "open") closeTile();
-        else if (g.mode === "idle") backToMeanings();
-      } else if (!["ArrowLeft", "ArrowRight", "d", "D", "1", "2", "3"].includes(e.key)) {
-        return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;   // leave shortcuts alone
+      let target = null;
+      switch (e.key) {
+        case "Escape":
+          if (g.mode === "open") closeTile();
+          else if (g.mode === "idle") backToMeanings();
+          break;
+        case "ArrowRight": case "d": case "D": target = cycleTarget(1); break;
+        case "ArrowLeft":  target = cycleTarget(-1); break;
+        case "1": target = "rw"; break;
+        case "2": target = "thoth"; break;
+        case "3": target = "marseille"; break;
+        default: return;
       }
       e.stopPropagation();
       e.preventDefault();
+      if (target && g.mode === "idle" && target !== g.deckId) sweepToDeck(g, target);
     };
     window.addEventListener("keydown", g.onKey, true);
     g.onResize = () => { g.layoutDirty = true; };
@@ -760,6 +789,20 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
       lastSign = sign;
     }
     return reversals >= TF_REVERSALS && netDown >= TF_DOWN && maxX - minX >= TF_AMP;
+  }
+
+  // Desktop only, exactly as Randomizer.js gates its own mouse handling.
+  function isFine() {
+    return !!(window.matchMedia &&
+              window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+  }
+
+  // The card screen's right-click/key cycle, in its order.
+  const GRID_CYCLE = ["rw", "thoth", "marseille"];
+  function cycleTarget(dir) {
+    const i = GRID_CYCLE.indexOf(currentDeck);
+    if (i < 0) return "rw";
+    return GRID_CYCLE[(i + dir + GRID_CYCLE.length) % GRID_CYCLE.length];
   }
 
   // The same destinations the card screen's toggleDeck / toggleMarseille
