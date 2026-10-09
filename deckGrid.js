@@ -41,6 +41,17 @@
   const LEAVE_MS = 800;             // the deck sinks before the meanings return
   const DEEP = "cubic-bezier(0.16, 1, 0.3, 1)";
   const FIRM = "cubic-bezier(0.4, 0, 0.2, 1)";
+  // DEEP spends about 60% of its change in its first quarter. That is right
+  // for something crossing space and wrong for light: the card clearing from
+  // brightness .18 to 1 is a 5.5x jump, and front-loading it reads as a
+  // flash. Light changes ride this instead, which moves at an even rate.
+  const SOFT = "cubic-bezier(0.45, 0, 0.35, 1)";
+  const FILTER_TR = "filter 620ms " + SOFT;
+  // How long the card is given to come UP out of the dark before it starts
+  // back to its place. A muted card under the scrim is about 4% luminance —
+  // all but black — so this is what makes the beat a card being held rather
+  // than a black screen being held.
+  const EMERGE_MS = 420;
   const MUTED = "brightness(0.18) blur(3px) saturate(0.6)";   // = img.muted
   const CLEAR = "brightness(1) blur(0px) saturate(1)";
 
@@ -405,18 +416,25 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (grid !== g) return;
       const slot = slotRect(g, fromKey, true);
-      // The scrim lifts and the card clears as it sinks back to its place,
-      // righting itself if it was drawn reversed; the deck surfaces around it.
+      // The card comes up out of the dark, is briefly just there where the
+      // words were, and only then sinks back to its place, righting itself
+      // if it was drawn reversed; the deck surfaces around it. The light
+      // rides SOFT so the card emerges rather than flashing, and the recede
+      // waits until there is actually a card to watch go.
+      scrim.style.transition = "opacity 560ms " + SOFT;
       scrim.style.opacity = "0";
-      fly.style.transition = "filter 700ms " + DEEP;
+      fly.style.transition = FILTER_TR;
       fly.style.filter = CLEAR;
-      later(140, () => {
+      later(EMERGE_MS, () => {
         g.flyFull = false;
+        backdrop.style.transition = "opacity 640ms " + SOFT;
         backdrop.style.opacity = "0";
         root.classList.add("dg-in");
-        if (slot) setFly(null, null, slot, 0, CLEAR, ARRIVE_LAND_MS + "ms " + DEEP);
+        if (slot) {
+          setFly(null, null, slot, 0, CLEAR, ARRIVE_LAND_MS + "ms " + DEEP, FILTER_TR);
+        }
       });
-      later(140 + ARRIVE_LAND_MS, () => {
+      later(EMERGE_MS + ARRIVE_LAND_MS, () => {
         fly.classList.remove("dg-live");
         const t = g.tiles[fromKey];
         if (t) t.btn.classList.remove("dg-hidden");
@@ -437,7 +455,7 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
 
   // Place the flying card: full screen when rect is null, else exactly over
   // a tile. Transform only, so the flight never touches layout.
-  function setFly(src, aspect, rect, rot, filter, transition) {
+  function setFly(src, aspect, rect, rot, filter, transition, filterTr) {
     const g = grid;
     if (!g) return;
     const fly = g.fly;
@@ -451,7 +469,7 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
       tf = "translate3d(" + dx + "px," + dy + "px,0px) scale(" + rect.w / cw + "," + rect.h / ch + ") rotate(" + rot + "deg)";
     }
     fly.style.transition = transition === "none" ? "none"
-      : "transform " + transition + ", filter 700ms " + DEEP;
+      : "transform " + transition + ", " + (filterTr || "filter 700ms " + DEEP);
     fly.style.transform = tf;
     if (filter) fly.style.filter = filter;
   }
