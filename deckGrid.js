@@ -40,6 +40,21 @@
   const reduceMotion = !!(window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
+  // --- The sweep --------------------------------------------------------
+  // Changing decks here is one gesture-agnostic move: a hand smushes the
+  // whole tableau off the table while the other hand pushes the next deck
+  // on behind it, and the new cards coast into their places and take a beat
+  // to stop ringing. Everything below is a window; the actual numbers are
+  // drawn fresh on every switch (see sweepParams) so no two look alike.
+  const SWEEP_FRONT_MS  = 300;   // the hand crossing the whole tableau
+  const SWEEP_HOLD_MS   = 110;   // a struck card's grace before it fades
+  const SWEEP_FADE_MS   = 210;   // and how long the fade takes
+  const SWEEP_GAP_MS    = 470;   // a slot emptying -> its new card arriving
+  const SWEEP_RISE_MS   = 170;   // the new card's fade-up as it flies in
+  const SWEEP_SETTLE_MS = 1700;  // after the last arrival, before idle again
+  const SWEEP_DRAG      = 1.15;  // air on a card sliding off the table (1/s)
+  const SWEEP_GRAVITY   = 150;   // pulls the lifted card back down (z/s²)
+
   // --- Decks ------------------------------------------------------------
   // Each deck's own card shape, names and arrangement. RW and Thoth set the
   // Fool above the three rows of seven (the journey laid out); Marseille's
@@ -108,7 +123,12 @@
   transition:opacity 900ms ${DEEP},transform 900ms ${DEEP}}
 #deck-grid.dg-in .dg-sec{opacity:1;transform:none}
 #deck-grid.dg-out .dg-sec{opacity:0;transition-delay:0ms!important}
-#deck-grid .dg-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0 2px}
+#deck-grid .dg-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0 2px;
+  transition:opacity 260ms ${DEEP}}
+/* The headings can't ride the sweep (they aren't cards), so they simply
+   stand aside while the table is cleared and are back, renamed, by the
+   time the new deck has anything to sit under. */
+#deck-grid.dg-sweep .dg-head{opacity:0;transition-duration:200ms}
 #deck-grid .dg-head h2{margin:0;font-family:"Cormorant Garamond","EB Garamond",Garamond,Georgia,serif;font-style:italic;
   font-weight:500;font-size:24px;line-height:1.18;color:#f4f3ee}
 #deck-grid .dg-head p{margin:0;font-family:"Cormorant Garamond","EB Garamond",Garamond,Georgia,serif;font-style:italic;
@@ -258,6 +278,10 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
       appAspect: (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : L.deck.aspect,
       tiles: {}, bodies: {}, ripples: [], timers: [],
       mode: "arrive", flyFull: true, settled: false, layoutDirty: true,
+      // Simulated milliseconds: the sum of the frame steps actually taken.
+      // The sweep runs on this rather than on the wall clock so its phases
+      // can never outrun the motion when frames are scarce.
+      sim: 0, sweepTo: null, swapAt: 0, sweepEnd: 0, swapped: false,
       scrollVel: 0, lastScroll: 0, hold: null, openKey: null,
       lastWake: { x: -999, y: -999, at: 0 },
       t0: performance.now(), last: performance.now(),
@@ -386,6 +410,7 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
         g.layoutDirty = true;
         Object.values(g.tiles).forEach((t) => { t.btn.style.transitionDelay = "0ms"; });
         root.querySelectorAll(".dg-sec").forEach((s) => { s.style.transitionDelay = "0ms"; });
+        warmThumbs(g);
       });
     }));
   }
@@ -571,6 +596,37 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     });
     ["pointerup", "pointercancel", "pointerleave"].forEach((t) =>
       sc.addEventListener(t, (e) => { if (g.hold && e.pointerId === g.hold.id) gridHoldCancel(g); }));
+    // Two-finger gestures. Each handler no-ops unless exactly two fingers
+    // are down, so one-finger scrolling is untouched and the three-finger
+    // share — which Randomizer.js binds on document, in capture, ahead of
+    // these — still reaches its own handlers first.
+    g.root.addEventListener("touchstart", (e) => {
+      if (!e.touches || e.touches.length !== 2 || g.mode !== "idle") { tfPath = null; return; }
+      gridHoldCancel(g);
+      tfPath = [tfMidOf(e.touches[0], e.touches[1])];
+      if (e.cancelable) e.preventDefault();     // not a scroll, and not a pinch
+    }, { passive: false });
+    g.root.addEventListener("touchmove", (e) => {
+      if (!tfPath || !e.touches || e.touches.length !== 2) return;
+      if (e.cancelable) e.preventDefault();
+      tfPath.push(tfMidOf(e.touches[0], e.touches[1]));
+    }, { passive: false });
+    const tfEnd = (e) => {
+      if (!tfPath) return;
+      if (e.touches && e.touches.length >= 2) return;   // a finger still down
+      const p = tfPath;
+      tfPath = null;
+      if (g.mode !== "idle") return;
+      // The circle is tested first, exactly as on the card screen: a sloppy
+      // multi-loop stir can drift downward far enough to read as a zigzag,
+      // and the circle is the more deliberate gesture.
+      const target = pathIsCircle(p) ? circleTarget()
+                   : pathIsZigzag(p) ? zigzagTarget() : null;
+      if (target && target !== g.deckId) sweepToDeck(g, target);
+    };
+    g.root.addEventListener("touchend", tfEnd, { passive: false });
+    g.root.addEventListener("touchcancel", tfEnd, { passive: false });
+
     // Keep the desktop deck switching (right-click, arrow keys) out of the
     // grid, so the deck can't change underneath it.
     g.root.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -588,6 +644,295 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     window.addEventListener("keydown", g.onKey, true);
     g.onResize = () => { g.layoutDirty = true; };
     window.addEventListener("resize", g.onResize);
+  }
+
+  // --- Two-finger gestures on the grid ----------------------------------
+  // The card screen's recognisers live on the <img> in Randomizer.js and
+  // cannot see this screen, which sits above it. These are a separate,
+  // read-only copy: same shapes, same thresholds, so a gesture means here
+  // exactly what it means there.
+  //
+  //   ZIGZAG down  ->  RW <-> Thoth  (from Marseille, straight to Thoth)
+  //   CIRCLE       ->  Marseille, or back to the deck it was summoned from
+  //
+  // The card screen gates the zigzag to the top quarter so it can't be
+  // confused with the Thoth pinch-zoom. There is no pinch here, so the
+  // gate is waived — the same waiver the Marseille deck already gets.
+  // Both gestures land the same way: one sweep, see sweepToDeck().
+  const TF_TURN = (280 * Math.PI) / 180;   // most of a loop
+  const TF_RADIUS = 26;                    // px, so a wobble can't wind up
+  const TF_SAMPLES = 12;
+  const TF_REVERSALS = 3, TF_DOWN = 60, TF_AMP = 26;
+  let tfPath = null;
+
+  const tfMidOf = (a, b) => ({ x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 });
+  const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+
+  // Signed turning of the midpoint path: a loop accumulates ±360°, a
+  // zigzag's turns cancel toward zero, a pinch barely moves the midpoint.
+  function pathIsCircle(p) {
+    if (p.length < TF_SAMPLES) return false;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const q of p) {
+      if (q.x < minX) minX = q.x;
+      if (q.x > maxX) maxX = q.x;
+      if (q.y < minY) minY = q.y;
+      if (q.y > maxY) maxY = q.y;
+    }
+    if (Math.max(maxX - minX, maxY - minY) / 2 < TF_RADIUS) return false;
+    let turn = 0;
+    for (let i = 2; i < p.length; i++) {
+      const a = p[i - 2], b = p[i - 1], c = p[i];
+      const v1x = b.x - a.x, v1y = b.y - a.y, v2x = c.x - b.x, v2y = c.y - b.y;
+      if (Math.hypot(v1x, v1y) < 2 || Math.hypot(v2x, v2y) < 2) continue;
+      turn += Math.atan2(v1x * v2y - v1y * v2x, v1x * v2x + v1y * v2y);
+    }
+    return Math.abs(turn) >= TF_TURN;
+  }
+
+  function pathIsZigzag(p) {
+    if (p.length < 6) return false;
+    const netDown = p[p.length - 1].y - p[0].y;
+    let reversals = 0, lastSign = 0, minX = Infinity, maxX = -Infinity;
+    for (let i = 1; i < p.length; i++) {
+      const dx = p[i].x - p[i - 1].x;
+      if (p[i].x < minX) minX = p[i].x;
+      if (p[i].x > maxX) maxX = p[i].x;
+      if (Math.abs(dx) < 2) continue;
+      const sign = Math.sign(dx);
+      if (lastSign !== 0 && sign !== lastSign) reversals++;
+      lastSign = sign;
+    }
+    return reversals >= TF_REVERSALS && netDown >= TF_DOWN && maxX - minX >= TF_AMP;
+  }
+
+  // The same destinations the card screen's toggleDeck / toggleMarseille
+  // choose, so the gestures stay honest across the two screens.
+  function zigzagTarget() {
+    return currentDeck === "rw" ? "thoth" : currentDeck === "marseille" ? "thoth" : "rw";
+  }
+  function circleTarget() {
+    if (currentDeck === "marseille") {
+      return (typeof marseilleOrigin !== "undefined" && marseilleOrigin === "thoth") ? "thoth" : "rw";
+    }
+    try { marseilleOrigin = currentDeck; } catch (_e) { /* older build */ }
+    return "marseille";
+  }
+
+  // --- Changing deck underneath the grid --------------------------------
+  // This mirrors the STATE half of Randomizer.js's switchToDeck(): the deck,
+  // the zoom it comes up at, the signature module's deck and crop, and the
+  // card itself. It deliberately skips that function's warp, which animates
+  // the <img> lying under this screen — invisible here, and competing with
+  // the sweep for the GPU on a phone. If switchToDeck ever grows new state,
+  // it needs the same line here.
+  function applyDeckState(target) {
+    currentDeck = target;
+    if (typeof defaultZoomForDraw === "function") zoomMode = defaultZoomForDraw();
+    const sig = window.MajorArcanaSignature;
+    if (sig) {
+      if (sig.cancel) sig.cancel();
+      if (sig.setDeck) sig.setDeck(target);
+      if (sig.setCrop) sig.setCrop(zoomMode);
+    }
+    const img = cardImg();
+    if (!img) return;
+    const onBack = (typeof showingBack !== "undefined") && showingBack;
+    try {
+      img.src = onBack ? backSrc() : deckModel().cardSrc(currentCardName, zoomMode);
+    } catch (_e) { /* leave the card as it is rather than break the screen */ }
+    if (typeof updateCardAlt === "function") {
+      updateCardAlt(img, onBack ? null : currentCardName, img.classList.contains("reversed"));
+    }
+  }
+
+  // Re-point the existing 78 tiles at another deck: new headings, new card
+  // shape, and the Mat moved (Marseille lays it below the twenty-one, the
+  // others lead with the Fool). The tiles are MOVED, never rebuilt, so every
+  // card keeps the body that is carrying it through the air.
+  function relayoutGrid(g, deckId) {
+    const before = {};
+    for (const k in g.tiles) {
+      const r = g.tiles[k].btn.getBoundingClientRect();
+      before[k] = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
+    const sTop = g.scroller.scrollTop;
+    const L = layoutFor(deckId);
+    g.deckId = deckId;
+    g.L = L;
+
+    const secs = g.root.querySelectorAll(".dg-sec");
+    L.sections.forEach((sec, si) => {
+      const s = secs[si];
+      if (!s) return;
+      const h2 = s.querySelector("h2"), p = s.querySelector("p");
+      if (h2) h2.textContent = sec.name;
+      if (p) p.textContent = sec.sub;
+      const rowEls = s.querySelectorAll(".dg-row");
+      sec.rows.forEach((row, ri) => {
+        const rowEl = rowEls[ri];
+        if (!rowEl) return;
+        row.forEach((k) => {
+          const t = g.tiles[k];
+          if (!t) return;
+          t.btn.style.gridColumn = row.length === 1 ? "4 / span 1" : "";
+          // The same card answers to a different name in each deck.
+          if (typeof cardDisplayName === "function") {
+            t.btn.setAttribute("aria-label", cardDisplayName(k, deckId));
+          }
+          rowEl.appendChild(t.btn);     // a move, so order follows the layout
+        });
+      });
+    });
+    for (const k in g.tiles) g.tiles[k].btn.style.aspectRatio = String(L.deck.aspect);
+
+    // Hold the reading position; a taller card shape may have shortened the
+    // scrollable run underneath it.
+    g.scroller.scrollTop = Math.min(sTop,
+      Math.max(0, g.scroller.scrollHeight - g.scroller.clientHeight));
+    g.lastScroll = g.scroller.scrollTop;
+
+    // Every slot just moved. Push the difference into the bodies so each
+    // card stays exactly where the eye last saw it and simply carries on
+    // toward its new home — no card jumps, mid-flight or mid-float.
+    for (const k in g.tiles) {
+      const b = g.bodies[k];
+      if (!b) continue;
+      const r = g.tiles[k].btn.getBoundingClientRect();
+      b.x += before[k].x - (r.left + r.width / 2);
+      b.y += before[k].y - (r.top + r.height / 2);
+    }
+    const p0 = L.pos[g.fromKey] || { r: 0, c: 3 };
+    for (const k in L.pos) {
+      g.dist[k] = Math.abs(L.pos[k].r - p0.r) + Math.abs(L.pos[k].c - p0.c) * 0.85;
+    }
+    g.layoutDirty = true;
+  }
+
+  // Once the grid has settled, fetch the other decks' thumbnails one at a
+  // time on idle, so the first sweep has its cards in hand. Three decks of
+  // 78 at ~28 KB is a few MB — enough to ask first on a metered connection.
+  function warmThumbs(g) {
+    const c = navigator.connection;
+    if (c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || ""))) return;
+    const queue = [];
+    Object.keys(GRID_DECKS).forEach((d) => {
+      if (d === g.deckId) return;
+      for (const k in g.L.pos) queue.push(thumbSrc(d, k));
+    });
+    let i = 0;
+    const idle = (fn, timeout) => (window.requestIdleCallback
+      ? requestIdleCallback(fn, { timeout }) : setTimeout(fn, 80));
+    const step = () => {
+      if (grid !== g || i >= queue.length) return;
+      const im = new Image();
+      im.onload = im.onerror = () => idle(step, 500);
+      im.src = queue[i++];
+    };
+    idle(step, 1500);
+  }
+
+  function swapAllThumbs(g, deckId) {
+    for (const k in g.tiles) {
+      const t = g.tiles[k];
+      t.img.loading = "eager";
+      t.img.src = thumbSrc(deckId, k);
+    }
+  }
+
+  // --- The sweep --------------------------------------------------------
+  // One hand clears the table; the other lays the next deck down behind it,
+  // moving the same way, so a slot empties and refills in one continuous
+  // stroke. Every quantity below is drawn fresh: which way the hands travel,
+  // where the stroke is strongest, how straight it is, and how hard each
+  // individual card is hit. Both gestures arrive here — one move serves.
+  function sweepToDeck(g, target) {
+    if (g.mode !== "idle" || !GRID_DECKS[target]) return;
+    buzz(14);
+    applyDeckState(target);
+
+    if (reduceMotion) {
+      relayoutGrid(g, target);
+      swapAllThumbs(g, target);
+      return;
+    }
+
+    if (g.layoutDirty) measure(g);
+    const keys = Object.keys(g.bodies);
+    if (!keys.length) { relayoutGrid(g, target); swapAllThumbs(g, target); return; }
+
+    g.mode = "sweep";
+    g.sweepTo = target;
+    gridHoldCancel(g);
+    g.scroller.style.touchAction = "none";
+    g.root.classList.add("dg-sweep");
+
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const now = g.sim;                      // simulated ms, not the wall clock
+    // The clearing stroke: broadly sideways, either way, never square on.
+    const ang = (Math.random() < 0.5 ? 0 : Math.PI) + rnd(-0.40, 0.40);
+    const inAng = ang + rnd(-0.30, 0.30);   // the second hand, not a mirror
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+
+    // Project the viewport onto the stroke so the hand crosses what is
+    // actually on screen; cards scrolled out of sight clamp to the ends.
+    const W = g.root.clientWidth, H = g.root.clientHeight, st = g.scroller.scrollTop;
+    const us = [], vs = [];
+    [[0, 0], [W, 0], [0, H], [W, H]].forEach(([x, y]) => {
+      us.push(x * ca + y * sa);
+      vs.push(-x * sa + y * ca);
+    });
+    const uLo = Math.min.apply(null, us), uSpan = Math.max(1, Math.max.apply(null, us) - uLo);
+    const vLo = Math.min.apply(null, vs), vSpan = Math.max(1, Math.max.apply(null, vs) - vLo);
+
+    // Where the hand bears down, and how wide its sweep is. Cards in the
+    // path are flung; the ones at the fringe get a glancing shove and spin
+    // more for it.
+    const vc = vLo + vSpan * rnd(0.22, 0.78);
+    const vw = vSpan * rnd(0.45, 0.85);
+    const waves = rnd(1.1, 2.3), wph = rnd(0, Math.PI * 2);
+    const frontMs = SWEEP_FRONT_MS * rnd(0.85, 1.25);
+    const gapMs = SWEEP_GAP_MS * rnd(0.85, 1.2);
+
+    let lastArrive = now;
+    for (const k of keys) {
+      const b = g.bodies[k];
+      const x = b.cx, y = b.cy - st;                 // viewport, not content
+      const s = clamp01((x * ca + y * sa - uLo) / uSpan);
+      const prox = Math.exp(-Math.pow((-x * sa + y * ca - vc) / vw, 2));
+      // Not a ruler: the stroke eases, bows, and frays a little per card.
+      const wob = 0.07 * Math.sin(s * Math.PI * 2 * waves + wph);
+      const depart = now + Math.max(0, Math.pow(s, 0.82) + wob + rnd(-0.035, 0.035)) * frontMs;
+      b.sw = {
+        state: 0, ang, inAng,
+        departAt: depart,
+        arriveAt: depart + gapMs,
+        speed: rnd(1500, 2400) * (0.55 + 0.45 * prox),
+        perp: rnd(-1, 1) * 300 * (1 - 0.45 * prox),
+        spin: rnd(-1, 1) * 460 * (1.25 - 0.5 * prox),
+        lift: rnd(26, 86),
+      };
+      if (b.sw.arriveAt > lastArrive) lastArrive = b.sw.arriveAt;
+    }
+
+    // The headings can't ride the stroke, so they step aside and come back
+    // renamed once the hand has passed. The tiles are re-pointed in the same
+    // breath; the bodies absorb the slot shift, so nothing on screen jumps.
+    // Both moments are read off sim time by tick().
+    g.swapped = false;
+    g.swapAt = now + frontMs + 40;
+    g.sweepEnd = lastArrive + SWEEP_SETTLE_MS;
+
+    // Backstop. Every phase above advances only while frames do, so a loop
+    // that stops — a backgrounded tab, a suspended PWA — would strand the
+    // sweep half-finished. Rather than guess a duration, watch sim time
+    // itself: if it stops moving, land the deck immediately.
+    const watch = (prev) => g.later(700, () => {
+      if (grid !== g || g.mode !== "sweep") return;
+      if (g.sim === prev) finishSweep(g, target);
+      else watch(g.sim);
+    });
+    watch(-1);
   }
 
   // --- The water --------------------------------------------------------
@@ -654,10 +999,109 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
     g.layoutDirty = false;
   }
 
+  function writeBody(g, k, b, op) {
+    const s = g.tiles[k].float.style;
+    s.transform =
+      "translate3d(" + b.x.toFixed(2) + "px," + (b.y - b.z * 0.5).toFixed(2) + "px,0) " +
+      "rotateX(" + b.rx.toFixed(2) + "deg) rotateY(" + b.ry.toFixed(2) + "deg) rotateZ(" + b.rz.toFixed(2) + "deg) " +
+      "scale(" + (1 + b.z * 0.006).toFixed(4) + ")";
+    // Only when it changes: outside a sweep this is 78 identical writes a
+    // frame, and every one of them dirties style.
+    const want = op >= 1 ? "" : op.toFixed(3);
+    if (s.opacity !== want) s.opacity = want;
+  }
+
+  // Guarantee the outcome, not the path. Every phase above is driven by the
+  // frame loop, and a frame loop can simply stop — a backgrounded tab, an
+  // iOS PWA suspended mid-stroke, a device under load. Whichever cards were
+  // left in the air, this is the moment the new deck is on the table.
+  // (Same discipline as the share heartbeat; see NOTES.md.)
+  function finishSweep(g, deckId) {
+    if (g.deckId !== deckId) relayoutGrid(g, deckId);
+    swapAllThumbs(g, deckId);
+    for (const k in g.bodies) {
+      const b = g.bodies[k];
+      b.sw = null;
+      // Anything still a long way from its place is put there. Judged by
+      // distance rather than by phase: at the normal end of a sweep every
+      // card is already home and only floating, so nothing is touched —
+      // but if the loop died there is no spring left to finish the job.
+      if (Math.hypot(b.x, b.y) < 24 && Math.abs(b.rz) < 6) continue;
+      b.x = b.y = b.z = b.rx = b.ry = b.rz = 0;
+      b.vx = b.vy = b.vz = b.vrx = b.vry = b.vrz = 0;
+      writeBody(g, k, b, 1);
+    }
+    for (const k in g.tiles) g.tiles[k].float.style.opacity = "";
+    g.root.classList.remove("dg-sweep");
+    g.scroller.style.touchAction = "";
+    g.sweepTo = null;
+    g.mode = "idle";
+    g.layoutDirty = true;
+  }
+
+  // The hand reaches this card: a shove along the stroke, a slew across it,
+  // a spin, and enough lift to come off the table rather than slide on it.
+  function strike(b, sw) {
+    sw.state = 1;
+    const ca = Math.cos(sw.ang), sa = Math.sin(sw.ang);
+    b.vx += ca * sw.speed - sa * sw.perp;
+    b.vy += sa * sw.speed + ca * sw.perp;
+    b.vz += sw.lift;
+    b.vrz += sw.spin;
+    b.vrx += (Math.random() - 0.5) * 220;
+    b.vry += (Math.random() - 0.5) * 220;
+  }
+
+  // Off the edge: air, a little weight, and gone. No spring — nothing is
+  // holding it to its slot any more.
+  function slideOff(g, k, b, sw, now, dt) {
+    const d = Math.exp(-SWEEP_DRAG * dt);
+    b.vx *= d; b.vy *= d;
+    b.vz = (b.vz - SWEEP_GRAVITY * dt) * d;
+    b.vrx *= d; b.vry *= d; b.vrz *= d;
+    b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt;
+    b.rx += b.vrx * dt; b.ry += b.vry * dt; b.rz += b.vrz * dt;
+    const op = 1 - clamp01((now - sw.departAt - SWEEP_HOLD_MS) / SWEEP_FADE_MS);
+    writeBody(g, k, b, op);
+    if (op > 0) return;
+    // Out of sight is the only safe moment to become another deck's card.
+    sw.state = 2;
+    const t = g.tiles[k];
+    t.img.loading = "eager";
+    t.img.src = thumbSrc(g.sweepTo || g.deckId, k);
+  }
+
+  // The second hand puts it back on: out of the dark on the far side, in a
+  // loose pile, already moving. The springs in tick() do the rest.
+  function landIncoming(g, b, sw) {
+    sw.state = 3;
+    const rnd = (a, c) => a + Math.random() * (c - a);
+    const ci = Math.cos(sw.inAng), si = Math.sin(sw.inAng);
+    const d0 = rnd(560, 980), off = rnd(-170, 170);
+    b.x = -ci * d0 - si * off;
+    b.y = -si * d0 + ci * off;
+    b.z = rnd(8, 28);
+    b.rx = rnd(-16, 16); b.ry = rnd(-16, 16); b.rz = rnd(-26, 26);
+    b.vx = ci * rnd(300, 720); b.vy = si * rnd(300, 720);
+    b.vz = 0; b.vrx = 0; b.vry = 0; b.vrz = rnd(-120, 120);
+    // Every few cards rings the surface as the deck comes down.
+    if (Math.random() < 0.22) ripple(g, b.cx, b.cy, 0.34);
+  }
+
   function tick(g, now) {
     const dt = Math.min(0.034, Math.max(0.001, (now - g.last) / 1000));
     g.last = now;
     if (reduceMotion || g.flyFull) return;     // nothing to see under a full-screen card
+    g.sim += dt * 1000;
+    if (g.mode === "sweep") {
+      if (!g.swapped && g.sim >= g.swapAt) {
+        g.swapped = true;
+        relayoutGrid(g, g.sweepTo);          // the hand has crossed; rename
+        g.root.classList.remove("dg-sweep");
+        measure(g);
+      }
+      if (g.sim >= g.sweepEnd) finishSweep(g, g.sweepTo);
+    }
     if (g.layoutDirty) measure(g);
     const t = (now - g.t0) / 1000;
     g.ripples = g.ripples.filter((r) => t - r.t < 9);
@@ -675,6 +1119,20 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
         b.dropped = true;
         b.vz -= 26; b.vrx += 22 * (Math.random() - 0.5); b.vry += 14 * (Math.random() - 0.5);
       }
+
+      // A card being swept off the table has left the water: it is struck,
+      // it slides, and it is gone. Only when it comes back down on the far
+      // side (state 3) does the surface get hold of it again.
+      const sw = b.sw;
+      if (sw) {
+        if (sw.state === 0 && g.sim >= sw.departAt) strike(b, sw);
+        if (sw.state === 1) { slideOff(g, k, b, sw, g.sim, dt); continue; }
+        if (sw.state === 2) {
+          if (g.sim < sw.arriveAt) { writeBody(g, k, b, 0); continue; }
+          landIncoming(g, b, sw);
+        }
+      }
+
       const f = field(g, b.cx, b.cy, t);
       const wt = t * b.f;
       const tz = f[0] + Math.sin(wt + b.ph) * 0.9;
@@ -684,17 +1142,24 @@ img.muted.dg-charging{animation:dgCharge 900ms ease-in-out infinite}
       const tryy = clamp(-f[1] * 210 + Math.cos(wt * 0.7 + b.ph * 0.6) * 1.2, -20, 20);
       const trz = clamp((f[1] - f[2]) * 34 + Math.sin(wt * 0.5 + b.ph * 2) * 0.7, -6, 6);
       // Soft, lightly damped: the cards lag the water and overshoot a little.
-      const kk = 7 / b.m, c = 2 * Math.sqrt(kk) * 0.3;
+      // A card still flying home gets extra authority and a firmer hand, so
+      // it arrives rather than wanders — both relax away over the next beat
+      // and leave it floating like everything else.
+      let kk = 7 / b.m, zeta = 0.3;
+      if (sw && sw.state === 3) {
+        const a = Math.exp(-(g.sim - sw.arriveAt) / 460);
+        kk *= 1 + 2.4 * a;
+        zeta += 0.34 * a;
+      }
+      const c = 2 * Math.sqrt(kk) * zeta;
       b.vx += (kk * (tx - b.x) - c * b.vx) * dt; b.x += b.vx * dt;
       b.vy += (kk * (ty - b.y) - c * b.vy) * dt; b.y += b.vy * dt;
       b.vz += (kk * (tz - b.z) - c * b.vz) * dt; b.z += b.vz * dt;
       b.vrx += (kk * (trx - b.rx) - c * b.vrx) * dt; b.rx += b.vrx * dt;
       b.vry += (kk * (tryy - b.ry) - c * b.vry) * dt; b.ry += b.vry * dt;
       b.vrz += (kk * (trz - b.rz) - c * b.vrz) * dt; b.rz += b.vrz * dt;
-      g.tiles[k].float.style.transform =
-        "translate3d(" + b.x.toFixed(2) + "px," + (b.y - b.z * 0.5).toFixed(2) + "px,0) " +
-        "rotateX(" + b.rx.toFixed(2) + "deg) rotateY(" + b.ry.toFixed(2) + "deg) rotateZ(" + b.rz.toFixed(2) + "deg) " +
-        "scale(" + (1 + b.z * 0.006).toFixed(4) + ")";
+      writeBody(g, k, b, sw && sw.state === 3
+        ? clamp01((g.sim - sw.arriveAt) / SWEEP_RISE_MS) : 1);
     }
   }
 })();
