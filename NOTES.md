@@ -238,3 +238,35 @@ Worth remembering whenever a threshold is tuned on one input and then
 shared by another. The same applies to timing: the card opens its meanings
 at ~600 ms, the grid commits at 2200 ms, and the longer a hold must be
 held the more the input's own noise floor matters.
+
+### A guarantee must not depend on a flag that can latch
+
+The share heartbeat is the thing that guarantees a face-up card always has
+a share File. It skipped while a build was in flight, and that skip was a
+boolean — `shareBuilding` — which could latch true and switch the whole
+guarantee off.
+
+`refreshShareFile()` bumps `shareFileToken` on entry, then has two early
+returns that start no build: mid-draw, and card-face-down. If either fired
+while an earlier build was running, that build eventually landed, found the
+token had moved on, and therefore declined to clear the flag. Nothing else
+ever cleared it. From then on the heartbeat returned at its first line
+forever, and the share worked only as long as the old trigger chain
+happened to deliver — which is how it came to "work for a few seconds after
+a draw and then stop", recoverable only by opening the meanings, the same
+workaround as the original bug.
+
+Reproduced by slowing the build and setting the card down mid-build;
+measured afterwards, the heartbeat rebuilt nothing across seven ticks.
+
+The flag is now a token: `shareBuildingToken` holds the token whose build
+is running, and the heartbeat skips only while `shareBuildingToken ===
+shareFileToken`. A claim cannot outlive the refresh that made it, because
+any newer refresh moves the token and retires it automatically. Same test
+afterwards: the file comes back on the next tick with nothing touching the
+DOM.
+
+The general shape, twice over now in this file: when something exists to
+guarantee an outcome, check what can stop it running. A heartbeat that can
+be silently disabled is not a guarantee, and it fails exactly where it was
+supposed to help — invisibly, and only on the device.

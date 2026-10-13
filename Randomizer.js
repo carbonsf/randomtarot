@@ -883,7 +883,16 @@ function avgY(touches) {
 let shareRefreshTimer = null;
 let shareRetryTimer = null;
 let shareRetries = 0;
-let shareBuilding = false;      // a build is in flight — don't start another
+// Which token's build is in flight, if any. A TOKEN rather than a boolean
+// deliberately: a boolean could latch. refreshShareFile() bumps the token
+// on entry and then has two early returns (mid-draw, and card-face-down)
+// that start no build — so an older build would land, find the token had
+// moved on, decline to clear the flag, and leave it true forever. That
+// switches off the heartbeat below, which is the one thing guaranteeing a
+// share file exists: the share then worked until the first time that race
+// happened and never again. Tying the claim to the token that made it
+// means any newer refresh retires it automatically.
+let shareBuildingToken = -1;
 function scheduleShareRefresh() {
   if (shareRefreshTimer) clearTimeout(shareRefreshTimer);
   shareRefreshTimer = setTimeout(refreshShareFile, 120);
@@ -955,12 +964,12 @@ function refreshShareFile() {
   // composite fails on a device (memory, fonts, toBlob), fall back to the
   // card rather than leaving the gesture with nothing — a silently-null
   // file is indistinguishable from a broken gesture.
-  shareBuilding = true;
+  shareBuildingToken = token;
   const build = infoOverlayOpen ? composite.catch(() => plain) : plain;
   build
     .then((f) => { if (token === shareFileToken) { currentShareFile = f; currentShareKey = key; } })
     .catch(() => { if (token === shareFileToken) { currentShareFile = null; currentShareKey = ""; } })
-    .then(() => { if (token === shareFileToken) shareBuilding = false; });
+    .then(() => { if (token === shareFileToken) shareBuildingToken = -1; });
 }
 
 // --- The heartbeat: the trigger that cannot be missed ------------------
@@ -978,7 +987,8 @@ function refreshShareFile() {
 // mutation delivery entirely.
 function shareHeartbeat() {
   if (document.hidden) return;
-  if (showingBack || drawing || shareBuilding) return;
+  if (showingBack || drawing) return;
+  if (shareBuildingToken === shareFileToken) return;   // a current build is running
   const imgEl = document.querySelector("img");
   if (!imgEl || !currentCardName) return;
   if (currentShareFile && currentShareKey === shareKeyFor(imgEl)) return;
