@@ -1001,6 +1001,10 @@ function shareHeartbeat() {
 // share, or for anything else. Set SHARE_DEBUG to false to silence it;
 // delete this block and its shareNote() calls to remove it entirely.
 const SHARE_DEBUG = true;
+// Bumped on every deploy of this diagnostic, and appended to the messages.
+// Without it a stale cached build and a failed fix look identical on the
+// device — both just say NotAllowedError.
+const SHARE_DEBUG_TAG = "2";
 let shareNoteEl = null, shareNoteTimer = null;
 function shareNote(msg) {
   if (!SHARE_DEBUG) return;
@@ -1097,7 +1101,7 @@ function threeFingerEnd(e) {
   if (e && e.type === "touchcancel") {
     threeFingerActive = false;
     threeFingerArmed  = false;
-    shareNote("cancelled by iOS (touchcancel) — no activation to share with");
+    shareNote("cancelled by iOS" + SHARE_DEBUG_TAG + " (touchcancel) — no activation");
     return;
   }
   // touchend: wait until fewer than three fingers remain so a brief lift
@@ -1118,7 +1122,7 @@ function threeFingerEnd(e) {
     haptic(12);
     fireShare(meaningShareFile);   // same path, different payload
   } else if (!threeFingerFired) {
-    shareNote("not armed — up " + Math.round(threeFingerPeakUp) + "px / down " +
+    shareNote("not armed" + SHARE_DEBUG_TAG + " — up " + Math.round(threeFingerPeakUp) + "px / down " +
       Math.round(threeFingerPeakDown) + "px, needs " +
       Math.round(Math.max(80, window.innerHeight * 0.12)) + "px");
   }
@@ -1388,7 +1392,7 @@ function fireShare(preferredFile) {
   let file = preferredFile || currentShareFile;
   if (!file) file = currentShareFile;
   if (!file) {
-    shareNote("no file ready — cache empty (building: " +
+    shareNote("no file ready" + SHARE_DEBUG_TAG + " — cache empty (building: " +
       (shareBuildingToken === shareFileToken) + ", fallback: " +
       !!fallbackShareFile + ")");
     return;
@@ -1430,7 +1434,9 @@ function fireShare(preferredFile) {
        // A cancel rejects with AbortError and is not a fault; anything
        // else is the thing we are hunting.
        const name = (err && err.name) || String(err);
-       if (name !== "AbortError") shareNote("share rejected: " + name);
+       if (name !== "AbortError") {
+         shareNote("share rejected: " + name + SHARE_DEBUG_TAG);
+       }
      })
      .finally(clearShareInFlight);
   } else {
