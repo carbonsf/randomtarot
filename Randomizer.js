@@ -995,46 +995,12 @@ function shareHeartbeat() {
   refreshShareFile();
 }
 
-// --- TEMPORARY share diagnostic --------------------------------------
-// Shows one dim line ONLY when a three-finger swipe ends WITHOUT sharing,
-// naming which silent exit was taken. Nothing is shown on a successful
-// share, or for anything else. Set SHARE_DEBUG to false to silence it;
-// delete this block and its shareNote() calls to remove it entirely.
-const SHARE_DEBUG = true;
-// Bumped on every deploy of this diagnostic, and appended to the messages.
-// Without it a stale cached build and a failed fix look identical on the
-// device — both just say NotAllowedError.
-const SHARE_DEBUG_TAG = "3";
-let shareNoteEl = null, shareNoteTimer = null;
-function shareNote(msg) {
-  if (!SHARE_DEBUG) return;
-  if (!shareNoteEl) {
-    shareNoteEl = document.createElement("div");
-    shareNoteEl.style.cssText =
-      "position:fixed;left:0;right:0;z-index:9999;pointer-events:none;" +
-      "bottom:calc(env(safe-area-inset-bottom) + 16px);text-align:center;" +
-      "padding:0 14px;opacity:0;transition:opacity 160ms linear;" +
-      "font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;" +
-      "color:rgba(236,236,236,0.74);text-shadow:0 1px 3px rgba(0,0,0,0.9);";
-    document.body.appendChild(shareNoteEl);
-  }
-  shareNoteEl.textContent = msg;
-  shareNoteEl.style.opacity = "1";
-  clearTimeout(shareNoteTimer);
-  shareNoteTimer = setTimeout(() => {
-    if (shareNoteEl) shareNoteEl.style.opacity = "0";
-  }, 4500);
-}
-
 function threeFingerStart(e) {
   if (!e.touches || e.touches.length !== 3) return;
   // Face-up card only. The meanings screen is now shareable too (it shares
   // the card+meanings composite), so an open overlay no longer blocks the
   // gesture — everything else about this handler is unchanged.
-  if (showingBack || drawing) {
-    shareNote("ignored: " + (showingBack ? "card is face-down" : "still drawing"));
-    return;
-  }
+  if (showingBack || drawing) return;
   // Defensive: a brand-new deliberate gesture means any previous share is
   // done (its sheet, if open, would be intercepting touches — so we'd never
   // get here). Clear a possibly-stuck flag so this share isn't blocked.
@@ -1101,7 +1067,6 @@ function threeFingerEnd(e) {
   if (e && e.type === "touchcancel") {
     threeFingerActive = false;
     threeFingerArmed  = false;
-    shareNote("cancelled by iOS" + SHARE_DEBUG_TAG + " (touchcancel) — no activation");
     return;
   }
   // touchend: wait until fewer than three fingers remain so a brief lift
@@ -1121,10 +1086,6 @@ function threeFingerEnd(e) {
     threeFingerFired = true;
     haptic(12);
     showSharePrompt("down");   // same path, different payload
-  } else if (!threeFingerFired) {
-    shareNote("not armed" + SHARE_DEBUG_TAG + " — up " + Math.round(threeFingerPeakUp) + "px / down " +
-      Math.round(threeFingerPeakDown) + "px, needs " +
-      Math.round(Math.max(80, window.innerHeight * 0.12)) + "px");
   }
 }
 
@@ -1392,31 +1353,15 @@ function invalidateShareFile() {
 // So the swipe arms the share and a single dim word carries it. The tap on
 // that word is a real interaction, so the sheet always opens.
 //
-// The word sits in the overlay's italic, low on the screen, over nothing.
-// It takes no pointer events itself — the capture-phase listener below
-// catches the tap anywhere on screen, and swallows it so the same tap
-// cannot also set the card down or open a tile.
+// Nothing is drawn for it. The app says nothing anywhere else and should
+// not start here: the haptic that fires as the swipe arms is the signal,
+// and the next tap sends. An unarmed swipe buzzes nothing, so the two
+// states are already distinguishable without a word on screen.
 const SHARE_PROMPT_MS = 4500;
-let sharePromptKind = null, sharePromptEl = null, sharePromptTimer = null;
+let sharePromptKind = null, sharePromptTimer = null;
 
 function showSharePrompt(kind) {
   sharePromptKind = kind;
-  if (!sharePromptEl) {
-    sharePromptEl = document.createElement("div");
-    sharePromptEl.style.cssText =
-      "position:fixed;inset:0;z-index:300;pointer-events:none;display:flex;" +
-      "align-items:flex-end;justify-content:center;" +
-      "padding-bottom:calc(env(safe-area-inset-bottom) + 11vh);" +
-      "font-family:'Cormorant Garamond','EB Garamond',Garamond,Georgia,serif;" +
-      "font-style:italic;font-weight:400;letter-spacing:0.01em;" +
-      "font-size:clamp(23px,4.6vw,31px);color:rgba(244,243,238,0.74);" +
-      "text-shadow:0 1px 12px rgba(0,0,0,0.85);opacity:0;" +
-      "transition:opacity 420ms cubic-bezier(0.16, 1, 0.3, 1);";
-    document.body.appendChild(sharePromptEl);
-  }
-  sharePromptEl.textContent = "Share";
-  void sharePromptEl.offsetHeight;
-  sharePromptEl.style.opacity = "1";
   clearTimeout(sharePromptTimer);
   sharePromptTimer = setTimeout(hideSharePrompt, SHARE_PROMPT_MS);
 }
@@ -1425,7 +1370,6 @@ function hideSharePrompt() {
   clearTimeout(sharePromptTimer);
   sharePromptTimer = null;
   sharePromptKind = null;
-  if (sharePromptEl) sharePromptEl.style.opacity = "0";
 }
 
 // Capture phase on document: runs before the card's inline onclick and
@@ -1449,19 +1393,13 @@ document.addEventListener("click", function (e) {
 // terminator so iOS still sees transient activation. Shares ONLY the
 // eagerly-cached image File.
 function fireShare(preferredFile) {
-  if (shareInFlight) { shareNote("blocked: previous share still in flight"); return; }
-  if (!navigator.share) { shareNote("this browser has no navigator.share"); return; }
+  if (shareInFlight || !navigator.share) return;
   // preferredFile lets the down-swipe hand over the meanings composite
   // instead of the plain card. Falls back to the card if it isn't built
   // yet, so the gesture never does nothing.
   let file = preferredFile || currentShareFile;
   if (!file) file = currentShareFile;
-  if (!file) {
-    shareNote("no file ready" + SHARE_DEBUG_TAG + " — cache empty (building: " +
-      (shareBuildingToken === shareFileToken) + ", fallback: " +
-      !!fallbackShareFile + ")");
-    return;
-  }
+  if (!file) return;
   // canShare, when present, is authoritative; when absent (older iOS),
   // attempt the file share anyway rather than refusing.
   //
@@ -1475,8 +1413,6 @@ function fireShare(preferredFile) {
     if (fallbackShareFile && navigator.canShare({ files: [fallbackShareFile] })) {
       file = fallbackShareFile;
     } else {
-      shareNote("platform refused the file" +
-        (fallbackShareFile ? " and the fallback too" : "; no fallback built"));
       return;
     }
   }
@@ -1487,22 +1423,12 @@ function fireShare(preferredFile) {
   let p;
   try {
     p = navigator.share({ files: [file] });
-  } catch (_e) {
-    shareNote("share() threw: " + ((_e && _e.name) || _e));
-    clearShareInFlight(); invalidateShareFile(); return;
-  } // sync throw
+  } catch (_e) { clearShareInFlight(); invalidateShareFile(); return; } // sync throw
   // The File is now spent (iOS consumes it on a successful share). Drop it
   // and rebuild a fresh one so the very next swipe can share again.
   invalidateShareFile();
   if (p && typeof p.finally === "function") {
-    p.catch((err) => {
-       // A cancel rejects with AbortError and is not a fault; anything
-       // else is the thing we are hunting.
-       const name = (err && err.name) || String(err);
-       if (name !== "AbortError") {
-         shareNote("share rejected: " + name + SHARE_DEBUG_TAG);
-       }
-     })
+    p.catch(() => { /* user canceled / platform refused */ })
      .finally(clearShareInFlight);
   } else {
     clearShareInFlight();

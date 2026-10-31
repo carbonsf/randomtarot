@@ -67,11 +67,20 @@ load-bearing and the bug can come back.
 
 ## iOS / WebKit gotchas already paid for
 
-- **Transient activation for touch comes only from `touchend`** — never
-  `touchstart`. If iOS hands a gesture to a native scroller it ends with
-  `touchcancel`, which grants nothing, so `share()` can never fire. This is
-  why the meanings overlay needed `touch-action: none` (and hand-rolled
-  one-finger scrolling) exactly like the card has.
+- **iOS grants user activation for a TAP, and not for a multi-finger
+  gesture.** This note used to say activation comes from `touchend`, which
+  was wrong and cost several rounds of chasing: it made the three-finger
+  share look like something a handler could fix. It cannot. Measured on the
+  device, `navigator.share()` from a three-finger `touchend` is refused with
+  `NotAllowedError`, while *several* swipes in a row succeed if they follow
+  a tap — so the activation was never granted by the swipe, only borrowed
+  from the tap before it (drawing the card, leaving the meanings), which is
+  also why "open the meanings and come back" appeared to revive it.
+  Dropping the handlers' `preventDefault` changed nothing. The swipe
+  therefore arms the share and the following tap sends it.
+  A gesture handed to a native scroller still ends in `touchcancel`, which
+  grants nothing either — that part stands, and is why the meanings overlay
+  needs `touch-action: none` and hand-rolled scrolling like the card has.
 
 - **Right-click DOES grant activation in Chrome/macOS.** Verified on the
   real browser: `userActivation.isActive` is true on the secondary button's
@@ -270,3 +279,27 @@ The general shape, twice over now in this file: when something exists to
 guarantee an outcome, check what can stop it running. A heartbeat that can
 be silently disabled is not a guarantee, and it fails exactly where it was
 supposed to help — invisibly, and only on the device.
+
+
+### Two bugs wearing one face
+
+The share failing after a draw was two independent faults with the same
+symptom, and fixing one left the other looking like a regression.
+
+One was the cache: the eagerly-built File went missing and nothing
+rebuilt it. That was the stranded trigger chain, then the heartbeat, then
+the latched `shareBuilding` flag that switched the heartbeat off.
+
+The other was user activation, above: the swipe never had any.
+
+Both produced "it works right after a draw and then stops", and both were
+relieved by the same workaround — opening the meanings and coming back —
+because that does two things at once: it toggles a class, which rebuilds
+the cache, AND it is a tap, which grants activation. Every time a cache
+fix landed, the activation half remained and the bug "came back".
+
+The lesson is about evidence, not about iOS. A workaround that fixes a
+symptom is not a diagnosis, and when one does two things, it will confirm
+whichever theory you already hold. What actually ended it was getting the
+platform's own error message off the device — one line of instrumentation,
+which should have come several rounds earlier than it did.
