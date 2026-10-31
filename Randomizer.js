@@ -1004,7 +1004,7 @@ const SHARE_DEBUG = true;
 // Bumped on every deploy of this diagnostic, and appended to the messages.
 // Without it a stale cached build and a failed fix look identical on the
 // device — both just say NotAllowedError.
-const SHARE_DEBUG_TAG = "2";
+const SHARE_DEBUG_TAG = "3";
 let shareNoteEl = null, shareNoteTimer = null;
 function shareNote(msg) {
   if (!SHARE_DEBUG) return;
@@ -1116,11 +1116,11 @@ function threeFingerEnd(e) {
   if (threeFingerArmed && !wantsDown && !threeFingerFired) {
     threeFingerFired = true;
     haptic(12);
-    fireShare();   // synchronous within this touchend → activation intact
+    showSharePrompt("up");     // the tap on it carries the activation
   } else if (wantsDown && !threeFingerFired) {
     threeFingerFired = true;
     haptic(12);
-    fireShare(meaningShareFile);   // same path, different payload
+    showSharePrompt("down");   // same path, different payload
   } else if (!threeFingerFired) {
     shareNote("not armed" + SHARE_DEBUG_TAG + " — up " + Math.round(threeFingerPeakUp) + "px / down " +
       Math.round(threeFingerPeakDown) + "px, needs " +
@@ -1379,6 +1379,71 @@ function invalidateShareFile() {
   currentShareKey = "";
   refreshShareFile();
 }
+
+// --- Swipe, then tap to send ------------------------------------------
+// iOS grants the transient user activation that navigator.share() requires
+// only for a TAP. A three-finger touchend grants none — measured on the
+// device: the swipe shared only while the activation from the PREVIOUS tap
+// (drawing the card, leaving the meanings) was still alive, and was refused
+// with NotAllowedError once it lapsed. Removing the handlers'
+// preventDefault did not change that; the platform simply does not count a
+// multi-touch gesture as an interaction.
+//
+// So the swipe arms the share and a single dim word carries it. The tap on
+// that word is a real interaction, so the sheet always opens.
+//
+// The word sits in the overlay's italic, low on the screen, over nothing.
+// It takes no pointer events itself — the capture-phase listener below
+// catches the tap anywhere on screen, and swallows it so the same tap
+// cannot also set the card down or open a tile.
+const SHARE_PROMPT_MS = 4500;
+let sharePromptKind = null, sharePromptEl = null, sharePromptTimer = null;
+
+function showSharePrompt(kind) {
+  sharePromptKind = kind;
+  if (!sharePromptEl) {
+    sharePromptEl = document.createElement("div");
+    sharePromptEl.style.cssText =
+      "position:fixed;inset:0;z-index:300;pointer-events:none;display:flex;" +
+      "align-items:flex-end;justify-content:center;" +
+      "padding-bottom:calc(env(safe-area-inset-bottom) + 11vh);" +
+      "font-family:'Cormorant Garamond','EB Garamond',Garamond,Georgia,serif;" +
+      "font-style:italic;font-weight:400;letter-spacing:0.01em;" +
+      "font-size:clamp(23px,4.6vw,31px);color:rgba(244,243,238,0.74);" +
+      "text-shadow:0 1px 12px rgba(0,0,0,0.85);opacity:0;" +
+      "transition:opacity 420ms cubic-bezier(0.16, 1, 0.3, 1);";
+    document.body.appendChild(sharePromptEl);
+  }
+  sharePromptEl.textContent = "Share";
+  void sharePromptEl.offsetHeight;
+  sharePromptEl.style.opacity = "1";
+  clearTimeout(sharePromptTimer);
+  sharePromptTimer = setTimeout(hideSharePrompt, SHARE_PROMPT_MS);
+}
+
+function hideSharePrompt() {
+  clearTimeout(sharePromptTimer);
+  sharePromptTimer = null;
+  sharePromptKind = null;
+  if (sharePromptEl) sharePromptEl.style.opacity = "0";
+}
+
+// Capture phase on document: runs before the card's inline onclick and
+// before anything else can claim the tap, and stopPropagation here keeps
+// the tap from doing its usual job as well. (stopPropagation does not stop
+// other listeners on document itself, so this still works alongside them.)
+document.addEventListener("click", function (e) {
+  if (!sharePromptKind) return;
+  const kind = sharePromptKind;
+  e.stopPropagation();
+  e.preventDefault();
+  hideSharePrompt();
+  suppressClicksUntil = performance.now() + POST_PRESS_SUPPRESS_MS;
+  // Synchronous inside the click, so the activation is still ours. The
+  // files are read NOW rather than when the swipe happened, so this always
+  // sends whatever is current.
+  fireShare(kind === "down" ? meaningShareFile : undefined);
+}, true);
 
 // Fire the native share sheet. Must be called synchronously from a touch
 // terminator so iOS still sees transient activation. Shares ONLY the
