@@ -1049,13 +1049,27 @@ function threeFingerStart(e) {
   if (!currentShareFile || (imgEl && currentShareKey !== shareKeyFor(imgEl))) {
     refreshShareFile();
   }
-  if (e.cancelable) e.preventDefault();
+  // NOT preventDefault'd, deliberately. Preventing the default of a
+  // touchstart suppresses WebKit's tap processing, and the transient user
+  // activation that navigator.share() requires rides on that processing —
+  // so the swipe granted no activation of its own and could only share on
+  // the activation left over from the preceding TAP (drawing the card, or
+  // closing the meanings). That is exactly the observed behaviour: it
+  // shares for a moment after the card appears and is refused with
+  // NotAllowedError thereafter, and "open the meanings and come back"
+  // revived it because those are taps.
+  //
+  // Nothing is lost by dropping it: the card, the meanings overlay and the
+  // deck grid's scroller all carry touch-action:none, so the browser has
+  // no native pan or zoom to suppress here, and the trailing click is
+  // already handled by suppressClicksUntil in threeFingerEnd.
 }
 
 function threeFingerMove(e) {
   if (!threeFingerActive || threeFingerFired) return;
   if (!e.touches || e.touches.length !== 3) return;
-  if (e.cancelable) e.preventDefault();
+  // Also not prevented — same reason as touchstart above. touch-action
+  // already stops anything native from happening during the swipe.
   // Track the largest upward travel; arm once it passes a modest threshold
   // (~12% of viewport, min 80px) so a real swipe-up qualifies even if iOS
   // is about to cancel the touch.
